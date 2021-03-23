@@ -1,0 +1,12 @@
+ldap:
+    uri: ldaps://ldap.scz-vm.net
+    basedn: dc=https://mail,dc=services,dc=vnet
+    binddn: cn=admin,dc=services,dc=vnet
+    passwd: changethispassword
+cua:
+    add: sara_adduser
+    modify: sara_modify_users
+    groups:
+      - ai_dev
+      - ai_res
+      - foo
