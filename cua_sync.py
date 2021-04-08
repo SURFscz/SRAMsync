@@ -104,7 +104,7 @@ if len(dns):
                         new_status[cua_group].append(user)
                         print(f"    #member: {user}")
                         if user not in status.get(cua_group, []):
-                            print(f"sara_modify_users -g {cua_group} {user}\n")
+                            print(f"{modifyuser} -g {cua_group} {user}\n")
 
 removes = { k : status[k] for k in set(status) - set(new_status) }
 for user in removes:
