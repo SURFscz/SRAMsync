@@ -78,7 +78,7 @@ if len(dns):
                 givenname = entry['uid'][0].decode('UTF-8')
                 sn = entry['sn'][0].decode('UTF-8')
                 uid = entry['uid'][0].decode('UTF-8')
-                user = f"sram-{co}-{uid}"
+                user = f"sram-delena-{uid}"
                 mail = entry['mail'][0].decode('UTF-8')
                 line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:spider_login"
                 new_status[user]=line
@@ -109,11 +109,12 @@ if len(dns):
                     members = [m.decode('UTF-8') for m in entry['member']]
                     for member in members:
                         m_uid = dn2rdns(member)['uid'][0]
-                        user = f"sram-{co}-{m_uid}"
+                        user = f"sram-delena-{m_uid}"
                         new_status[cua_group].append(user)
                         print(f"    #member: {user}")
                         if user not in status.get(cua_group, []):
                             print(f"{modifyuser} -g {cua_group} {user}\n")
+
 
 removes = { k : status[k] for k in set(status) - set(new_status) }
 for user in removes:
