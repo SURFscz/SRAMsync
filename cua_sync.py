@@ -65,7 +65,6 @@ if len(dns):
         #print(f"dn: {dn}")
         service = entry['o'][0].decode('UTF-8')
         org, co = service.split('.')
-        project_name = f"sram-{co}"
         print(f"\n#service: {service}")
 
         # Find users
