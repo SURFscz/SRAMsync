@@ -14,16 +14,19 @@ if len(sys.argv) < 2:
 with open(sys.argv[1]) as f:
     config = yaml.safe_load(f)
 
-src = config['ldap']
-basedn = src['basedn']
-uri    = src['uri']
-binddn = src['binddn']
-passwd = src['passwd']
+try:
+    src = config['ldapp']
+    basedn = src['basedn']
+    uri    = src['uri']
+    binddn = src['binddn']
+    passwd = src['passwd']
 
-cua = config['cua']
-adduser = cua['add']
-modifyuser = cua['modify']
-cua_groups = cua['groups']
+    cua = config['cua']
+    adduser = cua['add']
+    modifyuser = cua['modify']
+    cua_groups = cua['groups']
+except KeyError as e:
+    sys.exit(f"Missing element from config: {e.value}")
 
 # Setup LDAP connection
 ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)
