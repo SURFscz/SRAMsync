@@ -119,4 +119,3 @@ for user in removes:
 
 with open('status.json', 'w') as outfile:
     json.dump(new_status, outfile, indent=4)
-    pass
