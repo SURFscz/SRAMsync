@@ -11,14 +11,11 @@ import ldap
 if len(sys.argv) < 2:
     sys.exit(sys.argv[0] + "  <config.yml>")
 
-try:
-    with open(sys.argv[1]) as f:
-        config = yaml.safe_load(f)
-except FileNotFoundError as e:
-    sys.exit(f"{e.strerror}: {e.filename}")
+with open(sys.argv[1]) as f:
+    config = yaml.safe_load(f)
 
 try:
-    src = config['ldapp']
+    src = config['ldap']
     basedn = src['basedn']
     uri    = src['uri']
     binddn = src['binddn']
@@ -29,7 +26,7 @@ try:
     modifyuser = cua['modify']
     cua_groups = cua['groups']
 except KeyError as e:
-    sys.exit(f"Missing element from config: {e.value}")
+    sys.exit(f"Missing element from config: {e}")
 
 # Setup LDAP connection
 ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)
