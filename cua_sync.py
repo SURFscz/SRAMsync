@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# -*- coding: future_fstrings -*-
+
 
 import sys
 import yaml
