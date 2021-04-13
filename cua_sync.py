@@ -25,6 +25,8 @@ try:
     adduser = cua['add']
     modifyuser = cua['modify']
     cua_groups = cua['groups']
+
+    status_filename = config['status_filename']
 except KeyError as e:
     sys.exit(f"Missing element from config: {e}")
 
@@ -36,7 +38,7 @@ ldap_conn.simple_bind_s(binddn, passwd)
 
 new_status ={}
 try:
-    with open('status.json') as json_file:
+    with open(status_filename) as json_file:
         status = json.load(json_file)
 except:
     status = {}
@@ -117,5 +119,5 @@ for user in removes:
     print(f"{modifyuser} --list {user} &&")
     print(f"  {modifyuser} --lock {user}")
 
-with open('status.json', 'w') as outfile:
+with open(status_filename, 'w') as outfile:
     json.dump(new_status, outfile, indent=4)
