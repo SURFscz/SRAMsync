@@ -64,7 +64,7 @@ if len(dns):
     for dn, entry in dns:
         #print(f"dn: {dn}")
         service = entry['o'][0].decode('UTF-8')
-        co = service.split('.')[1]
+        org, co = service.split('.')
         project_name = f"sram-{co}"
         print(f"\n#service: {service}")
 
