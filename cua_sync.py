@@ -7,6 +7,16 @@ import yaml
 import json
 import ldap
 
+
+def dn2rdns(dn):
+    rdns = {}
+    r = ldap.dn.str2dn(dn)
+    for rdn in r:
+        a, v, t = rdn[0]
+        rdns.setdefault(a, []).append(v)
+    return rdns
+
+
 # Load configuration
 if len(sys.argv) < 2:
     sys.exit(sys.argv[0] + "  <config.yml>")
@@ -43,13 +53,6 @@ try:
 except:
     status = {}
 
-def dn2rdns(dn):
-    rdns = {}
-    r = ldap.dn.str2dn(dn)
-    for rdn in r:
-        a, v, t = rdn[0]
-        rdns.setdefault(a, []).append(v)
-    return rdns
 
 print("#!/bin/bash")
 # Find organisation dns (o = ...)
