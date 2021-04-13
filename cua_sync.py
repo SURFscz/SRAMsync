@@ -11,8 +11,11 @@ import ldap
 if len(sys.argv) < 2:
     sys.exit(sys.argv[0] + "  <config.yml>")
 
-with open(sys.argv[1]) as f:
-    config = yaml.safe_load(f)
+try:
+    with open(sys.argv[1]) as f:
+        config = yaml.safe_load(f)
+except FileNotFoundError as e:
+    sys.exit(f"{e.strerror}: {e.filename}")
 
 try:
     src = config['ldapp']
