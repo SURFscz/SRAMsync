@@ -89,7 +89,9 @@ if len(dns):
 
         # Find groups in service
         for group in cua_groups:
-            cua_group = f"{project_name}-{group}"
+            sram_group = list(group.keys())[0]
+            tmp = list(group.values())[0]
+            cua_group = f'{tmp}'.format(**locals())
             print(f"  #group: {cua_group}")
             # Create groups
             line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
@@ -100,7 +102,7 @@ if len(dns):
 
             # Find members
             try:
-                dns = ldap_conn.search_s(f"cn={group},ou=Groups,o={service},dc=ordered,{basedn}", ldap.SCOPE_BASE, "(objectClass=groupOfMembers)")
+                dns = ldap_conn.search_s(f"cn={sram_group},ou=Groups,o={service},dc=ordered,{basedn}", ldap.SCOPE_BASE, "(objectClass=groupOfMembers)")
             except:
                 dns = []
             if len(dns):
