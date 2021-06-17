@@ -8,7 +8,7 @@ cua:
     modify: sara_modify_users
     groups:
     groups:
-        - ai_dev: "sysi:{org}-{co}-ai-dev"
+        - ai_dev: "sys:{org}-{co}-ai-dev"
         - ai_res: "prj:ai_res"
         - foo: "ign:foo"
-status_filename: "/home/<user>/status.json"
+status_filename: "/path/to/status.json"
