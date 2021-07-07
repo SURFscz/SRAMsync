@@ -7,8 +7,11 @@ cua:
     add: sara_adduser
     modify: sara_modify_users
     groups:
-    groups:
+        - ai_login: "sys+grace:{org}-{co}-ai-login
         - ai_dev: "sys:{org}-{co}-ai-dev"
         - ai_res: "prj:ai_res"
         - foo: "ign:foo"
-status_filename: "/path/to/status.json"
+    grace:
+        my-org-my-co-ai-login:
+            period: 90
+status_filename: "/home/<user>/status.json"
