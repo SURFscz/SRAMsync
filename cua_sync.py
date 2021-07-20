@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: future_fstrings -*-
 
-
 import sys
 import json
 import ldap
 import copy
 import click
 from config import Config
-# from jsonschema import validate, ValidationError
 from datetime import datetime, timezone, timedelta
+
 
 def dn2rdns(dn):
     rdns = {}
@@ -20,167 +19,169 @@ def dn2rdns(dn):
     return rdns
 
 
-@click.command()
-@click.help_option()
-@click.version_option()
-@click.argument('configuration', type=click.Path(exists=True, dir_okay=False))
-@click.argument('output', type=click.Path(writable=True, allow_dash=True))
-def cli(configuration, output):
-    """
-    Synchronisation between the SRAM LDAP and the CUA
-
-    CONFIGURATION
-
-    OUTPUT
-    """
-
-    cfg = Config(configuration)
-
-
-def main():
-    # Load configuration
-    if len(sys.argv) < 2:
-        sys.exit(sys.argv[0] + "  <config.yml>")
-
-    with open(sys.argv[1]) as f:
-        config = yaml.safe_load(f)
-
-    try:
-        src = config['ldap']
-        basedn = src['basedn']
-        uri    = src['uri']
-        binddn = src['binddn']
-        passwd = src['passwd']
-
-        cua = config['cua']
-        adduser = cua['add']
-        modifyuser = cua['modify']
-        cua_groups = cua['groups']
-
-        status_filename = config['status_filename']
-    except KeyError as e:
-        sys.exit(f"Missing element from config: {e}")
-
-# Setup LDAP connection
+def init_ldap(config):
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)
     ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
-    ldap_conn = ldap.initialize(uri)
-    ldap_conn.simple_bind_s(binddn, passwd)
+    ldap_conn = ldap.initialize(config['uri'])
+    ldap_conn.simple_bind_s(config['binddn'], config['passwd'])
 
-    new_status = { 'users': {}, 'groups': {} }
+    return ldap_conn
+
+
+def get_previous_status(cfg):
+    status = { 'users': {}, 'groups': {} }
 
     try:
-        with open(status_filename) as json_file:
+        with open(cfg['status_filename']) as json_file:
             status = json.load(json_file)
-    except:
-        status = { 'users': {}, 'groups': {} }
+    except FileNotFoundError as e:
+        pass
+
+    return status
+        # line_number, line = cfg.find_line_containing_element('status_filename')
+        # click.echo(f'Error: Status file \'{cfg["status_filename"]}\' could not be found.')
+        # click.echo(f'       Please consult your configuration file at line {line_number}.')
+        # click.echo(f'       {line}')
 
 
-    print("#!/bin/bash")
-    print()
-    print("set -o xtrace")
-# Find organisation dns (o = ...)
+def generate_header(cfg):
+    output = cfg.getOutputDescriptor()
+
+    print('#!/usr/bin/env python3', file=output)
+    print(file=output)
+    print('################', file=output)
+    print('#', file=output)
+    print('#  Automatically generated file by cua-sync', file=output)
+    print(f'#  Date: {datetime.now()}', file=output)
+    print('#', file=output)
+    print('################', file=output)
+    print(file=output)
+    print("set -o xtrace", file=output)
+    print(file=output)
+
+
+def process_user_data(cfg, service, co, status, new_status):
     try:
-        dns = ldap_conn.search_s(f"dc=ordered,{basedn}", ldap.SCOPE_ONELEVEL, "(&(o=*)(ObjectClass=organization))")
-    except:
-        dns = []
-    if len(dns):
-        for dn, entry in dns:
-            #print(f"dn: {dn}")
-            service = entry['o'][0].decode('UTF-8')
-            org, co = service.split('.')
-            print(f"\n#service: {service}")
+        ldap_conn = cfg.getLDAPconnector()
+        output = cfg.getOutputDescriptor()
+        dns = ldap_conn.search_s(f"ou=People,o={service},dc=ordered,{cfg.getSRAMbasedn()}", ldap.SCOPE_ONELEVEL, "(objectClass=person)")
 
-            # Find users
-            try:
-                dns = ldap_conn.search_s(f"ou=People,o={service},dc=ordered,{basedn}", ldap.SCOPE_ONELEVEL, "(objectClass=person)")
-            except:
-                dns = []
-            if len(dns):
-                for dn, entry in dns:
-                    #print(f"dn: {dn}")
-                    givenname = entry['uid'][0].decode('UTF-8')
-                    sn = entry['sn'][0].decode('UTF-8')
-                    uid = entry['uid'][0].decode('UTF-8')
-                    user = f"sram-{co}-{uid}"
-                    mail = entry['mail'][0].decode('UTF-8')
-                    line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:spider_login"
-                    new_status['users'][user] = {'line': line}
-                    print(f"  #user {user}")
-                    user_status = status.get(user)
+        for _, entry in dns:
+            givenname = entry['uid'][0].decode('UTF-8')
+            sn = entry['sn'][0].decode('UTF-8')
+            uid = entry['uid'][0].decode('UTF-8')
+            user = f"sram-{co}-{uid}"
+            mail = entry['mail'][0].decode('UTF-8')
+            line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:spider_login"
+            new_status['users'][user] = {'line': line}
+            print(f"  # user {user}", file=output)
+            user_status = status.get(user)
 
-                    if user_status == None or user_status.get('line') != line:
-                        new_status['users'][user]['line'] = line
-                        print(f"{modifyuser} --list {user} ||")
-                        print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n    {modifyuser} --service sram:{service} {user}\n  }}\n")
+            if user_status == None or user_status.get('line') != line:
+                new_status['users'][user]['line'] = line
+                print(f"{cfg['cua']['modify_user']} --list {user} ||", file=output)
+                print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n    {cfg['cua']['modify_user']} --service sram:{service} {user}\n  }}\n", file=output)
 
-                    if 'sshPublicKey' in entry:
-                        raw_sshPublicKeys = entry['sshPublicKey']
-                        sshPublicKeys = set([raw_sshPublicKeys[0].decode('UTF-8').rstrip()])
-                        for key in raw_sshPublicKeys[1:]:
-                            sshPublicKeys = sshPublicKeys | key.decode('UTF-8').rstrip()
+            if 'sshPublicKey' in entry:
+                raw_sshPublicKeys = entry['sshPublicKey']
+                sshPublicKeys = set([raw_sshPublicKeys[0].decode('UTF-8').rstrip()])
+                for key in raw_sshPublicKeys[1:]:
+                    sshPublicKeys = sshPublicKeys | key.decode('UTF-8').rstrip()
 
-                        known_sshPublicKeys = set()
-                        if user_status and 'sshPublicKey' in user_status:
-                            known_sshPublicKeys = set(user_status['sshPublicKey'])
-                        new_status['users'][user]['sshPublicKey'] = list(sshPublicKeys)
+                known_sshPublicKeys = set()
+                if user_status and 'sshPublicKey' in user_status:
+                    known_sshPublicKeys = set(user_status['sshPublicKey'])
+                new_status['users'][user]['sshPublicKey'] = list(sshPublicKeys)
 
-                        new_sshPublicKeys = sshPublicKeys - known_sshPublicKeys
-                        dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
+                new_sshPublicKeys = sshPublicKeys - known_sshPublicKeys
+                dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
 
-                        for key in new_sshPublicKeys:
-                            print(f'  # SSH Public key: {key}')
-                            print(f'{modifyuser} --ssh-public-key "{key}" {user}')
+                for key in new_sshPublicKeys:
+                    print(f'  # SSH Public key: {key}', file=output)
+                    print(f'{cfg["cua"]["modify_user"]} --ssh-public-key "{key}" {user}', file=output)
 
-            # Find groups in service
-            for group in cua_groups:
-                sram_group = list(group.keys())[0]
-                tmp = list(group.values())[0]
-                group_def, cua_group = tmp.split(':')
-                tmp = group_def.split('+', 1)
-                group_type = tmp[0]
-                group_attributes = tmp[1:]
+    except ldap.NO_SUCH_OBJECT as e:
+        print('The basedn does not exists.')
 
-                if group_type == 'ign':
-                    continue
+    return new_status
 
-                if group_type == 'sys':
-                    group_attributes.append('system_group')
-                if group_type == 'prj':
-                    group_attributes.append('project_group')
 
-                cua_group = f'{cua_group}'.format(**locals())
-                print(f"  #group: {cua_group}")
-                # Create groups
-                line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
-                if cua_group not in new_status['groups']:
-                    new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
-                if not isinstance(status.get(cua_group), list):
-                    print(f"{modifyuser} --list {cua_group} ||")
-                    print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n  }}\n")
+def process_group_data(cfg, service, org, co, status, new_status):
+    output = cfg.getOutputDescriptor()
 
-                # Find members
-                try:
-                    dns = ldap_conn.search_s(f"cn={sram_group},ou=Groups,o={service},dc=ordered,{basedn}", ldap.SCOPE_BASE, "(objectClass=groupOfMembers)")
-                except:
-                    dns = []
-                if len(dns):
-                    for dn, entry in dns:
-                        # Add members
-                        members = [m.decode('UTF-8') for m in entry['member']]
-                        for member in members:
-                            m_uid = dn2rdns(member)['uid'][0]
-                            user = f"sram-{co}-{m_uid}"
-                            new_status['groups'][cua_group]['members'].append(user)
-                            print(f"    #member: {user}")
-                            if user not in status.get(cua_group, []):
-                                if group_type == 'sys':
-                                    print(f"{modifyuser} -a delena {cua_group} {user}\n")
-                                elif group_type == 'prj':
-                                    print(f"{modifyuser} -g {cua_group} {user}\n")
-                                else:
-                                    raise ValueError
+    for group in cfg['cua']['groups']:
+        sram_group = list(group.keys())[0]
+        tmp = list(group.values())[0]
+        group_def, cua_group = tmp.split(':')
+        tmp = group_def.split('+', 1)
+        group_type = tmp[0]
+        group_attributes = tmp[1:]
 
+        if group_type == 'ign':
+            continue
+        if group_type == 'sys':
+            group_attributes.append('system_group')
+        if group_type == 'prj':
+            group_attributes.append('project_group')
+
+        cua_group = f'{cua_group}'.format(**locals())  # The cua_group could contain an org reference
+        print(f"  # group: {cua_group}", file=output)
+        # Create groups
+        line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
+        if cua_group not in new_status['groups']:
+            new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
+        if not isinstance(status.get(cua_group), list):
+            print(f"{cfg['cua']['modify_user']} --list {cua_group} ||", file=output)
+            print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n  }}\n", file=output)
+
+        # Find members
+        try:
+            basedn = cfg.getSRAMbasedn()
+            dns = ldap_conn.search_s(f"cn={sram_group},ou=Groups,o={service},dc=ordered,{basedn}", ldap.SCOPE_BASE, "(objectClass=groupOfMembers)")
+
+            for dn, entry in dns:
+                # Add members
+                members = [m.decode('UTF-8') for m in entry['member']]
+                for member in members:
+                    m_uid = dn2rdns(member)['uid'][0]
+                    user = f"sram-{co}-{m_uid}"
+                    new_status['groups'][cua_group]['members'].append(user)
+                    print(f"    # member: {user}", file=output)
+                    if user not in status.get(cua_group, []):
+                        if group_type == 'sys':
+                            print(f"{modifyuser} -a delena {cua_group} {user}\n", file=output)
+                        elif group_type == 'prj':
+                            print(f"{modifyuser} -g {cua_group} {user}\n", file=output)
+                        else:
+                            raise ValueError
+        except:
+            pass
+
+    return new_status
+
+
+def add_missing_entries_to_cua(cfg, status, new_status):
+    generate_header(cfg)
+
+    ldap_conn = cfg.getLDAPconnector()
+    basedn = cfg.getSRAMbasedn()
+    dns = ldap_conn.search_s(f"dc=ordered,{basedn}", ldap.SCOPE_ONELEVEL, "(&(o=*)(ObjectClass=organization))")
+
+    for _, entry in dns:
+        output = cfg.getOutputDescriptor()
+
+        service = entry['o'][0].decode('UTF-8')
+        org, co = service.split('.')
+        print(f"\n# service: {service}", file=output)
+
+        new_status = process_user_data(cfg, service, co, status, new_status)
+        new_status = process_group_data(cfg, service, org, co, status, new_status)
+
+    return new_status
+
+
+def remove_superfluous_entries_from_cua(cfg, status, new_status):
+    output = cfg.getOutputDescriptor()
     new_groups = new_status['groups']
     groups = status['groups']
 
@@ -199,11 +200,11 @@ def main():
                 new_groups[group]['graced'] = {user: datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')}
                 continue
 
-            print(f'# Remove {user} from {group}')
+            print(f'# Remove {user} from {group}', file=output)
             if 'project_group' in new_groups[group]['attributes']:
-                print(f'{modifyuser} -r -g {group} {user}')
+                print(f'{modifyuser} -r -g {group} {user}', file=output)
             if 'system_group' in new_groups[group]['attributes']:
-                print(f'{modifyuser} -r -a delena {group} {user}')
+                print(f'{modifyuser} -r -a delena {group} {user}', file=output)
 
     removes = {k: new_groups[k] for k in new_groups if 'graced' in new_groups[k]}
     if removes != {} and 'grace' not in cua:
@@ -217,12 +218,45 @@ def main():
                 grace_start = datetime.strptime(grace_start, '%Y-%m-%dT%H:%M:%S.%f%z')
                 if grace_start + grace_period < datetime.now(timezone.utc):
                     del tmp_status['groups'][group]['graced'][user]
-                    print(f'# removing {user} from {group} after grace period ended. Grace period started on {grace_start}')
-                    print(f'{modifyuser} -r -a delena {group} {user}')
+                    print(f'# removing {user} from {group} after grace period ended. Grace period started on {grace_start}', file=output)
+                    print(f'{modifyuser} -r -a delena {group} {user}', file=output)
     except KeyError as e:
         sys.exit(f"Missing element from config: {e}")
 
-    new_status = tmp_status
+    return new_status
 
-    with open(status_filename, 'w') as outfile:
-        json.dump(new_status, outfile, indent=4)
+
+@click.command()
+@click.help_option()
+@click.version_option()
+@click.argument('configuration', type=click.Path(exists=True, dir_okay=False))
+@click.argument('output', type=click.Path(writable=True, allow_dash=True))
+def cli(configuration, output):
+    """
+    Synchronisation between the SRAM LDAP and the CUA
+
+    CONFIGURATION
+
+    OUTPUT
+    """
+
+    new_status = { 'users': {}, 'groups': {} }
+    cfg = Config(configuration)
+    try:
+        with open(output, mode='w') as output_file:
+            cfg.setOutputDescriptor(output_file)
+            ldap_conn = init_ldap(cfg['ldap'])
+            cfg.setLDAPconnector(ldap_conn)
+            status = get_previous_status(cfg)
+            new_status = add_missing_entries_to_cua(cfg, status, new_status)
+            new_status = remove_superfluous_entries_from_cua(cfg, status, new_status)
+
+            with open(cfg['status_filename'], "w") as status_file:
+                json.dump(new_status, status_file, indent=4)
+    except IOError as e:
+        print(e)
+    except ldap.NO_SUCH_OBJECT as e:
+        if 'desc' in e.args[0]:
+            print(e.args[0]['desc'])
+    except ldap.INVALID_CREDENTIALS:
+        print('Invalid credentials. Please check your configuration file.')
