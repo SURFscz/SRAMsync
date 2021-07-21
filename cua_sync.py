@@ -20,6 +20,9 @@ def dn2rdns(dn):
 
 
 def init_ldap(config):
+    """
+    Initialization and binding an LDAP connection.
+    """
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)
     ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
     ldap_conn = ldap.initialize(config['uri'])
@@ -29,6 +32,9 @@ def init_ldap(config):
 
 
 def get_previous_status(cfg):
+    """
+    Get the saved status from disk if it exits. Return an empty status otherwise.
+    """
     status = { 'users': {}, 'groups': {} }
 
     try:
@@ -38,13 +44,13 @@ def get_previous_status(cfg):
         pass
 
     return status
-        # line_number, line = cfg.find_line_containing_element('status_filename')
-        # click.echo(f'Error: Status file \'{cfg["status_filename"]}\' could not be found.')
-        # click.echo(f'       Please consult your configuration file at line {line_number}.')
-        # click.echo(f'       {line}')
 
 
 def generate_header(cfg):
+    """
+    Generate the first line of the resulting script. This includes the shebang,
+    some comments and setting xtrace
+    """
     output = cfg.getOutputDescriptor()
 
     print('#!/usr/bin/env python3', file=output)
@@ -61,6 +67,20 @@ def generate_header(cfg):
 
 
 def process_user_data(cfg, service, co, status, new_status):
+    """
+    Process the CO user data as found in SRAM for the service.
+
+    Collect the necessary information from SRAM such that shell commands can be
+    generated that call for the respective sara_usertools commands with the
+    collected information.
+
+    The provided status is used to determine whether or not a user has already
+    been processed in a previous run.
+
+    While looping over all users, a new_status is maintained to reflect the to
+    be situation of the CUA. This to be situation will be achieved after a
+    successful run of the resulting script.
+    """
     try:
         ldap_conn = cfg.getLDAPconnector()
         output = cfg.getOutputDescriptor()
@@ -107,6 +127,21 @@ def process_user_data(cfg, service, co, status, new_status):
 
 
 def process_group_data(cfg, service, org, co, status, new_status):
+    """
+    Process the CO group data as found in SRAM for the service. Only those
+    groups that are defined in the configuration file are processed.
+
+    Collect the necessary information from SRAM such that shell commands can be
+    generated that call for the respective sara_usertools commands with the
+    collected information.
+
+    The provided status is used to determine whether or not a user has already
+    been added to the group in a previous run.
+
+    While looping over all users, a new_status is maintained to reflect the to
+    be situation of the CUA. This to be situation will be achieved after a
+    successful run of the resulting script.
+    """
     output = cfg.getOutputDescriptor()
 
     for group in cfg['cua']['groups']:
@@ -161,6 +196,19 @@ def process_group_data(cfg, service, org, co, status, new_status):
 
 
 def add_missing_entries_to_cua(cfg, status, new_status):
+    """
+    Determine which entries in the SRAM LDAP have not been processed before.
+
+    This is the main loop. It loops over all services that are in the SRAM LDAP
+    for the service provider. For each service it is determined if it needs to
+    be added to the CUA. The work in determining what is defined in the SRAM
+    LDAP is split into two: i) processing user data and ii) processing group
+    data.
+
+    The current state the CUA should be in is tracked in new_status, while
+    status is the previous known status of the CUA.
+    """
+
     generate_header(cfg)
 
     ldap_conn = cfg.getLDAPconnector()
@@ -181,6 +229,11 @@ def add_missing_entries_to_cua(cfg, status, new_status):
 
 
 def remove_superfluous_entries_from_cua(cfg, status, new_status):
+    """
+    Remove entries in the CUA based on the difference between status and
+    new_status.
+    """
+
     output = cfg.getOutputDescriptor()
     new_groups = new_status['groups']
     groups = status['groups']
@@ -235,9 +288,24 @@ def cli(configuration, output):
     """
     Synchronisation between the SRAM LDAP and the CUA
 
-    CONFIGURATION
+    cua-sync takes an configuration file which describes a source LDAP with
+    which the CUA must be synchronized. This configuration file also describes
+    which groups need to be considered for synchronisation.
 
-    OUTPUT
+    During a synchronisation run, a status is kept. It reflects the current
+    state of what has been done in order to synchronize the CUA. However, the
+    actual actions to make changes to the CUA are diverted to a generated
+    script file. Once cua-sync has finished running, this resulting script file
+    must be executed in order to finish the syncing process.
+
+    The generated status file is written to disk to keep this history. Upon a
+    next run, the previous known status is read and used to determine if
+    additional actions are required to keep the CUA in sync the SRAM. Thus the
+    status is used to prevent adding things to the CUA when that already has
+    happened.
+
+    CONFIGURATION: Path to a configuration file. OUTPUT: Path of the resulting
+    script.
     """
 
     new_status = { 'users': {}, 'groups': {} }
