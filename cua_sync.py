@@ -53,8 +53,6 @@ def generate_header(cfg):
     """
     output = cfg.getOutputDescriptor()
 
-    print('#!/usr/bin/env python3', file=output)
-    print(file=output)
     print('################', file=output)
     print('#', file=output)
     print('#  Automatically generated file by cua-sync', file=output)
@@ -92,7 +90,7 @@ def process_user_data(cfg, service, co, status, new_status):
             uid = entry['uid'][0].decode('UTF-8')
             user = f"sram-{co}-{uid}"
             mail = entry['mail'][0].decode('UTF-8')
-            line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:spider_login"
+            line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:delena_login"
             new_status['users'][user] = {'line': line}
             print(f"  # user {user}", file=output)
             user_status = status.get(user)
@@ -143,6 +141,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
     successful run of the resulting script.
     """
     output = cfg.getOutputDescriptor()
+    ldap_conn = cfg.getLDAPconnector()
 
     for group in cfg['cua']['groups']:
         sram_group = list(group.keys())[0]
@@ -173,7 +172,6 @@ def process_group_data(cfg, service, org, co, status, new_status):
         try:
             basedn = cfg.getSRAMbasedn()
             dns = ldap_conn.search_s(f"cn={sram_group},ou=Groups,o={service},dc=ordered,{basedn}", ldap.SCOPE_BASE, "(objectClass=groupOfMembers)")
-
             for dn, entry in dns:
                 # Add members
                 members = [m.decode('UTF-8') for m in entry['member']]
@@ -184,13 +182,16 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     print(f"    # member: {user}", file=output)
                     if user not in status.get(cua_group, []):
                         if group_type == 'sys':
-                            print(f"{modifyuser} -a delena {cua_group} {user}\n", file=output)
+                            print(f"{cfg['cua']['modify_user']} -a delena {cua_group} {user}\n", file=output)
                         elif group_type == 'prj':
-                            print(f"{modifyuser} -g {cua_group} {user}\n", file=output)
+                            print(' project group')
+                            print(f"{cfg['cua']['modify_user']} -g {cua_group} {user}\n", file=output)
                         else:
                             raise ValueError
+        except ldap.NO_SUCH_OBJECT:
+            print(f'Warning: service \'{service}\' does not contain group \'{sram_group}\'', file=sys.stderr)
         except:
-            pass
+            raise
 
     return new_status
 
@@ -246,6 +247,7 @@ def remove_superfluous_entries_from_cua(cfg, status, new_status):
                 new_groups[group]['graced'] = groups[group]['graced']
 
     removes = {k: set(groups[k]['members']) - set(new_groups[k]['members']) for k in groups if set(groups[k]['members']) - set(new_groups[k]['members'])}
+
     for group, users in removes.items():
         for user in users:
             if 'grace' in new_groups[group]['attributes']:
@@ -255,9 +257,9 @@ def remove_superfluous_entries_from_cua(cfg, status, new_status):
 
             print(f'# Remove {user} from {group}', file=output)
             if 'project_group' in new_groups[group]['attributes']:
-                print(f'{modifyuser} -r -g {group} {user}', file=output)
+                print(f'{cfg["cua"]["modify_user"]} -r -g {group} {user}', file=output)
             if 'system_group' in new_groups[group]['attributes']:
-                print(f'{modifyuser} -r -a delena {group} {user}', file=output)
+                print(f'{cfg["cua"]["modify_user"]} -r -a delena {group} {user}', file=output)
 
     removes = {k: new_groups[k] for k in new_groups if 'graced' in new_groups[k]}
     if removes != {} and 'grace' not in cua:

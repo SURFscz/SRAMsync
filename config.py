@@ -34,7 +34,7 @@ class Config():
                     "grace": {
                         "type": "object",
                         "patternProperties": {
-                            "sram-*": {
+                            "delena_login": {
                                 "type": "object",
                                 "properties": {
                                     "grace_period": { "type": "number" }
