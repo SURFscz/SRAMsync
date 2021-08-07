@@ -317,9 +317,9 @@ def cli(configuration, output):
     script.
     """
 
-    new_status = { 'users': {}, 'groups': {} }
-    cfg = Config(configuration)
     try:
+        new_status = { 'users': {}, 'groups': {} }
+        cfg = Config(configuration)
         with open(output, mode='w') as output_file:
             cfg.setOutputDescriptor(output_file)
             ldap_conn = init_ldap(cfg['ldap'])
@@ -337,3 +337,5 @@ def cli(configuration, output):
             print(e.args[0]['desc'])
     except ldap.INVALID_CREDENTIALS:
         print('Invalid credentials. Please check your configuration file.')
+    except Exception as e:
+        print(e)

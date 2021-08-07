@@ -1,4 +1,5 @@
 import sys
+from jsonschema.exceptions import SchemaError
 
 import yaml
 from jsonschema import validate, ValidationError
@@ -7,7 +8,7 @@ from jsonschema import validate, ValidationError
 class ConfigurationError(Exception):
     def __init__(self, message):
         self.message = message
-        supeer().__init__(self.message)
+        super().__init__(self.message)
 
 
 class Config():
@@ -30,7 +31,17 @@ class Config():
                 "properties": {
                     "add_user": { "type": "string" },
                     "modify_user": { "type": "string" },
-                    "groups": { "type": "array" },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "attributes": { "type": "array" },
+                                "destination": { "type": "string" },
+                            },
+                            "required": ["attributes", "destination"],
+                        },
+                    },
                     "grace": {
                         "type": "object",
                         "patternProperties": {
@@ -53,18 +64,15 @@ class Config():
 
 
     def __init__(self, config_file):
-        try:
-            with open(config_file) as f:
-                config = yaml.safe_load(f)
+        with open(config_file) as f:
+            config = yaml.safe_load(f)
 
-            validate(schema=self._schema, instance=config)
+        validate(schema=self._schema, instance=config)
 
-            self.config_filename = config_file
-            self.config = config
-            self._ldap_connector = None
-            self._output_fd = sys.stdout
-        except ValidationError as e:
-            print(e)
+        self.config_filename = config_file
+        self.config = config
+        self._ldap_connector = None
+        self._output_fd = sys.stdout
 
 
     def __getitem__(self, item):
