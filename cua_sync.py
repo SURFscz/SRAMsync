@@ -14,7 +14,7 @@ def dn2rdns(dn):
     rdns = {}
     r = ldap.dn.str2dn(dn)
     for rdn in r:
-        a, v, t = rdn[0]
+        a, v, _ = rdn[0]
         rdns.setdefault(a, []).append(v)
     return rdns
 
@@ -93,9 +93,10 @@ def process_user_data(cfg, service, co, status, new_status):
             line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:delena_login"
             new_status['users'][user] = {'line': line}
             print(f"  # user {user}", file=output)
-            user_status = status.get(user)
+            user_status = status['users'].get(user)
 
             if user_status == None or user_status.get('line') != line:
+                print(f'Found new user: {user}')
                 new_status['users'][user]['line'] = line
                 print(f"{cfg['cua']['modify_user']} --list {user} ||", file=output)
                 print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n    {cfg['cua']['modify_user']} --service sram:{service} {user}\n  }}\n", file=output)
@@ -117,6 +118,10 @@ def process_user_data(cfg, service, co, status, new_status):
                 for key in new_sshPublicKeys:
                     print(f'  # SSH Public key: {key}', file=output)
                     print(f'{cfg["cua"]["modify_user"]} --ssh-public-key "{key}" {user}', file=output)
+
+                for key in dropped_sshPublicKeys:
+                    print(f'  # Remove SSH Public key: {key}', file=output)
+                    print(f'{cfg["cua"]["modify_user"]} -r --ssh-public-key "{key}" {user}', file=output)
 
     except ldap.NO_SUCH_OBJECT as e:
         print('The basedn does not exists.')
@@ -143,6 +148,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
     output = cfg.getOutputDescriptor()
     ldap_conn = cfg.getLDAPconnector()
 
+    print(f'Processing CO: {co}')
     for group in cfg['cua']['groups']:
         sram_group = list(group.keys())[0]
         tmp = list(group.values())[0]
@@ -162,9 +168,9 @@ def process_group_data(cfg, service, org, co, status, new_status):
         print(f"  # group: {cua_group}", file=output)
         # Create groups
         line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
-        if cua_group not in new_status['groups']:
+        if cua_group not in status['groups']:
+            print(f'Adding group: {cua_group}')
             new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
-        if not isinstance(status.get(cua_group), list):
             print(f"{cfg['cua']['modify_user']} --list {cua_group} ||", file=output)
             print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n  }}\n", file=output)
 
@@ -182,12 +188,13 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     print(f"    # member: {user}", file=output)
                     if user not in status.get(cua_group, []):
                         if group_type == 'sys':
+                            print(f'  Adding user {user} to system group {cua_group}')
                             print(f"{cfg['cua']['modify_user']} -a delena {cua_group} {user}\n", file=output)
                         elif group_type == 'prj':
-                            print(' project group')
+                            print(f'  Adding user {user} to project group {cua_group}')
                             print(f"{cfg['cua']['modify_user']} -g {cua_group} {user}\n", file=output)
                         else:
-                            raise ValueError
+                            raise ValueError(f'group_type has unknown value: {group_type}')
         except ldap.NO_SUCH_OBJECT:
             print(f'Warning: service \'{service}\' does not contain group \'{sram_group}\'', file=sys.stderr)
         except:
