@@ -79,6 +79,16 @@ def process_user_data(cfg, service, co, status, new_status):
     be situation of the CUA. This to be situation will be achieved after a
     successful run of the resulting script.
     """
+
+    groups = cfg['cua']['groups']
+
+    #  Check if there is at least one group that controls which users are
+    #  allowed to login. IF there are none, it's okay to use all known users.
+    login_group = [k for k in groups if 'login_users' in k['attributes']]
+    if len(login_group) != 0:
+        print(f'Skipping ou=People for service \'{service}\'')
+        return
+
     try:
         ldap_conn = cfg.getLDAPconnector()
         output = cfg.getOutputDescriptor()
