@@ -35,11 +35,16 @@ class Config():
                         "type": "array",
                         "items": {
                             "type": "object",
-                            "properties": {
-                                "attributes": { "type": "array" },
-                                "destination": { "type": "string" },
+                            "patternProperties": {
+                                ".*": {
+                                    "type": "object",
+                                    "properties": {
+                                        "attributes": { "type": "array" },
+                                        "destination": { "type": "string" },
+                                    },
+                                    "required": ["attributes", "destination"],
+                                },
                             },
-                            "required": ["attributes", "destination"],
                         },
                     },
                     "grace": {

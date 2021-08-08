@@ -83,8 +83,8 @@ def process_user_data(cfg, service, co, status, new_status):
     groups = cfg['cua']['groups']
 
     #  Check if there is at least one group that controls which users are
-    #  allowed to login. IF there are none, it's okay to use all known users.
-    login_group = [k for k in groups if 'login_users' in k['attributes']]
+    #  allowed to login. If there are none, it's okay to use all known users.
+    login_group = [ k for g in groups for k,v in g.items() if 'login_users' in v['attributes'] ]
     if len(login_group) != 0:
         print(f'Skipping ou=People for service \'{service}\'')
         return
@@ -347,5 +347,3 @@ def cli(configuration, output):
             print(e.args[0]['desc'])
     except ldap.INVALID_CREDENTIALS:
         print('Invalid credentials. Please check your configuration file.')
-    except Exception as e:
-        print(e)
