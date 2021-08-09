@@ -81,32 +81,46 @@ def process_user_data(cfg, service, co, status, new_status):
     """
 
     groups = cfg['cua']['groups']
+    ldap_conn = cfg.getLDAPconnector()
+    output = cfg.getOutputDescriptor()
 
     #  Check if there is at least one group that controls which users are
     #  allowed to login. If there are none, it's okay to use all known users.
     login_group = [ k for g in groups for k,v in g.items() if 'login_users' in v['attributes'] ]
-    if len(login_group) != 0:
-        print(f'  Skipping ou=People for CO \'{co}\'. Using group {login_group} instead.')
-        return new_status
+    login_users = []
+    l = len(login_group)
+    if l >= 1:
+        print(f'  Using group(s) {login_group} for allowing users to login.')
+        for group in login_group:
+            try:
+                dns = ldap_conn.search_s(f"ou=Groups,o={service},dc=ordered,{cfg.getSRAMbasedn()}", ldap.SCOPE_ONELEVEL, f'(cn={group})')
+                for _, entry in dns:
+                    for member in entry['member']:
+                        uid = dn2rdns(member)['uid'][0]
+                        login_users.append(uid)
+            except ldap.NO_SUCH_OBJECT:
+                print(f'Warning: login group \'{group}\' has been defined but could not be found for CO \'{co}\'.')
+        if len(login_users) == 0:
+            return new_status
 
     try:
-        ldap_conn = cfg.getLDAPconnector()
-        output = cfg.getOutputDescriptor()
         dns = ldap_conn.search_s(f"ou=People,o={service},dc=ordered,{cfg.getSRAMbasedn()}", ldap.SCOPE_ONELEVEL, "(objectClass=person)")
 
         for _, entry in dns:
-            givenname = entry['givenname'][0].decode('UTF-8')
-            sn = entry['sn'][0].decode('UTF-8')
             uid = entry['uid'][0].decode('UTF-8')
+            if login_users and uid not in login_users:
+                continue
+            givenname = entry['givenName'][0].decode('UTF-8')
+            sn = entry['sn'][0].decode('UTF-8')
             user = f"sram-{co}-{uid}"
             mail = entry['mail'][0].decode('UTF-8')
             line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:delena_login"
             new_status['users'][user] = {'line': line}
-            print(f"  # user {user}", file=output)
+            print(f"## Adding user: {user}", file=output)
             user_status = status['users'].get(user)
 
             if user_status == None or user_status.get('line') != line:
-                print(f'Found new user: {user}')
+                print(f'  Found new user: {user}')
                 new_status['users'][user]['line'] = line
                 print(f"{cfg['cua']['modify_user']} --list {user} ||", file=output)
                 print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n    {cfg['cua']['modify_user']} --service sram:{service} {user}\n  }}\n", file=output)
@@ -126,12 +140,13 @@ def process_user_data(cfg, service, co, status, new_status):
                 dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
 
                 for key in new_sshPublicKeys:
-                    print(f'  # SSH Public key: {key}', file=output)
-                    print(f'{cfg["cua"]["modify_user"]} --ssh-public-key "{key}" {user}', file=output)
+                    print('      Adding public SSH key')
+                    print(f'### SSH Public key: {key}', file=output)
+                    print(f'{cfg["cua"]["modify_user"]} --ssh-public-key "{key}" {user}\n', file=output)
 
                 for key in dropped_sshPublicKeys:
-                    print(f'  # Remove SSH Public key: {key}', file=output)
-                    print(f'{cfg["cua"]["modify_user"]} -r --ssh-public-key "{key}" {user}', file=output)
+                    print(f'### Remove SSH Public key: {key}', file=output)
+                    print(f'{cfg["cua"]["modify_user"]} -r --ssh-public-key "{key}" {user}\n', file=output)
 
     except ldap.NO_SUCH_OBJECT as e:
         print('The basedn does not exists.')
