@@ -86,8 +86,8 @@ def process_user_data(cfg, service, co, status, new_status):
     #  allowed to login. If there are none, it's okay to use all known users.
     login_group = [ k for g in groups for k,v in g.items() if 'login_users' in v['attributes'] ]
     if len(login_group) != 0:
-        print(f'Skipping ou=People for service \'{service}\'')
-        return
+        print(f'  Skipping ou=People for CO \'{co}\'. Using group {login_group} instead.')
+        return new_status
 
     try:
         ldap_conn = cfg.getLDAPconnector()
@@ -95,7 +95,7 @@ def process_user_data(cfg, service, co, status, new_status):
         dns = ldap_conn.search_s(f"ou=People,o={service},dc=ordered,{cfg.getSRAMbasedn()}", ldap.SCOPE_ONELEVEL, "(objectClass=person)")
 
         for _, entry in dns:
-            givenname = entry['uid'][0].decode('UTF-8')
+            givenname = entry['givenname'][0].decode('UTF-8')
             sn = entry['sn'][0].decode('UTF-8')
             uid = entry['uid'][0].decode('UTF-8')
             user = f"sram-{co}-{uid}"
@@ -158,36 +158,33 @@ def process_group_data(cfg, service, org, co, status, new_status):
     output = cfg.getOutputDescriptor()
     ldap_conn = cfg.getLDAPconnector()
 
-    print(f'Processing CO: {co}')
     for group in cfg['cua']['groups']:
         sram_group = list(group.keys())[0]
         tmp = list(group.values())[0]
-        group_def, cua_group = tmp.split(':')
-        tmp = group_def.split('+', 1)
-        group_type = tmp[0]
-        group_attributes = tmp[1:]
+        group_attributes = tmp['attributes']
+        cua_group = tmp['destination']
 
-        if group_type == 'ign':
+        if 'ignore' in group_attributes:
             continue
-        if group_type == 'sys':
-            group_attributes.append('system_group')
-        if group_type == 'prj':
-            group_attributes.append('project_group')
 
-        cua_group = f'{cua_group}'.format(**locals())  # The cua_group could contain an org reference
-        print(f"  # group: {cua_group}", file=output)
-        # Create groups
-        line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
-        if cua_group not in status['groups']:
-            print(f'Adding group: {cua_group}')
-            new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
-            print(f"{cfg['cua']['modify_user']} --list {cua_group} ||", file=output)
-            print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n  }}\n", file=output)
-
-        # Find members
         try:
             basedn = cfg.getSRAMbasedn()
             dns = ldap_conn.search_s(f"cn={sram_group},ou=Groups,o={service},dc=ordered,{basedn}", ldap.SCOPE_BASE, "(objectClass=groupOfMembers)")
+            cua_group = f'{cua_group}'.format(**locals())  # The cua_group could contain an org reference
+            line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
+
+            # Create groups
+            if cua_group not in status['groups']:
+                status['groups'][cua_group] = { 'members': [], 'attributes': group_attributes }
+                print(f'  Adding group: {cua_group}')
+                print(f"## Adding group: {cua_group}", file=output)
+                print(f"{cfg['cua']['modify_user']} --list {cua_group} ||", file=output)
+                print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n  }}\n", file=output)
+
+            if cua_group not in new_status['groups']:
+                new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
+
+            # Find members
             for dn, entry in dns:
                 # Add members
                 members = [m.decode('UTF-8') for m in entry['member']]
@@ -195,18 +192,18 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     m_uid = dn2rdns(member)['uid'][0]
                     user = f"sram-{co}-{m_uid}"
                     new_status['groups'][cua_group]['members'].append(user)
-                    print(f"    # member: {user}", file=output)
-                    if user not in status.get(cua_group, []):
-                        if group_type == 'sys':
-                            print(f'  Adding user {user} to system group {cua_group}')
+                    print(f"### Adding member: {user} to group {cua_group}", file=output)
+                    if user not in status['groups'][cua_group]['members']:
+                        if 'system_group' in group_attributes:
+                            print(f'    Adding user {user} to system group {cua_group}')
                             print(f"{cfg['cua']['modify_user']} -a delena {cua_group} {user}\n", file=output)
-                        elif group_type == 'prj':
-                            print(f'  Adding user {user} to project group {cua_group}')
+                        elif 'project_group' in group_attributes:
+                            print(f'    Adding user {user} to project group {cua_group}')
                             print(f"{cfg['cua']['modify_user']} -g {cua_group} {user}\n", file=output)
                         else:
                             raise ValueError(f'group_type has unknown value: {group_type}')
         except ldap.NO_SUCH_OBJECT:
-            print(f'Warning: service \'{service}\' does not contain group \'{sram_group}\'', file=sys.stderr)
+            print(f'  Warning: service \'{service}\' does not contain group \'{sram_group}\'')
         except:
             raise
 
@@ -239,6 +236,7 @@ def add_missing_entries_to_cua(cfg, status, new_status):
         service = entry['o'][0].decode('UTF-8')
         org, co = service.split('.')
         print(f"\n# service: {service}", file=output)
+        print(f'Processing CO: {co}')
 
         new_status = process_user_data(cfg, service, co, status, new_status)
         new_status = process_group_data(cfg, service, org, co, status, new_status)
