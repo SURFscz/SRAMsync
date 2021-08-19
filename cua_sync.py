@@ -46,24 +46,6 @@ def get_previous_status(cfg):
     return status
 
 
-def generate_header(cfg):
-    """
-    Generate the first line of the resulting script. This includes the shebang,
-    some comments and setting xtrace
-    """
-    output = cfg.getOutputDescriptor()
-
-    print('################', file=output)
-    print('#', file=output)
-    print('#  Automatically generated file by cua-sync', file=output)
-    print(f'#  Date: {datetime.now()}', file=output)
-    print('#', file=output)
-    print('################', file=output)
-    print(file=output)
-    print("set -o xtrace", file=output)
-    print(file=output)
-
-
 def process_user_data(cfg, service, co, status, new_status):
     """
     Process the CO user data as found in SRAM for the service.
@@ -238,8 +220,6 @@ def add_missing_entries_to_cua(cfg, status, new_status):
     The current state the CUA should be in is tracked in new_status, while
     status is the previous known status of the CUA.
     """
-
-    generate_header(cfg)
 
     ldap_conn = cfg.getLDAPconnector()
     basedn = cfg.getSRAMbasedn()
