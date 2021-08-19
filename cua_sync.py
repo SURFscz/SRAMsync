@@ -311,6 +311,29 @@ def remove_superfluous_entries_from_cua(cfg, status, new_status):
     return new_status
 
 
+def get_generator(cfg):
+    generator_name = cfg['cua']['generator']['generator_type']
+    generator_module = __import__(generator_name)
+    generator_class = getattr(generator_module, generator_name)
+    generator = generator_class(
+                {
+                    'servicename': cfg['cua']['servicename'],
+                    **cfg['cua']['generator']['input']
+                }
+            )
+
+    return generator
+
+
+def get_event_handler(cfg, generator):
+    event_name = cfg['cua']['generator']['event_handler']
+    event_module = __import__(event_name)
+    event_class = getattr(event_module, event_name)
+    event_handler = event_class(generator)
+
+    return event_handler
+
+
 @click.command()
 @click.help_option()
 @click.version_option()
@@ -343,16 +366,18 @@ def cli(configuration, output):
     try:
         new_status = { 'users': {}, 'groups': {} }
         cfg = Config(configuration)
-        with open(output, mode='w') as output_file:
-            cfg.setOutputDescriptor(output_file)
-            ldap_conn = init_ldap(cfg['ldap'])
-            cfg.setLDAPconnector(ldap_conn)
-            status = get_previous_status(cfg)
-            new_status = add_missing_entries_to_cua(cfg, status, new_status)
-            new_status = remove_superfluous_entries_from_cua(cfg, status, new_status)
 
-            with open(cfg['status_filename'], "w") as status_file:
-                json.dump(new_status, status_file, indent=4)
+        generator = get_generator(cfg)
+        event_handler = get_event_handler(cfg, generator)
+
+        ldap_conn = init_ldap(cfg['ldap'])
+        cfg.setLDAPconnector(ldap_conn)
+        status = get_previous_status(cfg)
+        new_status = add_missing_entries_to_cua(cfg, status, new_status)
+        new_status = remove_superfluous_entries_from_cua(cfg, status, new_status)
+
+        with open(cfg['status_filename'], "w") as status_file:
+            json.dump(new_status, status_file, indent=4)
     except IOError as e:
         print(e)
     except ldap.NO_SUCH_OBJECT as e:
@@ -360,3 +385,5 @@ def cli(configuration, output):
             print(e.args[0]['desc'])
     except ldap.INVALID_CREDENTIALS:
         print('Invalid credentials. Please check your configuration file.')
+    except ModuleNotFoundError as e:
+        print(f'{e}. Please check your config file.')

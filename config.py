@@ -29,8 +29,6 @@ class Config():
             "cua": {
                 "type": "object",
                 "properties": {
-                    "add_user": { "type": "string" },
-                    "modify_user": { "type": "string" },
                     "servicename": { "type": "string" },
                     "groups": {
                         "type": "array",
@@ -48,6 +46,15 @@ class Config():
                             },
                         },
                     },
+                    "generator": {
+                        "type": "object",
+                        "properties": {
+                            "generator_type": { "type": "string" },
+                            "event_handler": { "type": "string" },
+                            "input": { "type": "object" },
+                        },
+                        "required": ["generator_type", "event_handler", "input"],
+                    },
                     "grace": {
                         "type": "object",
                         "patternProperties": {
@@ -62,7 +69,7 @@ class Config():
                         "additionalProperties": False
                     }
                 },
-                "required": ["add_user", "modify_user", "servicename", "groups"]
+                "required": ["servicename", "groups", "generator"]
             },
             "status_filename": { "type": "string" }
         }
