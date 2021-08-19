@@ -31,6 +31,7 @@ class Config():
                 "properties": {
                     "add_user": { "type": "string" },
                     "modify_user": { "type": "string" },
+                    "servicename": { "type": "string" },
                     "groups": {
                         "type": "array",
                         "items": {
@@ -61,7 +62,7 @@ class Config():
                         "additionalProperties": False
                     }
                 },
-                "required": ["add_user", "modify_user", "groups"]
+                "required": ["add_user", "modify_user", "servicename", "groups"]
             },
             "status_filename": { "type": "string" }
         }

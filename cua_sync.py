@@ -114,7 +114,7 @@ def process_user_data(cfg, service, co, status, new_status):
             sn = entry['sn'][0].decode('UTF-8')
             user = f"sram-{co}-{uid}"
             mail = entry['mail'][0].decode('UTF-8')
-            line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:delena_login"
+            line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{cfg['cua']['servicename']}"
             new_status['users'][user] = {'line': line}
             print(f"## Adding user: {user}", file=output)
             user_status = status['users'].get(user)
