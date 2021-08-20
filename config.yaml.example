@@ -1,16 +1,26 @@
 ldap:
     uri: ldaps://ldap.scz-vm.net
-    basedn: dc=https://mail,dc=services,dc=vnet
-    binddn: cn=admin,dc=services,dc=vnet
+    basedn: dc=myservice,dc=services,dc=vnet
+    binddn: cn=admin,dc=myserive,dc=services,dc=vnet
     passwd: changethispassword
 cua:
-    add: sara_adduser
-    modify: sara_modify_users
+    servicename: <serive-name>
     groups:
-        - ai_login: "sys+grace:{org}-{co}-ai-login
-        - ai_dev: "sys:{org}-{co}-ai-dev"
-        - ai_res: "prj:ai_res"
-        - foo: "ign:foo"
+        - ai_login:
+            {
+                attributes: ["system_group", "grace_period", "login_users"],
+                destination: "{org}-{co}-ai-login"
+            }
+        - ai_dev: { attributes: ["system_group"], destination: "{org}-{co}-ai-dev" }
+        - ai_res: { attributes: ["project_group"], destination: "prj:ai_res" }
+        - foo: { attributes: ["ignore"], destination: "ign:foo" }
+    generator:
+        generator_type: <Generator>
+        event_handler: <EventHandler>
+        input:
+          filename: ./sync-script.sh
+          add_user_cmd: sudo sara_adduser --no-usermail
+          modify_user_cmd: sudo sara_modify_users --no-usermail
     grace:
         my-org-my-co-ai-login:
             period: 90
