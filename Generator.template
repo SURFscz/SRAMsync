@@ -1,21 +1,20 @@
 from EventHandler import EventHandler
 
 
-class CommandGenerator(EventHandler):
+class TemplateGenerator(EventHandler):
 
     def __init__(self, cfg):
         pass
-
 
     def print(self, string):
         pass
 
 
-    def start_of_service_processing(self, co):
+    def add_new_user(self, givenname, sn, user, mail):
         pass
 
 
-    def add_new_user(self, givenname, sn, user, mail):
+    def start_of_service_processing(self, co):
         pass
 
 

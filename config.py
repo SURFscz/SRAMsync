@@ -103,16 +103,12 @@ class Config():
             raise ConfigurationError('ldap_connection is uninitialized.')
 
 
-    def getOutputDescriptor(self):
-        return self._output_fd
-
-
     def setLDAPconnector(self, ldap_connector):
         self._ldap_connector = ldap_connector
 
 
-    def setOutputDescriptor(self, output_fd):
-        self._output_fd = output_fd
+    def setEventHandler(self, event_handler):
+        self.event_handler = event_handler
 
 
     def find_line_containing_element(self, *elements):

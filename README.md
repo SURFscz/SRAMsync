@@ -14,7 +14,7 @@ SRAM LDAP.
 In order to synchronize the CUA, execute the following commands:
 
 ```bash
-./cua_sync.py <configuration> > sync.sh
+./cua_sync.py <configuration>
 chmod +x sync.sh
 ./sync.sh
 ```
@@ -35,18 +35,28 @@ ldap:
   binddn: cn=admin,dc=<service>,dc=services,dc=sram,dc=surf,dc=nl
   passwd: VerySecretPassword!
 cua:
-  add: sudo sara_adduser --no-usermail
-  modify: sudo sara_modify_users --no-usermail
+  servicename: <myservice>
   groups:
-   - <project>_login: "sys+grace:sram-<project>-login"
-   - <project>_cpu: "sys:sram-<project>-cpu"
-   - delena_gpu_v100: "sys:sram-<project>-gpu_v100"
-   - dcache: "ign:dcache"
-   - intelc: "ign:intelc"
-   - user: "prj:sram-<project>-{org}-{co}-user"
-   - data: "prj:sram-<project>-{org}-{co}-data"
-   - sw: "prj:sram-<project>-{org}-{co}-sw"
-  grace:
+    - <project>_login:
+        {
+            attributes: ["system_group", "grace_period", "login_users"],
+            destination: "<project>_login"
+        }
+    - <project>_cpu: { attributes: ["system_group"], destination: "<project>_cpu" }
+    - <project>_gpu_v100: { attributes: ["system_group"], destination: "<project>_gpu_v100" }
+    - user: { attributes: ["project_group"], destination: "sram-project-{co}-user" }
+    - data: { attributes: ["project_group"], destination: "sram-project-{co}-data" }
+    - sw: { attributes: ["project_group"], destination: "sram-project-{co}-sw" }
+    - dcache: { attributes: ["ignore"], destination: "dcache" }
+    - intelc: { attributes: ["ignore"], destination: "intelc" }
+  generator:
+    generator_type: <MyGenerator>
+    event_handler: <MyEventHandler>
+    input:
+      filename: script.sh
+      add_user_cmd: sudo sara_adduser --no-usermail
+      modify_user_cmd: sudo sara_modify_users --no-usermail
+grace:
     sram-<project>-login:
        grace_period: 90
 status_filename: "/home/<user>/status.json"

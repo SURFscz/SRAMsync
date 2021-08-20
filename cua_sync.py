@@ -64,7 +64,7 @@ def process_user_data(cfg, service, co, status, new_status):
 
     groups = cfg['cua']['groups']
     ldap_conn = cfg.getLDAPconnector()
-    output = cfg.getOutputDescriptor()
+    event_handler = cfg.event_handler
 
     #  Check if there is at least one group that controls which users are
     #  allowed to login. If there are none, it's okay to use all known users.
@@ -98,14 +98,12 @@ def process_user_data(cfg, service, co, status, new_status):
             mail = entry['mail'][0].decode('UTF-8')
             line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{cfg['cua']['servicename']}"
             new_status['users'][user] = {'line': line}
-            print(f"## Adding user: {user}", file=output)
             user_status = status['users'].get(user)
 
             if user_status == None or user_status.get('line') != line:
                 print(f'  Found new user: {user}')
                 new_status['users'][user]['line'] = line
-                print(f"{cfg['cua']['modify_user']} --list {user} ||", file=output)
-                print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n    {cfg['cua']['modify_user']} --service sram:{service} {user}\n  }}\n", file=output)
+                event_handler.add_new_user(givenname, sn, user, mail)
 
             if 'sshPublicKey' in entry:
                 raw_sshPublicKeys = entry['sshPublicKey']
@@ -123,12 +121,11 @@ def process_user_data(cfg, service, co, status, new_status):
 
                 for key in new_sshPublicKeys:
                     print('      Adding public SSH key')
-                    print(f'### SSH Public key: {key}', file=output)
-                    print(f'{cfg["cua"]["modify_user"]} --ssh-public-key "{key}" {user}\n', file=output)
+                    event_handler.add_public_ssh_key(user, key)
 
                 for key in dropped_sshPublicKeys:
-                    print(f'### Remove SSH Public key: {key}', file=output)
-                    print(f'{cfg["cua"]["modify_user"]} -r --ssh-public-key "{key}" {user}\n', file=output)
+                    print('      Removing public SSH key')
+                    event_handler.delete_public_ssh_key(user, key)
 
     except ldap.NO_SUCH_OBJECT as e:
         print('The basedn does not exists.')
@@ -152,7 +149,8 @@ def process_group_data(cfg, service, org, co, status, new_status):
     be situation of the CUA. This to be situation will be achieved after a
     successful run of the resulting script.
     """
-    output = cfg.getOutputDescriptor()
+
+    event_handler = cfg.event_handler
     ldap_conn = cfg.getLDAPconnector()
 
     for group in cfg['cua']['groups']:
@@ -168,15 +166,12 @@ def process_group_data(cfg, service, org, co, status, new_status):
             basedn = cfg.getSRAMbasedn()
             dns = ldap_conn.search_s(f"cn={sram_group},ou=Groups,o={service},dc=ordered,{basedn}", ldap.SCOPE_BASE, "(objectClass=groupOfMembers)")
             cua_group = f'{cua_group}'.format(**locals())  # The cua_group could contain an org reference
-            line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
             # Create groups
             if cua_group not in status['groups']:
                 status['groups'][cua_group] = { 'members': [], 'attributes': group_attributes }
                 print(f'  Adding group: {cua_group}')
-                print(f"## Adding group: {cua_group}", file=output)
-                print(f"{cfg['cua']['modify_user']} --list {cua_group} ||", file=output)
-                print(f"  {{\n    echo \"{line}\" | {cfg['cua']['add_user']} -f-\n  }}\n", file=output)
+                event_handler.add_new_group(cua_group)
 
             if cua_group not in new_status['groups']:
                 new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
@@ -189,14 +184,14 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     m_uid = dn2rdns(member)['uid'][0]
                     user = f"sram-{co}-{m_uid}"
                     new_status['groups'][cua_group]['members'].append(user)
-                    print(f"### Adding member: {user} to group {cua_group}", file=output)
+                    # print(f"### Adding member: {user} to group {cua_group}", file=output)
                     if user not in status['groups'][cua_group]['members']:
                         if 'system_group' in group_attributes:
-                            print(f'    Adding user {user} to system group {cua_group}')
-                            print(f"{cfg['cua']['modify_user']} -a delena {cua_group} {user}\n", file=output)
+                            print(f'    Adding user {user} to system group {group}')
+                            event_handler.add_user_to_system_group(user, cua_group)
                         elif 'project_group' in group_attributes:
-                            print(f'    Adding user {user} to project group {cua_group}')
-                            print(f"{cfg['cua']['modify_user']} -g {cua_group} {user}\n", file=output)
+                            print(f'    Adding user {user} to project group {group}')
+                            event_handler.add_user_to_project_group(user, cua_group)
                         else:
                             raise ValueError(f'group_type has unknown value: {group_type}')
         except ldap.NO_SUCH_OBJECT:
@@ -221,16 +216,15 @@ def add_missing_entries_to_cua(cfg, status, new_status):
     status is the previous known status of the CUA.
     """
 
+    event_handler = cfg.event_handler
     ldap_conn = cfg.getLDAPconnector()
     basedn = cfg.getSRAMbasedn()
     dns = ldap_conn.search_s(f"dc=ordered,{basedn}", ldap.SCOPE_ONELEVEL, "(&(o=*)(ObjectClass=organization))")
 
     for _, entry in dns:
-        output = cfg.getOutputDescriptor()
-
         service = entry['o'][0].decode('UTF-8')
         org, co = service.split('.')
-        print(f"\n# service: {service}", file=output)
+        event_handler.start_of_service_processing(co)
         print(f'Processing CO: {co}')
 
         new_status = process_user_data(cfg, service, co, status, new_status)
@@ -245,7 +239,7 @@ def remove_superfluous_entries_from_cua(cfg, status, new_status):
     new_status.
     """
 
-    output = cfg.getOutputDescriptor()
+    event_handler = cfg.event_handler
     new_groups = new_status['groups']
     groups = status['groups']
 
@@ -265,11 +259,10 @@ def remove_superfluous_entries_from_cua(cfg, status, new_status):
                 new_groups[group]['graced'] = {user: datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')}
                 continue
 
-            print(f'# Remove {user} from {group}', file=output)
             if 'project_group' in new_groups[group]['attributes']:
-                print(f'{cfg["cua"]["modify_user"]} -r -g {group} {user}', file=output)
+                event_handler.remove_user_from_project_group(group, user)
             if 'system_group' in new_groups[group]['attributes']:
-                print(f'{cfg["cua"]["modify_user"]} -r -a delena {group} {user}', file=output)
+                event_handler.remove_user_from_system_group(group, user)
 
     removes = {k: new_groups[k] for k in new_groups if 'graced' in new_groups[k]}
     if removes != {} and 'grace' not in cua:
@@ -318,8 +311,7 @@ def get_event_handler(cfg, generator):
 @click.help_option()
 @click.version_option()
 @click.argument('configuration', type=click.Path(exists=True, dir_okay=False))
-@click.argument('output', type=click.Path(writable=True, allow_dash=True))
-def cli(configuration, output):
+def cli(configuration):
     """
     Synchronisation between the SRAM LDAP and the CUA
 
@@ -349,6 +341,7 @@ def cli(configuration, output):
 
         generator = get_generator(cfg)
         event_handler = get_event_handler(cfg, generator)
+        cfg.setEventHandler(event_handler)
 
         ldap_conn = init_ldap(cfg['ldap'])
         cfg.setLDAPconnector(ldap_conn)
@@ -356,8 +349,10 @@ def cli(configuration, output):
         new_status = add_missing_entries_to_cua(cfg, status, new_status)
         new_status = remove_superfluous_entries_from_cua(cfg, status, new_status)
 
+        event_handler.finialize()
+
         with open(cfg['status_filename'], "w") as status_file:
-            json.dump(new_status, status_file, indent=4)
+            json.dump(new_status, status_file, indent=2)
     except IOError as e:
         print(e)
     except ldap.NO_SUCH_OBJECT as e:
