@@ -32,24 +32,13 @@ class EventHandler(ABC):
 
 
     @abstractmethod
-    def add_user_to_system_group(self, group, user):
-        self.generator.add_user_to_system_group(group, user)
+    def add_user_to_group(self, group, user, attributes):
+        self.generator.add_user_to_group(group, user, attributes)
 
 
     @abstractmethod
-    def add_user_to_project_group(self, group, user):
-        self.generator.add_user_to_project_group(group, user)
-
-
-
-    @abstractmethod
-    def remove_user_from_system_group(self, group, user):
-        self.generator.remove_user_from_system_group(group, user)
-
-
-    @abstractmethod
-    def remove_user_from_project_group(self, group, user):
-        self.generator.remove_user_from_project_group(group, user)
+    def remove_user_from_group(self, group, user, attributes: list):
+        self.generator.remove_user_from_group(group, user)
 
 
     @abstractmethod

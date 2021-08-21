@@ -6,6 +6,7 @@ class ScriptGenerator(EventHandler):
     file_descriptor = None
 
     requiredKeywords = ('filename', 'servicename', 'add_user_cmd', 'modify_user_cmd')
+    cua_group_types = {'system_group', 'project_group'}
 
     def __init__(self, cfg):
         keywordPresent = [k in cfg.keys() for k in self.requiredKeywords]
@@ -91,22 +92,38 @@ class ScriptGenerator(EventHandler):
         self.print(f"  {{\n    echo \"{line}\" | {self.add_user_cmd} -f-\n  }}\n")
 
 
-    def add_user_to_system_group(self, group, user):
-        self.print(f"{self.modify_user_cmd} -a delena {group} {user}\n")
+    def add_user_to_group(self, group, user, attributes: list):
+        self.print(f'# Add {user} to group {group}')
+        self.update_user_in_group(group, user, attributes, add=True)
 
 
-    def add_user_to_project_group(self, group, user):
-        self.print(f"{self.modify_user_cmd} -g delena {group} {user}\n")
+    def remove_user_from_group(self, group, user, attributes):
+        self.print(f'# Remove {user} from group {group}')
+        self.update_user_in_group(group, user, attributes, add=False)
 
 
-    def remove_user_from_system_group(self, group, user):
-        self.print(f'# Remove {user} from system group {group}')
-        self.print(f'{self.modify_user_cmd} -r -g {group} {user}')
+    def update_user_in_group(self, group, user, attributes, add):
+        attr = set(attributes)
+        l1 = len(attr)
+        l2 = len(attr-self.cua_group_types)
 
+        if add:
+            remove = ' '
+        else:
+            remove = ' -r '
 
-    def remove_user_from_project_group(self, group, user):
-        self.print(f'# Remove {user} from project group {group}')
-        self.print(f'{self.modify_user_cmd} -r -a delena {group} {user}')
+        if l1 - l2 == 1:
+            if 'system_group' in attr:
+                self.print(f"{self.modify_user_cmd}{remove}-a delena {group} {user}\n")
+
+            if 'project_group' in attr:
+                self.print(f"{self.modify_user_cmd}{remove}-g delena {group} {user}\n")
+        elif l1 - l2 == 0:
+            error = f'Expecting one the following attributes {self.cua_group_types} for {group}.'
+            raise ValueError(error)
+        else:
+            error = f'\'{", ".join(self.cua_group_types)}\' are mutually exclusive in the attributes of group: {group}.'
+            raise ValueError(error)
 
 
     def finialize(self):

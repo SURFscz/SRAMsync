@@ -120,11 +120,11 @@ def process_user_data(cfg, service, co, status, new_status):
                 dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
 
                 for key in new_sshPublicKeys:
-                    print('      Adding public SSH key')
+                    print('    Adding public SSH key')
                     event_handler.add_public_ssh_key(user, key)
 
                 for key in dropped_sshPublicKeys:
-                    print('      Removing public SSH key')
+                    print('    Removing public SSH key')
                     event_handler.delete_public_ssh_key(user, key)
 
     except ldap.NO_SUCH_OBJECT as e:
@@ -186,14 +186,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     new_status['groups'][cua_group]['members'].append(user)
                     # print(f"### Adding member: {user} to group {cua_group}", file=output)
                     if user not in status['groups'][cua_group]['members']:
-                        if 'system_group' in group_attributes:
-                            print(f'    Adding user {user} to system group {group}')
-                            event_handler.add_user_to_system_group(user, cua_group)
-                        elif 'project_group' in group_attributes:
-                            print(f'    Adding user {user} to project group {group}')
-                            event_handler.add_user_to_project_group(user, cua_group)
-                        else:
-                            raise ValueError(f'group_type has unknown value: {group_type}')
+                        event_handler.add_user_to_group(cua_group, user, group_attributes)
         except ldap.NO_SUCH_OBJECT:
             print(f'  Warning: service \'{service}\' does not contain group \'{sram_group}\'')
         except:
