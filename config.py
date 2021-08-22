@@ -16,7 +16,7 @@ class Config():
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {
-            "ldap": {
+            "sram": {
                 "type": "object",
                 "properties": {
                     "uri": { "type": "string" },
@@ -26,7 +26,7 @@ class Config():
                 },
                 "required": ["uri", "basedn", "binddn", "passwd"]
             },
-            "cua": {
+            "sync": {
                 "type": "object",
                 "properties": {
                     "servicename": { "type": "string" },
@@ -58,11 +58,12 @@ class Config():
                     "grace": {
                         "type": "object",
                         "patternProperties": {
-                            "delena_login": {
+                            ".*": {
                                 "type": "object",
                                 "properties": {
                                     "grace_period": { "type": "number" }
-                                }
+                                },
+                                "required": ["grace_period"]
                             }
                         },
                         "minProperties": 1,
@@ -71,8 +72,9 @@ class Config():
                 },
                 "required": ["servicename", "groups", "generator"]
             },
-            "status_filename": { "type": "string" }
-        }
+            "status_filename": { "type": "string" },
+        },
+        "required": ["sram", "sync", "status_filename"]
     }
 
 
@@ -93,7 +95,7 @@ class Config():
 
 
     def getSRAMbasedn(self):
-        return self.config['ldap']['basedn']
+        return self.config['sram']['basedn']
 
 
     def getLDAPconnector(self):

@@ -62,7 +62,7 @@ def process_user_data(cfg, service, co, status, new_status):
     successful run of the resulting script.
     """
 
-    groups = cfg['cua']['groups']
+    groups = cfg['sync']['groups']
     ldap_conn = cfg.getLDAPconnector()
     event_handler = cfg.event_handler
 
@@ -96,7 +96,7 @@ def process_user_data(cfg, service, co, status, new_status):
             sn = entry['sn'][0].decode('UTF-8')
             user = f"sram-{co}-{uid}"
             mail = entry['mail'][0].decode('UTF-8')
-            line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{cfg['cua']['servicename']}"
+            line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{cfg['sync']['servicename']}"
             new_status['users'][user] = {'line': line}
             user_status = status['users'].get(user)
 
@@ -153,7 +153,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
     event_handler = cfg.event_handler
     ldap_conn = cfg.getLDAPconnector()
 
-    for group in cfg['cua']['groups']:
+    for group in cfg['sync']['groups']:
         sram_group = list(group.keys())[0]
         tmp = list(group.values())[0]
         group_attributes = tmp['attributes']
@@ -177,7 +177,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
                 new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
 
             # Find members
-            for dn, entry in dns:
+            for _, entry in dns:
                 # Add members
                 members = [m.decode('UTF-8') for m in entry['member']]
                 for member in members:
@@ -278,13 +278,13 @@ def remove_superfluous_entries_from_cua(cfg, status, new_status):
 
 
 def get_generator(cfg):
-    generator_name = cfg['cua']['generator']['generator_type']
+    generator_name = cfg['sync']['generator']['generator_type']
     generator_module = __import__(generator_name)
     generator_class = getattr(generator_module, generator_name)
     generator = generator_class(
                 {
-                    'servicename': cfg['cua']['servicename'],
-                    **cfg['cua']['generator']['input']
+                    'servicename': cfg['sync']['servicename'],
+                    **cfg['sync']['generator']['input']
                 }
             )
 
@@ -292,7 +292,7 @@ def get_generator(cfg):
 
 
 def get_event_handler(cfg, generator):
-    event_name = cfg['cua']['generator']['event_handler']
+    event_name = cfg['sync']['generator']['event_handler']
     event_module = __import__(event_name)
     event_class = getattr(event_module, event_name)
     event_handler = event_class(generator)
@@ -336,7 +336,7 @@ def cli(configuration):
         event_handler = get_event_handler(cfg, generator)
         cfg.setEventHandler(event_handler)
 
-        ldap_conn = init_ldap(cfg['ldap'])
+        ldap_conn = init_ldap(cfg['sram'])
         cfg.setLDAPconnector(ldap_conn)
         status = get_previous_status(cfg)
         new_status = add_missing_entries_to_cua(cfg, status, new_status)
