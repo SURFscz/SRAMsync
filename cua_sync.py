@@ -72,7 +72,7 @@ def process_user_data(cfg, service, co, status, new_status):
     login_users = []
     l = len(login_group)
     if l >= 1:
-        print(f'  Using group(s) {login_group} for allowing users to login.')
+        print(f'  Using group(s) \'{", ".join(login_group)}\' for allowing users to login.')
         for group in login_group:
             try:
                 dns = ldap_conn.search_s(f"ou=Groups,o={service},dc=ordered,{cfg.getSRAMbasedn()}", ldap.SCOPE_ONELEVEL, f'(cn={group})')
