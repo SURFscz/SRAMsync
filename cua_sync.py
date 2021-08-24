@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: future_fstrings -*-
 
-import sys
-import json
-import ldap
 import copy
+from datetime import datetime, timedelta, timezone
+import json
+import sys
+
 import click
+import ldap
+
 from config import Config
-from datetime import datetime, timezone, timedelta
 
 
 def dn2rdns(dn):

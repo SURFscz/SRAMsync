@@ -1,8 +1,7 @@
 import sys
-from jsonschema.exceptions import SchemaError
 
+from jsonschema import validate
 import yaml
-from jsonschema import validate, ValidationError
 
 
 class ConfigurationError(Exception):
