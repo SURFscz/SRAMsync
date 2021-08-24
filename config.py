@@ -10,7 +10,7 @@ class ConfigurationError(Exception):
         super().__init__(self.message)
 
 
-class Config():
+class Config:
     _schema = {
         "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -18,17 +18,17 @@ class Config():
             "sram": {
                 "type": "object",
                 "properties": {
-                    "uri": { "type": "string" },
-                    "basedn": { "type": "string" },
-                    "binddn": { "type": "string" },
-                    "passwd": { "type": "string" }
+                    "uri": {"type": "string"},
+                    "basedn": {"type": "string"},
+                    "binddn": {"type": "string"},
+                    "passwd": {"type": "string"},
                 },
-                "required": ["uri", "basedn", "binddn", "passwd"]
+                "required": ["uri", "basedn", "binddn", "passwd"],
             },
             "sync": {
                 "type": "object",
                 "properties": {
-                    "servicename": { "type": "string" },
+                    "servicename": {"type": "string"},
                     "groups": {
                         "type": "array",
                         "items": {
@@ -37,8 +37,8 @@ class Config():
                                 ".*": {
                                     "type": "object",
                                     "properties": {
-                                        "attributes": { "type": "array" },
-                                        "destination": { "type": "string" },
+                                        "attributes": {"type": "array"},
+                                        "destination": {"type": "string"},
                                     },
                                     "required": ["attributes", "destination"],
                                 },
@@ -48,9 +48,9 @@ class Config():
                     "generator": {
                         "type": "object",
                         "properties": {
-                            "generator_type": { "type": "string" },
-                            "event_handler": { "type": "string" },
-                            "input": { "type": "object" },
+                            "generator_type": {"type": "string"},
+                            "event_handler": {"type": "string"},
+                            "input": {"type": "object"},
                         },
                         "required": ["generator_type", "event_handler", "input"],
                     },
@@ -59,23 +59,20 @@ class Config():
                         "patternProperties": {
                             ".*": {
                                 "type": "object",
-                                "properties": {
-                                    "grace_period": { "type": "number" }
-                                },
-                                "required": ["grace_period"]
+                                "properties": {"grace_period": {"type": "number"}},
+                                "required": ["grace_period"],
                             }
                         },
                         "minProperties": 1,
-                        "additionalProperties": False
-                    }
+                        "additionalProperties": False,
+                    },
                 },
-                "required": ["servicename", "groups", "generator"]
+                "required": ["servicename", "groups", "generator"],
             },
-            "status_filename": { "type": "string" },
+            "status_filename": {"type": "string"},
         },
-        "required": ["sram", "sync", "status_filename"]
+        "required": ["sram", "sync", "status_filename"],
     }
-
 
     def __init__(self, config_file):
         with open(config_file) as f:
@@ -88,29 +85,23 @@ class Config():
         self._ldap_connector = None
         self._output_fd = sys.stdout
 
-
     def __getitem__(self, item):
         return self.config[item]
 
-
     def getSRAMbasedn(self):
-        return self.config['sram']['basedn']
-
+        return self.config["sram"]["basedn"]
 
     def getLDAPconnector(self):
         if self._ldap_connector:
             return self._ldap_connector
         else:
-            raise ConfigurationError('ldap_connection is uninitialized.')
-
+            raise ConfigurationError("ldap_connection is uninitialized.")
 
     def setLDAPconnector(self, ldap_connector):
         self._ldap_connector = ldap_connector
 
-
     def setEventHandler(self, event_handler):
         self.event_handler = event_handler
-
 
     def find_line_containing_element(self, *elements):
         with open(self.config_filename) as config:
