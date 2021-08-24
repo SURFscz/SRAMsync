@@ -1,7 +1,7 @@
+# CUA-sync
+
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
-
-# CUA-sync
 
 The CUA-sync python script is meant to be used in conjunction with the CUA at
 SURF. It purpose is to synchronize the SRAM LDAP, or rather a sub tree thereof,
