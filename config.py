@@ -12,7 +12,7 @@ class ConfigurationError(Exception):
 
 class Config():
     _schema = {
-        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
             "sram": {
