@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: future_fstrings -*-
 
-import copy
 from datetime import datetime, timedelta, timezone
 import json
-import sys
 
 import click
 import ldap
