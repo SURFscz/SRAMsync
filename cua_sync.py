@@ -64,21 +64,21 @@ def process_user_data(cfg, service, co, status, new_status):
     successful run of the resulting script.
     """
 
-    groups = cfg["sync"]["groups"]
     ldap_conn = cfg.getLDAPconnector()
     event_handler = cfg.event_handler
 
     #  Check if there is at least one group that controls which users are
     #  allowed to login. If there are none, it's okay to use all known users.
     login_group = [
-        k for g in groups for k, v in g.items() if "login_users" in v["attributes"]
+        group
+        for groups in cfg["sync"]["groups"]
+        for group, v in groups.items()
+        if "login_users" in v["attributes"]
     ]
     login_users = []
     l = len(login_group)
     if l >= 1:
-        print(
-            f'  Using group(s) \'{", ".join(login_group)}\' for allowing users to login.'
-        )
+        print(f'  Using group(s) \'{", ".join(login_group)}\' for allowing users to login.')
         for group in login_group:
             try:
                 dns = ldap_conn.search_s(
@@ -214,13 +214,9 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     new_status["groups"][cua_group]["members"].append(user)
                     # print(f"### Adding member: {user} to group {cua_group}", file=output)
                     if user not in status["groups"][cua_group]["members"]:
-                        event_handler.add_user_to_group(
-                            cua_group, user, group_attributes
-                        )
+                        event_handler.add_user_to_group(cua_group, user, group_attributes)
         except ldap.NO_SUCH_OBJECT:
-            print(
-                f"  Warning: service '{service}' does not contain group '{sram_group}'"
-            )
+            print(f"  Warning: service '{service}' does not contain group '{sram_group}'")
         except:
             raise
 
@@ -262,65 +258,74 @@ def add_missing_entries_to_cua(cfg, status, new_status):
     return new_status
 
 
+def remove_graced_users(cfg, status, new_status) -> dict:
+    if "groups" not in new_status:
+        return new_status
+
+    event_handler = cfg.event_handler
+
+    for group, v in status["groups"].items():
+        if "graced_users" in v:
+            print(f"Checking graced users for group: {group}")
+            for user, grace_until_str in v["graced_users"].items():
+                grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
+                now = datetime.now(timezone.utc)
+                if now > grace_until:
+                    # The graced info for users is in status initially and needs to be
+                    # copied over to new_status if it needs to be preserved. Not doing
+                    # so automatically disregards this information automatically and
+                    # it is the intended behaviour
+                    print(f"Grace time ended for user {user} in {group}")
+                    event_handler.remove_graced_user(user)
+                else:
+                    if "graced_users" not in new_status["groups"][group]:
+                        new_status["groups"][group]["graced_users"] = {}
+                    new_status["groups"][group]["graced_users"][user] = grace_until_str
+
+                    remaining_time = grace_until - now
+                    print(f"{user} from {group} has {remaining_time} left of its grace time.")
+    return new_status
+
+
+def remove_user_from_group(cfg, status, new_status) -> dict:
+    event_handler = cfg.event_handler
+
+    for group, v in status["groups"].items():
+        removed_users = [
+            user for user in v["members"] if user not in new_status["groups"][group]["members"]
+        ]
+
+        for user in removed_users:
+            if "grace_period" in v["attributes"]:
+                if "grace" in cfg["sync"] and group in cfg["sync"]["grace"]:
+                    grace_until = datetime.now(timezone.utc) + timedelta(
+                        cfg["sync"]["grace"][group]["grace_period"]
+                    )
+                    remaining_time = grace_until - datetime.now(timezone.utc)
+                    print(
+                        f'User "{user}" has been removed but not deleted due to grace time. Remaining time: {remaining_time}'
+                    )
+                    new_status["groups"][group]["graced_users"] = {
+                        user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
+                    }
+                else:
+                    print(
+                        f'Grace has not been defined for group "{group}" in the configuration file.'
+                    )
+            else:
+                event_handler.remove_user_from_group(group, v["attributes"], user)
+
+    return new_status
+
+
 def remove_superfluous_entries_from_cua(cfg, status, new_status):
     """
     Remove entries in the CUA based on the difference between status and
     new_status.
     """
 
-    event_handler = cfg.event_handler
-    new_groups = new_status["groups"]
-    groups = status["groups"]
-
-    for group, values in groups.items():
-        if "graced" in values:
-            if "graced" in new_groups[group]:
-                new_groups[group]["graced"] = {
-                    **new_groups[group]["graced"],
-                    **groups[group]["graced"],
-                }
-            else:
-                new_groups[group]["graced"] = groups[group]["graced"]
-
-    removes = {
-        k: set(groups[k]["members"]) - set(new_groups[k]["members"])
-        for k in groups
-        if set(groups[k]["members"]) - set(new_groups[k]["members"])
-    }
-
-    for group, users in removes.items():
-        for user in users:
-            if "grace" in new_groups[group]["attributes"]:
-                # new_groups[group]['graced'] = {user: datetime.now(timezone.utc).isoformat()}
-                new_groups[group]["graced"] = {
-                    user: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-                }
-                continue
-
-            if "project_group" in new_groups[group]["attributes"]:
-                event_handler.remove_user_from_project_group(group, user)
-            if "system_group" in new_groups[group]["attributes"]:
-                event_handler.remove_user_from_system_group(group, user)
-
-    removes = {k: new_groups[k] for k in new_groups if "graced" in new_groups[k]}
-    if removes != {} and "grace" not in cua:
-        sys.exit(f"Missing element from config: grace")
-
-    tmp_status = copy.deepcopy(new_status)
-    try:
-        for group, values in removes.items():
-            grace_period = timedelta(days=cua["grace"][group]["grace_period"])
-            for user, grace_start in values["graced"].items():
-                grace_start = datetime.strptime(grace_start, "%Y-%m-%dT%H:%M:%S.%f%z")
-                if grace_start + grace_period < datetime.now(timezone.utc):
-                    del tmp_status["groups"][group]["graced"][user]
-                    print(
-                        f"# removing {user} from {group} after grace period ended. Grace period started on {grace_start}",
-                        file=output,
-                    )
-                    print(f"{modifyuser} -r -a delena {group} {user}", file=output)
-    except KeyError as e:
-        sys.exit(f"Missing element from config: {e}")
+    new_status = remove_graced_users(cfg, status, new_status)
+    new_status = remove_user_from_group(cfg, status, new_status)
 
     return new_status
 

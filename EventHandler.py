@@ -26,12 +26,20 @@ class EventHandler(ABC):
         self.generator.add_new_group(group)
 
     @abstractmethod
+    def remove_group(self, group, attributes):
+        self.generator.remove_group(group, attributes)
+
+    @abstractmethod
     def add_user_to_group(self, group, user, attributes):
         self.generator.add_user_to_group(group, user, attributes)
 
     @abstractmethod
     def remove_user_from_group(self, group, user, attributes: list):
         self.generator.remove_user_from_group(group, user)
+
+    @abstractmethod
+    def remove_graced_user(self, user):
+        self.generator.remove_graced_user(user)
 
     @abstractmethod
     def finialize(self):

@@ -42,24 +42,14 @@ class ScriptGenerator(EventHandler):
         self.print("#  Automatically generated script by cua-sync")
         self.print(f"#  Date: {datetime.now()}")
         self.print("#")
-        self.print(
-            "#  By executing this script, the CUA is synchronized with the state in SRAM"
-        )
-        self.print(
-            "#  at the time this script has been generated.  The service this script was"
-        )
+        self.print("#  By executing this script, the CUA is synchronized with the state in SRAM")
+        self.print("#  at the time this script has been generated. The service this script was")
         self.print(f"#  generated for is: {service_name}")
         self.print("#")
-        self.print(
-            "#  This script looses its purpuse after running it and a new one must be"
-        )
-        self.print(
-            f"#  generated to sync future changes in the COs for {service_name}."
-        )
+        self.print("#  This script looses its purpuse after running it and a new one must be")
+        self.print(f"#  generated to sync future changes in the COs for {service_name}.")
         self.print("#")
-        self.print(
-            "#  The script might be empty, in which case there was nothing to be synced."
-        )
+        self.print("#  The script might be empty, in which case there was nothing to be synced.")
         self.print("#")
         self.print("#" * 80)
         self.print("")
@@ -96,6 +86,9 @@ class ScriptGenerator(EventHandler):
         self.print(f"{self.modify_user_cmd} --list {group} ||")
         self.print(f'  {{\n    echo "{line}" | {self.add_user_cmd} -f-\n  }}\n')
 
+    def remove_group(self, group, attributes):
+        self.print("#!!! Remove group")
+
     def add_user_to_group(self, group, user, attributes: list):
         self.print(f"# Add {user} to group {group}")
         self.update_user_in_group(group, user, attributes, add=True)
@@ -103,6 +96,9 @@ class ScriptGenerator(EventHandler):
     def remove_user_from_group(self, group, user, attributes):
         self.print(f"# Remove {user} from group {group}")
         self.update_user_in_group(group, user, attributes, add=False)
+
+    def remove_graced_user(self, user):
+        self.print(f"# Removing graced user {user}")
 
     def update_user_in_group(self, group, user, attributes, add):
         attr = set(attributes)
