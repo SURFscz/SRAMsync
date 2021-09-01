@@ -183,9 +183,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
                 ldap.SCOPE_BASE,
                 "(objectClass=groupOfMembers)",
             )
-            cua_group = f"{cua_group}".format(
-                **locals()
-            )  # The cua_group could contain an org reference
+            cua_group = f"{cua_group}".format(**locals())  # The cua_group could contain an org reference
 
             # Create groups
             if cua_group not in status["groups"]:
@@ -289,9 +287,7 @@ def remove_user_from_group(cfg, status, new_status) -> dict:
     event_handler = cfg.event_handler
 
     for group, v in status["groups"].items():
-        removed_users = [
-            user for user in v["members"] if user not in new_status["groups"][group]["members"]
-        ]
+        removed_users = [user for user in v["members"] if user not in new_status["groups"][group]["members"]]
 
         for user in removed_users:
             if "grace_period" in v["attributes"]:
@@ -307,9 +303,7 @@ def remove_user_from_group(cfg, status, new_status) -> dict:
                         user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
                     }
                 else:
-                    print(
-                        f'Grace has not been defined for group "{group}" in the configuration file.'
-                    )
+                    print(f'Grace has not been defined for group "{group}" in the configuration file.')
             else:
                 event_handler.remove_user_from_group(group, v["attributes"], user)
 
