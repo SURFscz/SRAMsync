@@ -283,7 +283,7 @@ def remove_graced_users(cfg, status, new_status) -> dict:
     return new_status
 
 
-def remove_user_from_group(cfg, status, new_status) -> dict:
+def remove_deleted_users_from_groups(cfg, status, new_status) -> dict:
     event_handler = cfg.event_handler
 
     for group, v in status["groups"].items():
@@ -310,14 +310,33 @@ def remove_user_from_group(cfg, status, new_status) -> dict:
     return new_status
 
 
+def remove_deleted_groups(cfg, status, new_status):
+    event_handler = cfg.event_handler
+
+    removed_groups = [group for group in status["groups"] if group not in new_status["groups"]]
+
+    for group in removed_groups:
+        t = {"groups": status["groups"][group]}
+        t2 = {"groups": new_status["groups"][group]}
+        t2["groups"][group]["members"] = {}
+
+        new_status = remove_deleted_users_from_groups(cfg, t, t2)
+
+        print(f"Removing group: '{group}'")
+        event_handler.remove_group(group, status["groups"][group]["attributes"])
+
+    return new_status
+
+
 def remove_superfluous_entries_from_cua(cfg, status, new_status):
     """
     Remove entries in the CUA based on the difference between status and
     new_status.
     """
 
+    new_status = remove_deleted_groups(cfg, status, new_status)
     new_status = remove_graced_users(cfg, status, new_status)
-    new_status = remove_user_from_group(cfg, status, new_status)
+    new_status = remove_deleted_users_from_groups(cfg, status, new_status)
 
     return new_status
 
