@@ -3,7 +3,7 @@ from datetime import datetime
 from EventHandler import EventHandler
 
 
-class ScriptGenerator(EventHandler):
+class CuaScriptGenerator(EventHandler):
     file_descriptor = None
 
     requiredKeywords = ("filename", "servicename", "add_user_cmd", "modify_user_cmd")
