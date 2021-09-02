@@ -97,8 +97,9 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"# Remove {user} from group {group}")
         self.update_user_in_group(group, user, attributes, add=False)
 
-    def remove_graced_user(self, user):
-        self.print(f"# Removing graced user {user}")
+    def remove_graced_user_from_group(self, group, user, attributes):
+        self.print(f"Grace time has ended for user {user} from group {group}")
+        self.remove_user_from_group(group, user, attributes)
 
     def update_user_in_group(self, group, user, attributes, add):
         attr = set(attributes)
