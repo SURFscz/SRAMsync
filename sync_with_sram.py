@@ -67,12 +67,7 @@ def process_user_data(cfg, service, co, status, new_status):
 
     #  Check if there is at least one group that controls which users are
     #  allowed to login. If there are none, it's okay to use all known users.
-    login_group = [
-        group
-        for groups in cfg["sync"]["groups"]
-        for group, v in groups.items()
-        if "login_users" in v["attributes"]
-    ]
+    login_group = [group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]]
     login_users = []
     l = len(login_group)
     if l >= 1:
@@ -167,11 +162,9 @@ def process_group_data(cfg, service, org, co, status, new_status):
     event_handler = cfg.event_handler
     ldap_conn = cfg.getLDAPconnector()
 
-    for group in cfg["sync"]["groups"]:
-        sram_group = list(group.keys())[0]
-        tmp = list(group.values())[0]
-        group_attributes = tmp["attributes"]
-        cua_group = tmp["destination"]
+    for sram_group, v in cfg["sync"]["groups"].items():
+        group_attributes = v["attributes"]
+        cua_group = v["destination"]
 
         if "ignore" in group_attributes:
             continue

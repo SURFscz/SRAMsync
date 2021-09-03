@@ -30,18 +30,15 @@ class Config:
                 "properties": {
                     "servicename": {"type": "string"},
                     "groups": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "patternProperties": {
-                                ".*": {
-                                    "type": "object",
-                                    "properties": {
-                                        "attributes": {"type": "array"},
-                                        "destination": {"type": "string"},
-                                    },
-                                    "required": ["attributes", "destination"],
+                        "type": "object",
+                        "patternProperties": {
+                            ".*": {
+                                "type": "object",
+                                "properties": {
+                                    "attributes": {"type": "array"},
+                                    "destination": {"type": "string"},
                                 },
+                                "required": ["attributes", "destination"],
                             },
                         },
                     },
