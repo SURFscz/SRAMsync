@@ -1,7 +1,11 @@
+from tempfile import NamedTemporaryFile
 from EventHandler import EventHandler
 
 
 class DelenaEventHandler(EventHandler):
+    def __init__(self, generator):
+        self.generator = generator
+
     def add_new_user(self, givenname, sn, user, mail):
         return super().add_new_user(givenname, sn, user, mail)
 
@@ -26,8 +30,20 @@ class DelenaEventHandler(EventHandler):
     def remove_user_from_group(self, group, user, attributes: list):
         return super().remove_user_from_group(group, user, attributes)
 
-    def remove_graced_user(self, user):
-        return super().remove_graced_user(user)
+    def remove_graced_user_from_group(self, group, user, attributes):
+        if hasattr(self.generator, "file_descriptor"):
+            cfg = self.generator.cfg
+            subject = f"{cfg['mail-subject']}".format(**locals())
+            message = f"{cfg['mail-message']}".format(**locals())
+            with NamedTemporaryFile(delete=False) as f:
+                f.write(message.encode(encoding="ascii"))
+                self.generator.print(f"# Notifing by e-mail that {user} should be deletedi from {group}.")
+                self.generator.print(f"mail -s '{subject}' {cfg['mail-recipiant']} -f '{f.name}'")
+                self.generator.print(f"rm {f.name}\n")
+        else:
+            print("Error: cannot send mail.")
+
+        return super().remove_graced_user_from_group(group, user, attributes)
 
     def finialize(self):
         return super().finialize()

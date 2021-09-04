@@ -10,6 +10,7 @@ class CuaScriptGenerator(EventHandler):
     cua_group_types = {"system_group", "project_group"}
 
     def __init__(self, cfg):
+        self.cfg = cfg
         keywordPresent = [k in cfg.keys() for k in self.requiredKeywords]
         if all(keywordPresent):
             self.file_descriptor = open(cfg["filename"], "w+")
@@ -98,7 +99,7 @@ class CuaScriptGenerator(EventHandler):
         self.update_user_in_group(group, user, attributes, add=False)
 
     def remove_graced_user_from_group(self, group, user, attributes):
-        self.print(f"Grace time has ended for user {user} from group {group}")
+        self.print(f"# Grace time has ended for user {user} from group {group}")
         self.remove_user_from_group(group, user, attributes)
 
     def update_user_in_group(self, group, user, attributes, add):

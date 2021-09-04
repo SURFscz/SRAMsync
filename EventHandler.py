@@ -38,8 +38,8 @@ class EventHandler(ABC):
         self.generator.remove_user_from_group(group, user)
 
     @abstractmethod
-    def remove_graced_user_from_group(self, user):
-        self.generator.remove_graced_user(user)
+    def remove_graced_user_from_group(self, group, user, attributes):
+        self.generator.remove_graced_user_from_group(group, user, attributes)
 
     @abstractmethod
     def finialize(self):
