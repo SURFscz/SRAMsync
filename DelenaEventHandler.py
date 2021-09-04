@@ -43,7 +43,7 @@ class DelenaEventHandler(EventHandler):
         else:
             print("Error: cannot send mail.")
 
-        return super().remove_graced_user_from_group(group, user, attributes)
+        # return super().remove_graced_user_from_group(group, user, attributes)
 
     def finialize(self):
         return super().finialize()
