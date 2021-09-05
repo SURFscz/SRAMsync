@@ -170,7 +170,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
 
     for sram_group, v in cfg["sync"]["groups"].items():
         group_attributes = v["attributes"]
-        cua_group = v["destination"]
+        dest_group_name = v["destination"]
 
         if "ignore" in group_attributes:
             continue
@@ -182,19 +182,20 @@ def process_group_data(cfg, service, org, co, status, new_status):
                 ldap.SCOPE_BASE,
                 "(objectClass=groupOfMembers)",
             )
-            cua_group = f"{cua_group}".format(**locals())  # The cua_group could contain an org reference
+            # The dest_group_name could contain an org reference
+            dest_group_name = f"{dest_group_name}".format(**locals())
 
             # Create groups
-            if cua_group not in status["groups"]:
-                status["groups"][cua_group] = {
+            if dest_group_name not in status["groups"]:
+                status["groups"][dest_group_name] = {
                     "members": [],
                     "attributes": group_attributes,
                 }
-                print(f"  Adding group: {cua_group}")
-                event_handler.add_new_group(cua_group)
+                print(f"  Adding group: {dest_group_name}")
+                event_handler.add_new_group(dest_group_name)
 
-            if cua_group not in new_status["groups"]:
-                new_status["groups"][cua_group] = {
+            if dest_group_name not in new_status["groups"]:
+                new_status["groups"][dest_group_name] = {
                     "members": [],
                     "attributes": group_attributes,
                 }
@@ -206,10 +207,9 @@ def process_group_data(cfg, service, org, co, status, new_status):
                 for member in members:
                     m_uid = dn2rdns(member)["uid"][0]
                     user = f"sram-{co}-{m_uid}"
-                    new_status["groups"][cua_group]["members"].append(user)
-                    # print(f"### Adding member: {user} to group {cua_group}", file=output)
-                    if user not in status["groups"][cua_group]["members"]:
-                        event_handler.add_user_to_group(cua_group, user, group_attributes)
+                    new_status["groups"][dest_group_name]["members"].append(user)
+                    if user not in status["groups"][dest_group_name]["members"]:
+                        event_handler.add_user_to_group(dest_group_name, user, group_attributes)
         except ldap.NO_SUCH_OBJECT:
             print(f"  Warning: service '{service}' does not contain group '{sram_group}'")
         except:
@@ -218,7 +218,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
     return new_status
 
 
-def add_missing_entries_to_cua(cfg, status, new_status):
+def add_missing_entries_to_ldap(cfg, status, new_status):
     """
     Determine which entries in the SRAM LDAP have not been processed before.
 
@@ -328,7 +328,7 @@ def remove_deleted_groups(cfg, status, new_status):
     return new_status
 
 
-def remove_superfluous_entries_from_cua(cfg, status, new_status):
+def remove_superfluous_entries_from_ldap(cfg, status, new_status):
     """
     Remove entries in the CUA based on the difference between status and
     new_status.
@@ -422,8 +422,8 @@ def cli(configuration):
         ldap_conn = init_ldap(cfg["sram"])
         cfg.setLDAPconnector(ldap_conn)
         status = get_previous_status(cfg)
-        new_status = add_missing_entries_to_cua(cfg, status, new_status)
-        new_status = remove_superfluous_entries_from_cua(cfg, status, new_status)
+        new_status = add_missing_entries_to_ldap(cfg, status, new_status)
+        new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
 
         event_handler.finialize()
 
