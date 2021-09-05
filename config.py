@@ -80,7 +80,6 @@ class Config:
         self.config_filename = config_file
         self.config = config
         self._ldap_connector = None
-        self._output_fd = sys.stdout
 
     def __getitem__(self, item):
         return self.config[item]
