@@ -64,8 +64,8 @@ def process_user_data(cfg, service, co, status, new_status):
     been processed in a previous run.
 
     While looping over all users, a new_status is maintained to reflect the to
-    be situation of the CUA. This to be situation will be achieved after a
-    successful run of the resulting script.
+    be situation of the destination LDAP. This to be situation will be achieved
+    after a successful run of the resulting script.
     """
 
     ldap_conn = cfg.getLDAPconnector()
@@ -158,8 +158,8 @@ def process_group_data(cfg, service, org, co, status, new_status):
     been added to the group in a previous run.
 
     While looping over all users, a new_status is maintained to reflect the to
-    be situation of the CUA. This to be situation will be achieved after a
-    successful run of the resulting script.
+    be situation of the destination LDAP. This to be situation will be achieved
+    after a successful run of the resulting script.
     """
 
     event_handler = cfg.event_handler
@@ -221,13 +221,13 @@ def add_missing_entries_to_ldap(cfg, status, new_status):
 
     This is the main loop. It loops over all services that are in the SRAM LDAP
     for the service provider. For each service it is determined if it needs to
-    be added to the CUA. The work in determining what is defined in the SRAM
-    LDAP is split into two: i) processing user data and ii) processing group
-    data.
+    be added to the destination LDAP. The work in determining what is defined
+    in the SRAM LDAP is split into two: i) processing user data and ii)
+    processing group data.
 
-    The current state the CUA should be in is tracked in new_status, while
-    status is the previous known status of the CUA.
-    """
+    The current state the destination LDAP should be in is tracked in
+    new_status, while status is the previous known status of the destination
+    LDAP."""
 
     event_handler = cfg.event_handler
     ldap_conn = cfg.getLDAPconnector()
@@ -327,8 +327,8 @@ def remove_deleted_groups(cfg, status, new_status):
 
 def remove_superfluous_entries_from_ldap(cfg, status, new_status):
     """
-    Remove entries in the CUA based on the difference between status and
-    new_status.
+    Remove entries in the destination LDAP based on the difference between
+    status and new_status.
     """
 
     new_status = remove_deleted_groups(cfg, status, new_status)
@@ -386,23 +386,24 @@ def keep_new_status(cfg, new_status):
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=False))
 def cli(configuration):
     """
-    Synchronisation between the SRAM LDAP and the CUA
+    Synchronisation between the SRAM LDAP and the destination LDAP
 
-    cua-sync takes an configuration file which describes a source LDAP with
-    which the CUA must be synchronized. This configuration file also describes
-    which groups need to be considered for synchronisation.
+    sync_with_sram takes an configuration file which describes a source LDAP
+    with which the destination LDAP must be synchronized. This configuration
+    file also describes which groups need to be considered for synchronisation.
 
     During a synchronisation run, a status is kept. It reflects the current
-    state of what has been done in order to synchronize the CUA. However, the
-    actual actions to make changes to the CUA are diverted to a generated
-    script file. Once cua-sync has finished running, this resulting script file
-    must be executed in order to finish the syncing process.
+    state of what has been done in order to synchronize the destination LDAP.
+    However, the actual actions to make changes to the destination LDAP are
+    diverted to a generated script file. Once sync_with_sram has finished
+    running, this resulting script file must be executed in order to finish the
+    syncing process.
 
     The generated status file is written to disk to keep this history. Upon a
     next run, the previous known status is read and used to determine if
-    additional actions are required to keep the CUA in sync the SRAM. Thus the
-    status is used to prevent adding things to the CUA when that already has
-    happened.
+    additional actions are required to keep the destination LDAP in sync the
+    SRAM. Thus the status is used to prevent adding things to the destination
+    LDAP when that already has happened.
 
     CONFIGURATION: Path to a configuration file. OUTPUT: Path of the resulting
     script.
