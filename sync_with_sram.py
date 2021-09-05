@@ -111,13 +111,10 @@ def process_user_data(cfg, service, co, status, new_status):
             sn = entry["sn"][0].decode("UTF-8")
             user = f"sram-{co}-{uid}"
             mail = entry["mail"][0].decode("UTF-8")
-            line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{cfg['sync']['servicename']}"
-            new_status["users"][user] = {"line": line}
-            user_status = status["users"].get(user)
 
-            if user_status == None or user_status.get("line") != line:
+            new_status["users"][user] = {}
+            if user not in status["users"]:
                 print(f"  Found new user: {user}")
-                new_status["users"][user]["line"] = line
                 event_handler.add_new_user(givenname, sn, user, mail)
 
             if "sshPublicKey" in entry:
@@ -127,19 +124,19 @@ def process_user_data(cfg, service, co, status, new_status):
                     sshPublicKeys = sshPublicKeys | key.decode("UTF-8").rstrip()
 
                 known_sshPublicKeys = set()
-                if user_status and "sshPublicKey" in user_status:
-                    known_sshPublicKeys = set(user_status["sshPublicKey"])
+                if user in status["users"] and "sshPublicKey" in status["users"][user]:
+                    known_sshPublicKeys = set(status["users"][user]["sshPublicKey"])
                 new_status["users"][user]["sshPublicKey"] = list(sshPublicKeys)
 
                 new_sshPublicKeys = sshPublicKeys - known_sshPublicKeys
                 dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
 
                 for key in new_sshPublicKeys:
-                    print("    Adding public SSH key")
+                    print(f"    Adding public SSH key: {key[:50]}…")
                     event_handler.add_public_ssh_key(user, key)
 
                 for key in dropped_sshPublicKeys:
-                    print("    Removing public SSH key")
+                    print(f"    Removing public SSH key: {key[:50]}…")
                     event_handler.delete_public_ssh_key(user, key)
 
     except ldap.NO_SUCH_OBJECT as e:
