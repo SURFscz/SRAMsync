@@ -345,8 +345,18 @@ def get_generator(cfg):
     generator_name = cfg["sync"]["generator"]["generator_type"]
     generator_module = __import__(generator_name)
     generator_class = getattr(generator_module, generator_name)
+    if "provisional_status_filename" in cfg:
+        provisional_status_filename = cfg["provisional_status_filename"]
+    else:
+        provisional_status_filename = None
+
     generator = generator_class(
-        {"servicename": cfg["sync"]["servicename"], **cfg["sync"]["generator"]["input"]}
+        {
+            "servicename": cfg["sync"]["servicename"],
+            "status_filename": cfg["status_filename"],
+            "provisional_status_filename": provisional_status_filename,
+            **cfg["sync"]["generator"]["input"],
+        }
     )
 
     return generator

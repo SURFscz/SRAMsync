@@ -126,6 +126,12 @@ class CuaScriptGenerator(EventHandler):
             raise ValueError(error)
 
     def finialize(self):
+        if self.cfg["provisional_status_filename"]:
+            self.print("\n" + "#" * 32)
+            self.print("# Cleaning provisional status. #")
+            self.print("#" * 32 + "\n")
+            self.print(f"mv {self.cfg['provisional_status_filename']} {self.cfg['status_filename']}\n")
+
         self.print("\n" + "#" * 42)
         self.print("#" + " " * 40 + "#")
         self.print("#  Script generation ended successfully. #")
