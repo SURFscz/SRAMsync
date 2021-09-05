@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: future_fstrings -*-
 
+import os
 from datetime import datetime, timedelta, timezone
 import json
 
@@ -36,6 +37,11 @@ def get_previous_status(cfg):
     Get the saved status from disk if it exits. Return an empty status otherwise.
     """
     status = {"users": {}, "groups": {}}
+
+    if "provisional_status_filename" in cfg and os.path.isfile(cfg["provisional_status_filename"]):
+        print(f"Warning: Found unexpected provisional status file: {cfg['provisional_status_filename']}.")
+        print("         Possible reason is that the generated script has not been run yet.")
+        print("         It is okay to continue this sync and generate a new up-to-date script.")
 
     try:
         with open(cfg["status_filename"]) as json_file:
@@ -355,6 +361,18 @@ def get_event_handler(cfg, generator):
     return event_handler
 
 
+def keep_new_status(cfg, new_status):
+    if "provisional_status_filename" in cfg:
+        filename = cfg["provisional_status_filename"]
+    else:
+        filename = cfg["status_filename"]
+
+    with open(filename, "w") as status_file:
+        json.dump(new_status, status_file, indent=2)
+
+    print(f"new status file has been written to: {filename}")
+
+
 @click.command()
 @click.help_option()
 @click.version_option()
@@ -399,8 +417,7 @@ def cli(configuration):
 
         event_handler.finialize()
 
-        with open(cfg["status_filename"], "w") as status_file:
-            json.dump(new_status, status_file, indent=2)
+        keep_new_status(cfg, new_status)
     except IOError as e:
         print(e)
     except ldap.NO_SUCH_OBJECT as e:

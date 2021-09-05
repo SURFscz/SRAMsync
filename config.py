@@ -67,6 +67,7 @@ class Config:
                 "required": ["servicename", "groups", "generator"],
             },
             "status_filename": {"type": "string"},
+            "provisional_status_filename": {"type": "string"},
         },
         "required": ["sram", "sync", "status_filename"],
     }
@@ -83,6 +84,9 @@ class Config:
 
     def __getitem__(self, item):
         return self.config[item]
+
+    def __contains__(self, item):
+        return item in self.config
 
     def getSRAMbasedn(self):
         return self.config["sram"]["basedn"]
