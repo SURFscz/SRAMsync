@@ -22,8 +22,8 @@ class EventHandler(ABC):
         self.generator.delete_public_ssh_key(user, key)
 
     @abstractmethod
-    def add_new_group(self, group):
-        self.generator.add_new_group(group)
+    def add_new_group(self, group, attributes):
+        self.generator.add_new_group(group, attributes)
 
     @abstractmethod
     def remove_group(self, group, attributes):

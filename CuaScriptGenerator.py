@@ -80,7 +80,18 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"### Remove SSH Public key: {key}")
         self.print(f'{self.modify_user_cmd} -r --ssh-public-key "{key}" {user}\n')
 
-    def add_new_group(self, group):
+    def add_new_group(self, group, attributes):
+        if "system_group" in attributes:
+            self.add_new_system_group(group)
+        elif "project_group" in attributes:
+            self.add_new_project_group(group)
+        else:
+            print("Could not determine group type (system_group or project_group) for {group}.")
+
+    def add_new_system_group(self, group):
+        print(f"Ignoring adding system group {group}. It should be done by the CUA team.")
+
+    def add_new_project_group(self, group):
         line = f"sram_group:description:dummy:{group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
         self.print(f"## Adding group: {group}")

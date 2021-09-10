@@ -189,7 +189,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     "attributes": group_attributes,
                 }
                 print(f"  Adding group: {dest_group_name}")
-                event_handler.add_new_group(dest_group_name)
+                event_handler.add_new_group(dest_group_name, group_attributes)
 
             if dest_group_name not in new_status["groups"]:
                 new_status["groups"][dest_group_name] = {

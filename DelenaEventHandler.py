@@ -18,8 +18,8 @@ class DelenaEventHandler(EventHandler):
     def delete_public_ssh_key(self, user, key):
         return super().delete_public_ssh_key(user, key)
 
-    def add_new_group(self, group):
-        return super().add_new_group(group)
+    def add_new_group(self, group, attributes):
+        return super().add_new_group(group, attributes)
 
     def remove_group(self, group, attributes):
         return super().remove_group(group, attributes)
