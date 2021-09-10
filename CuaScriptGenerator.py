@@ -63,8 +63,8 @@ class CuaScriptGenerator(EventHandler):
     def start_of_service_processing(self, co):
         self.print(f"\n# service: {self.service_name}/{co}")
 
-    def add_new_user(self, givenname, sn, user, mail):
-        line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{self.service_name}"
+    def add_new_user(self, group, givenname, sn, user, mail):
+        line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self.print(f"## Adding user: {user}")
         self.print(f"{self.modify_user_cmd} --list {user} ||")

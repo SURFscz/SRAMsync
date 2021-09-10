@@ -6,8 +6,8 @@ class DelenaEventHandler(EventHandler):
     def __init__(self, generator):
         self.generator = generator
 
-    def add_new_user(self, givenname, sn, user, mail):
-        return super().add_new_user(givenname, sn, user, mail)
+    def add_new_user(self, group, givenname, sn, user, mail):
+        return super().add_new_user(group, givenname, sn, user, mail)
 
     def start_of_service_processing(self, co):
         return super().start_of_service_processing(co)

@@ -10,8 +10,8 @@ class EventHandler(ABC):
         self.generator.start_of_service_processing(co)
 
     @abstractmethod
-    def add_new_user(self, givenname, sn, user, mail):
-        self.generator.add_new_user(givenname, sn, user, mail)
+    def add_new_user(self, group, givenname, sn, user, mail):
+        self.generator.add_new_user(group, givenname, sn, user, mail)
 
     @abstractmethod
     def add_public_ssh_key(self, user, key):

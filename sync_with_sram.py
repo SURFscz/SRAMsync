@@ -11,6 +11,10 @@ import ldap
 from config import Config
 
 
+class MultipleLoginGroups(Exception):
+    pass
+
+
 def dn2rdns(dn):
     rdns = {}
     r = ldap.dn.str2dn(dn)
@@ -73,28 +77,28 @@ def process_user_data(cfg, service, co, status, new_status):
 
     #  Check if there is at least one group that controls which users are
     #  allowed to login. If there are none, it's okay to use all known users.
-    login_group = [group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]]
+    login_groups = [group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]]
     login_users = []
-    l = len(login_group)
-    if l >= 1:
-        print(f'  Using group(s) \'{", ".join(login_group)}\' for allowing users to login.')
-        for group in login_group:
-            try:
-                dns = ldap_conn.search_s(
-                    f"ou=Groups,o={service},dc=ordered,{cfg.getSRAMbasedn()}",
-                    ldap.SCOPE_ONELEVEL,
-                    f"(cn={group})",
-                )
-                for _, entry in dns:
-                    for member in entry["member"]:
-                        uid = dn2rdns(member)["uid"][0]
-                        login_users.append(uid)
-            except ldap.NO_SUCH_OBJECT:
-                print(
-                    f"Warning: login group '{group}' has been defined but could not be found for CO '{co}'."
-                )
-        if len(login_users) == 0:
-            return new_status
+    l = len(login_groups)
+
+    group = f"cfg['servicename']_login"
+
+    if l > 1:
+        raise MultipleLoginGroups()
+    elif l == 1:
+        group = login_groups[0]
+        try:
+            dns = ldap_conn.search_s(
+                f"ou=Groups,o={service},dc=ordered,{cfg.getSRAMbasedn()}",
+                ldap.SCOPE_ONELEVEL,
+                f"(cn={group})",
+            )
+            for _, entry in dns:
+                for member in entry["member"]:
+                    uid = dn2rdns(member)["uid"][0]
+                    login_users.append(uid)
+        except ldap.NO_SUCH_OBJECT:
+            print(f"Warning: login group '{group}' has been defined but could not be found for CO '{co}'.")
 
     try:
         dns = ldap_conn.search_s(
@@ -115,7 +119,7 @@ def process_user_data(cfg, service, co, status, new_status):
             new_status["users"][user] = {}
             if user not in status["users"]:
                 print(f"  Found new user: {user}")
-                event_handler.add_new_user(givenname, sn, user, mail)
+                event_handler.add_new_user(group, givenname, sn, user, mail)
 
             if "sshPublicKey" in entry:
                 raw_sshPublicKeys = entry["sshPublicKey"]
@@ -435,3 +439,5 @@ def cli(configuration):
         print("Invalid credentials. Please check your configuration file.")
     except ModuleNotFoundError as e:
         print(f"{e}. Please check your config file.")
+    except MultipleLoginGroups:
+        print("Multiple login groups have been defined in the config file. Only one is allowed.")
