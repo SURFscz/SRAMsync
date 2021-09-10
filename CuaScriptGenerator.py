@@ -138,13 +138,21 @@ class CuaScriptGenerator(EventHandler):
 
     def finialize(self):
         if self.cfg["provisional_status_filename"]:
+            filename = self.cfg["provisional_status_filename"]
+
             self.print("\n" + "#" * 32)
             self.print("# Cleaning provisional status. #")
-            self.print("#" * 32 + "\n")
-            self.print(f"mv {self.cfg['provisional_status_filename']} {self.cfg['status_filename']}\n")
+            self.print("#" * 32)
+            self.print(f'if [ -f "{filename}" ]; then')
+            self.print(
+                f"  mv \"{self.cfg['provisional_status_filename']}\" \"{self.cfg['status_filename']}\""
+            )
+            self.print(f"else")
+            self.print(f"  echo 'Cannot find {filename}. Has this script been run before?'")
+            self.print("fi")
 
-        self.print("\n" + "#" * 42)
-        self.print("#" + " " * 40 + "#")
-        self.print("#  Script generation ended successfully. #")
-        self.print("#" + " " * 40 + "#")
-        self.print("#" * 42)
+        self.print("\n" + "#" * 43)
+        self.print("#" + " " * 41 + "#")
+        self.print("#  Script generation ended successfully.  #")
+        self.print("#" + " " * 41 + "#")
+        self.print("#" * 43)
