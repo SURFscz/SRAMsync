@@ -128,7 +128,7 @@ class CuaScriptGenerator(EventHandler):
                 self.print(f"{self.modify_user_cmd}{remove}-a delena {group} {user}\n")
 
             if "project_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}-g delena {group} {user}\n")
+                self.print(f"{self.modify_user_cmd}{remove}-g {group} {user}\n")
         elif l1 - l2 == 0:
             error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
             raise ValueError(error)
