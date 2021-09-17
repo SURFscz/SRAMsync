@@ -38,7 +38,7 @@ class DelenaEventHandler(EventHandler):
             with NamedTemporaryFile(delete=False) as f:
                 f.write(message.encode(encoding="ascii"))
                 self.generator.print(f"# Notifing by e-mail that {user} should be deletedi from {group}.")
-                self.generator.print(f"mail -s '{subject}' {cfg['mail-recipiant']} -f '{f.name}'")
+                self.generator.print(f"mail -s '{subject}' {cfg['mail-recipiant']} < '{f.name}'")
                 self.generator.print(f"rm {f.name}\n")
         else:
             print("Error: cannot send mail.")
