@@ -56,32 +56,36 @@ def get_previous_status(cfg):
     return status
 
 
-def process_user_data(cfg, service, co, status, new_status):
+def is_user_eligible(uid, login_users, entry):
     """
-    Process the CO user data as found in SRAM for the service.
+    Check if the user (uid) is eligible for using the service. There are two
+    ways to determine it. i) if the users is found to be part of the
+    login_users. ii) if the voPersonStatus is set for the user.
 
-    Collect the necessary information from SRAM such that shell commands can be
-    generated that call for the respective sara_usertools commands with the
-    collected information.
-
-    The provided status is used to determine whether or not a user has already
-    been processed in a previous run.
-
-    While looping over all users, a new_status is maintained to reflect the to
-    be situation of the destination LDAP. This to be situation will be achieved
-    after a successful run of the resulting script.
+    If no login_users are defined nor is the voPersonStatus used, the user is
+    always eligible.
     """
+    if login_users and uid not in login_users:
+        return False
 
+    if "voPersonStatus" in entry:
+        voPersonStatus = entry["voPersonStatus"][0].decode("UTF-8")
+        if voPersonStatus != "active":
+            return False
+
+    return True
+
+
+def get_login_users(cfg, service):
+    """
+    Check if there is at least one group that controls which users are
+    allowed to login. If there are none, it's okay to use all known users.
+    """
     ldap_conn = cfg.getLDAPconnector()
-    event_handler = cfg.event_handler
 
-    #  Check if there is at least one group that controls which users are
-    #  allowed to login. If there are none, it's okay to use all known users.
     login_groups = [group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]]
     login_users = []
     l = len(login_groups)
-
-    group = f"cfg['servicename']_login"
 
     if l > 1:
         raise MultipleLoginGroups()
@@ -100,6 +104,31 @@ def process_user_data(cfg, service, co, status, new_status):
         except ldap.NO_SUCH_OBJECT:
             print(f"Warning: login group '{group}' has been defined but could not be found for CO '{co}'.")
 
+    return login_users
+
+
+def process_user_data(cfg, service, co, status, new_status):
+    """
+    Process the CO user data as found in SRAM for the service.
+
+    Collect the necessary information from SRAM such that shell commands can be
+    generated that call for the respective sara_usertools commands with the
+    collected information.
+
+    The provided status is used to determine whether or not a user has already
+    been processed in a previous run.
+
+    While looping over all users, a new_status is maintained to reflect the to
+    be situation of the destination LDAP. This to be situation will be achieved
+    after a successful run of the resulting script.
+    """
+
+    ldap_conn = cfg.getLDAPconnector()
+    event_handler = cfg.event_handler
+    group = f"cfg['servicename']_login"
+
+    login_users = get_login_users(cfg, service)
+
     try:
         dns = ldap_conn.search_s(
             f"ou=People,o={service},dc=ordered,{cfg.getSRAMbasedn()}",
@@ -109,39 +138,38 @@ def process_user_data(cfg, service, co, status, new_status):
 
         for _, entry in dns:
             uid = entry["uid"][0].decode("UTF-8")
-            if login_users and uid not in login_users:
-                continue
-            givenname = entry["givenName"][0].decode("UTF-8")
-            sn = entry["sn"][0].decode("UTF-8")
-            user = f"sram-{co}-{uid}"
-            mail = entry["mail"][0].decode("UTF-8")
+            if is_user_eligible(uid, login_users, entry):
+                givenname = entry["givenName"][0].decode("UTF-8")
+                sn = entry["sn"][0].decode("UTF-8")
+                user = f"sram-{co}-{uid}"
+                mail = entry["mail"][0].decode("UTF-8")
 
-            new_status["users"][user] = {}
-            if user not in status["users"]:
-                print(f"  Found new user: {user}")
-                event_handler.add_new_user(group, givenname, sn, user, mail)
+                new_status["users"][user] = {}
+                if user not in status["users"]:
+                    print(f"  Found new user: {user}")
+                    event_handler.add_new_user(group, givenname, sn, user, mail)
 
-            if "sshPublicKey" in entry:
-                raw_sshPublicKeys = entry["sshPublicKey"]
-                sshPublicKeys = set([raw_sshPublicKeys[0].decode("UTF-8").rstrip()])
-                for key in raw_sshPublicKeys[1:]:
-                    sshPublicKeys = sshPublicKeys | key.decode("UTF-8").rstrip()
+                if "sshPublicKey" in entry:
+                    raw_sshPublicKeys = entry["sshPublicKey"]
+                    sshPublicKeys = set([raw_sshPublicKeys[0].decode("UTF-8").rstrip()])
+                    for key in raw_sshPublicKeys[1:]:
+                        sshPublicKeys = sshPublicKeys | key.decode("UTF-8").rstrip()
 
-                known_sshPublicKeys = set()
-                if user in status["users"] and "sshPublicKey" in status["users"][user]:
-                    known_sshPublicKeys = set(status["users"][user]["sshPublicKey"])
-                new_status["users"][user]["sshPublicKey"] = list(sshPublicKeys)
+                    known_sshPublicKeys = set()
+                    if user in status["users"] and "sshPublicKey" in status["users"][user]:
+                        known_sshPublicKeys = set(status["users"][user]["sshPublicKey"])
+                    new_status["users"][user]["sshPublicKey"] = list(sshPublicKeys)
 
-                new_sshPublicKeys = sshPublicKeys - known_sshPublicKeys
-                dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
+                    new_sshPublicKeys = sshPublicKeys - known_sshPublicKeys
+                    dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
 
-                for key in new_sshPublicKeys:
-                    print(f"    Adding public SSH key: {key[:50]}…")
-                    event_handler.add_public_ssh_key(user, key)
+                    for key in new_sshPublicKeys:
+                        print(f"    Adding public SSH key: {key[:50]}…")
+                        event_handler.add_public_ssh_key(user, key)
 
-                for key in dropped_sshPublicKeys:
-                    print(f"    Removing public SSH key: {key[:50]}…")
-                    event_handler.delete_public_ssh_key(user, key)
+                    for key in dropped_sshPublicKeys:
+                        print(f"    Removing public SSH key: {key[:50]}…")
+                        event_handler.delete_public_ssh_key(user, key)
 
     except ldap.NO_SUCH_OBJECT as e:
         print("The basedn does not exists.")
