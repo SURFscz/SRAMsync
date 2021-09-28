@@ -153,7 +153,7 @@ def process_user_data(cfg, service, co, status, new_status):
                     raw_sshPublicKeys = entry["sshPublicKey"]
                     sshPublicKeys = set([raw_sshPublicKeys[0].decode("UTF-8").rstrip()])
                     for key in raw_sshPublicKeys[1:]:
-                        sshPublicKeys = sshPublicKeys | key.decode("UTF-8").rstrip()
+                        sshPublicKeys = sshPublicKeys | {key.decode("UTF-8").rstrip()}
 
                     known_sshPublicKeys = set()
                     if user in status["users"] and "sshPublicKey" in status["users"][user]:
