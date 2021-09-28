@@ -56,6 +56,13 @@ class CuaScriptGenerator(EventHandler):
         self.print("")
         self.print("set -o xtrace")
         self.print("")
+        self.print("trap quit INT")
+        self.print("")
+        self.print("function quit() {")
+        self.print("  echo 'quiting'")
+        self.print("  exit")
+        self.print("}")
+        self.print("")
 
     def print(self, string):
         print(string, file=self.file_descriptor)
