@@ -13,7 +13,9 @@ class CuaScriptGenerator(EventHandler):
         self.cfg = cfg
         keywordPresent = [k in cfg.keys() for k in self.requiredKeywords]
         if all(keywordPresent):
-            self.file_descriptor = open(cfg["filename"], "w+")
+            service = cfg["servicename"]
+            filename = f"{cfg['filename']}".format(**locals())
+            self.file_descriptor = open(filename, "w+")
             self.add_user_cmd = cfg["add_user_cmd"]
             self.modify_user_cmd = cfg["modify_user_cmd"]
             self.service_name = cfg["servicename"]
