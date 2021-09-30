@@ -47,8 +47,11 @@ def get_previous_status(cfg):
         print("         Possible reason is that the generated script has not been run yet.")
         print("         It is okay to continue this sync and generate a new up-to-date script.")
 
+    service = cfg["sync"]["servicename"]  # service might be accessed indirectly
+    filename = cfg["status_filename"]
+    filename = f"{filename}".format(**locals())
     try:
-        with open(cfg["status_filename"]) as json_file:
+        with open(filename) as json_file:
             status = json.load(json_file)
     except FileNotFoundError as e:
         pass
@@ -406,6 +409,9 @@ def keep_new_status(cfg, new_status):
         filename = cfg["provisional_status_filename"]
     else:
         filename = cfg["status_filename"]
+
+    service = cfg["sync"]["servicename"]  # service might be accessed indirectly
+    filename = f"{filename}".format(**locals())
 
     with open(filename, "w") as status_file:
         json.dump(new_status, status_file, indent=2)
