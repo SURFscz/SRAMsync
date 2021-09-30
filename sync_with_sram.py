@@ -107,7 +107,7 @@ def get_login_users(cfg, service):
     return login_users
 
 
-def process_user_data(cfg, service, co, status, new_status):
+def process_user_data(cfg, fq_co, co, status, new_status):
     """
     Process the CO user data as found in SRAM for the service.
 
@@ -127,11 +127,11 @@ def process_user_data(cfg, service, co, status, new_status):
     event_handler = cfg.event_handler
     group = f"cfg['servicename']_login"
 
-    login_users = get_login_users(cfg, service)
+    login_users = get_login_users(cfg, fq_co)
 
     try:
         dns = ldap_conn.search_s(
-            f"ou=People,o={service},dc=ordered,{cfg.getSRAMbasedn()}",
+            f"ou=People,o={fq_co},dc=ordered,{cfg.getSRAMbasedn()}",
             ldap.SCOPE_ONELEVEL,
             "(objectClass=person)",
         )
@@ -177,7 +177,7 @@ def process_user_data(cfg, service, co, status, new_status):
     return new_status
 
 
-def process_group_data(cfg, service, org, co, status, new_status):
+def process_group_data(cfg, fq_co, org, co, status, new_status):
     """
     Process the CO group data as found in SRAM for the service. Only those
     groups that are defined in the configuration file are processed.
@@ -207,7 +207,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
         try:
             basedn = cfg.getSRAMbasedn()
             dns = ldap_conn.search_s(
-                f"cn={sram_group},ou=Groups,o={service},dc=ordered,{basedn}",
+                f"cn={sram_group},ou=Groups,o={fq_co},dc=ordered,{basedn}",
                 ldap.SCOPE_BASE,
                 "(objectClass=groupOfMembers)",
             )
@@ -240,7 +240,7 @@ def process_group_data(cfg, service, org, co, status, new_status):
                     if user not in status["groups"][dest_group_name]["members"]:
                         event_handler.add_user_to_group(dest_group_name, user, group_attributes)
         except ldap.NO_SUCH_OBJECT:
-            print(f"  Warning: service '{service}' does not contain group '{sram_group}'")
+            print(f"  Warning: service '{fq_co}' does not contain group '{sram_group}'")
         except:
             raise
 
@@ -271,13 +271,13 @@ def add_missing_entries_to_ldap(cfg, status, new_status):
     )
 
     for _, entry in dns:
-        service = entry["o"][0].decode("UTF-8")
-        org, co = service.split(".")
+        fq_co = entry["o"][0].decode("UTF-8")
+        org, co = fq_co.split(".")
         event_handler.start_of_service_processing(co)
         print(f"Processing CO: {co}")
 
-        new_status = process_user_data(cfg, service, co, status, new_status)
-        new_status = process_group_data(cfg, service, org, co, status, new_status)
+        new_status = process_user_data(cfg, fq_co, co, status, new_status)
+        new_status = process_group_data(cfg, fq_co, org, co, status, new_status)
 
     return new_status
 
