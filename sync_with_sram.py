@@ -196,6 +196,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
 
     event_handler = cfg.event_handler
     ldap_conn = cfg.getLDAPconnector()
+    service = cfg["sync"]["servicename"]  # service might be accessed indirectly
 
     for sram_group, v in cfg["sync"]["groups"].items():
         group_attributes = v["attributes"]
