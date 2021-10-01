@@ -128,7 +128,7 @@ def process_user_data(cfg, fq_co, co, status, new_status):
 
     ldap_conn = cfg.getLDAPconnector()
     event_handler = cfg.event_handler
-    group = f"cfg['servicename']_login"
+    group = f"{cfg['sync']['servicename']}_login"
 
     login_users = get_login_users(cfg, fq_co)
 
