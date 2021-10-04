@@ -4,7 +4,7 @@ from EventHandler import EventHandler
 
 
 class CuaScriptGenerator(EventHandler):
-    file_descriptor = None
+    script_file_descriptor = None
 
     requiredKeywords = ("filename", "servicename", "add_user_cmd", "modify_user_cmd")
     cua_group_types = {"system_group", "project_group"}
@@ -14,8 +14,8 @@ class CuaScriptGenerator(EventHandler):
         keywordPresent = [k in cfg.keys() for k in self.requiredKeywords]
         if all(keywordPresent):
             service = cfg["servicename"]
-            filename = f"{cfg['filename']}".format(**locals())
-            self.file_descriptor = open(filename, "w+")
+            script_name = f"{cfg['filename']}".format(**locals())
+            self.script_file_descriptor = open(script_name, "w+")
             self.add_user_cmd = cfg["add_user_cmd"]
             self.modify_user_cmd = cfg["modify_user_cmd"]
             self.service_name = cfg["servicename"]
@@ -34,12 +34,10 @@ class CuaScriptGenerator(EventHandler):
             raise TypeError(errorString)
 
     def __del__(self):
-        if self.file_descriptor:
-            self.file_descriptor.close()
+        if self.script_file_descriptor:
+            self.script_file_descriptor.close()
 
     def GenerateHeader(self):
-        service_name = self.service_name
-
         self.print("#" * 80)
         self.print("#")
         self.print("#  Automatically generated script by cua-sync")
@@ -47,10 +45,10 @@ class CuaScriptGenerator(EventHandler):
         self.print("#")
         self.print("#  By executing this script, the CUA is synchronized with the state in SRAM")
         self.print("#  at the time this script has been generated. The service this script was")
-        self.print(f"#  generated for is: {service_name}")
+        self.print(f"#  generated for is: {self.service_name}")
         self.print("#")
         self.print("#  This script looses its purpuse after running it and a new one must be")
-        self.print(f"#  generated to sync future changes in the COs for {service_name}.")
+        self.print(f"#  generated to sync future changes in the COs for {self.service_name}.")
         self.print("#")
         self.print("#  The script might be empty, in which case there was nothing to be synced.")
         self.print("#")
@@ -67,7 +65,7 @@ class CuaScriptGenerator(EventHandler):
         self.print("")
 
     def print(self, string):
-        print(string, file=self.file_descriptor)
+        print(string, file=self.script_file_descriptor)
 
     def start_of_service_processing(self, co):
         self.print(f"\n# service: {self.service_name}/{co}")
@@ -147,17 +145,21 @@ class CuaScriptGenerator(EventHandler):
 
     def finialize(self):
         if self.cfg["provisional_status_filename"]:
-            filename = self.cfg["provisional_status_filename"]
+            service = self.service_name
+            status_filename = self.cfg["status_filename"]
+            status_filename = f"{status_filename}".format(**locals())
+            provisional_status_filename = self.cfg["provisional_status_filename"]
+            provisional_status_filename = f"{provisional_status_filename}".format(**locals())
 
             self.print("\n" + "#" * 32)
             self.print("# Cleaning provisional status. #")
             self.print("#" * 32)
-            self.print(f'if [ -f "{filename}" ]; then')
-            self.print(
-                f"  mv \"{self.cfg['provisional_status_filename']}\" \"{self.cfg['status_filename']}\""
-            )
+            self.print(f'if [ -f "{provisional_status_filename}" ]; then')
+            self.print(f'  mv "{provisional_status_filename}" "{status_filename}"')
             self.print(f"else")
-            self.print(f"  echo 'Cannot find {filename}. Has this script been run before?'")
+            self.print(
+                f"  echo 'Cannot find {provisional_status_filename}. Has this script been run before?'"
+            )
             self.print("fi")
 
         self.print("\n" + "#" * 43)
