@@ -132,7 +132,7 @@ class CuaScriptGenerator(EventHandler):
 
         if l1 - l2 == 1:
             if "system_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}-a delena {group} {user}\n")
+                self.print(f"{self.modify_user_cmd}{remove}-a {self.service_name} {group} {user}\n")
 
             if "project_group" in attr:
                 self.print(f"{self.modify_user_cmd}{remove}-g {group} {user}\n")
