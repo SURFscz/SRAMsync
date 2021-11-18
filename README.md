@@ -30,6 +30,13 @@ Use the following `pip` command to install the SYNCsram package.
 ```bash
 pip install git+https://github.com/venekamp/SRAMsync.git#egg=SRAMsync
 ```
+This installs the latets from the main branch. If you wish to use a specific
+version you can use the following:
+```bash
+pip install git+https://github.com/venekamp/SRAMsync.git@v1.0.0#egg=SRAMsync
+```
+The exact verions, i.e. the  `@v1.0.0` in the above url, can be found the
+[tags page](https://github.com/venekamp/SRAMsync/tags) at GitHub.
 
 ## Configuration file
 
@@ -46,7 +53,7 @@ ldap:
   basedn: dc=<service>,dc=services,dc=sram,dc=surf,dc=nl
   binddn: cn=admin,dc=<service>,dc=services,dc=sram,dc=surf,dc=nl
   passwd: VerySecretPassword!
-cua:
+sync:
   servicename: <myservice>
   groups:
     - <project>_login:
@@ -71,7 +78,8 @@ cua:
   grace:
     sram-<project>-login:
       grace_period: 90
-status_filename: "/home/<user>/status.json"
+status_filename: "/home/<user>/status-{service}.json"
+provisional_status_filename:: "/home/<user>/./provisional_status-{service}.json"
 ```
 
 ### LDAP config element
@@ -95,7 +103,7 @@ One could use `{service}` as a placeholder for the `servicename`. Thus the
 following group sync definition:
 
 ```yaml
-cua:
+sync:
   servicname: my-project
   groups:
     - project_login:
@@ -108,7 +116,7 @@ cua:
 is the same as:
 
 ```yaml
-cua:
+sync:
   servicname: my-project
   groups:
     - project_login:
@@ -189,9 +197,3 @@ be safely be removed. Running the `cua_sync.py` script then generates all the
 script also generates commands that check first if LDAP entries already exists.
 After running the sync script with an empty or non-existing status file, the
 new status file reflects the current state of the CUA again.
-
-## Final remarks
-
-The sync script has be tested with python 3.5.3 and with the
-future_fstrings (1.2.0) package. When using Python 3.6 or above, the
-future_fstrings should not be necessary.
