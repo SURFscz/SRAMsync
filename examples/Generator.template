@@ -1,4 +1,4 @@
-from EventHandler import EventHandler
+from SRAMsync.EventHandler import EventHandler
 
 
 class TemplateGenerator(EventHandler):
