@@ -8,7 +8,7 @@ import json
 import click
 import ldap
 
-from config import Config
+from SRAMsync.config import Config
 
 
 class MultipleLoginGroups(Exception):

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from EventHandler import EventHandler
+from SRAMsync.EventHandler import EventHandler
 
 
 class CuaScriptGenerator(EventHandler):

@@ -1,5 +1,3 @@
-import sys
-
 from jsonschema import validate
 import yaml
 

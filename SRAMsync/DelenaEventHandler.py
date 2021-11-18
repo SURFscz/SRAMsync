@@ -1,5 +1,5 @@
 from tempfile import NamedTemporaryFile
-from EventHandler import EventHandler
+from SRAMsync.EventHandler import EventHandler
 
 
 class DelenaEventHandler(EventHandler):
