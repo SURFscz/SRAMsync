@@ -1,25 +1,34 @@
-# CUA-sync
+# SRAMsync
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
+[![GPLv3 license](https://img.shields.io/badge/License-GPLv3-ble.svg)](http://perso.crans.org/besson/LICENSE.html)
 
-The CUA-sync python script is meant to be used in conjunction with the CUA at
-SURF. It purpose is to synchronize the SRAM LDAP, or rather a sub tree thereof,
-with the CUA. The CUA has its own tooling (`sara_usertools`) to add and modify
-LDAP entries and this script makes use of that tooling.
+The SRAMsync python script was originally developed in conjunction for the CUA
+LDAP at SURF. Its purpose is to synchronize the SRAM LDAP, or rather a sub tree
+thereof, with the CUA. The CUA has its own tooling (`sara_usertools`) to add
+and modify LDAP entries and this script makes use of that tooling. However,
+this does not mean this sync script can be used for the CUA only. Through
+decoupling of the specific implementation and through the use of the factory
+pattern new concrete implementations can be added.
 
-The `cua_sync.py` script takes one argument; a configuration file. The script
-outputs a bash script on standard output. This bash script should be run after
-it has been created. It contains all the necessary commands provided by
-`sara_usertools` to update the CUA such that the CUA is synchronized with the
-SRAM LDAP.
+The `sync-with-sram` script takes one argument; a configuration file. In case
+of the CUA concrete implementation, the script outputs a bash script on
+standard output. This bash script should be run after it has been created. It
+contains all the necessary commands provided by `sara_usertools` to update the
+CUA such that the CUA is synchronized with the SRAM LDAP.
 
-In order to synchronize the CUA, execute the following commands:
+After installation of `sync-with-sram`, the synchronization process is started
+with the following command:
 
 ```bash
-./cua_sync.py <configuration>
-chmod +x sync.sh
-./sync.sh
+sync-with-sram <configuration>
+```
+
+## Installation
+
+Use the following `pip` command to install the SYNCsram package.
+```bash
+pip install git+https://github.com/venekamp/SRAMsync.git#egg=SRAMsync
 ```
 
 ## Configuration file
@@ -82,17 +91,49 @@ tells what groups need to be synced. These are the names as they appear in the
 SRAM LDAP. `<project>` is a placeholder and you can name groups anyway you'd
 like. They are just presented as an example.
 
+One could use `{service}` as a placeholder for the `servicename`. Thus the
+following group sync definition:
+
+```yaml
+cua:
+  servicname: my-project
+  groups:
+    - project_login:
+      {
+        attributes: ["none"],
+        destination: "{serivce}_login}
+      }
+```
+
+is the same as:
+
+```yaml
+cua:
+  servicname: my-project
+  groups:
+    - project_login:
+      {
+        attributes: ["none"],
+        destination: "my-project_login}
+      }
+```
+
+The `attribute` element within the `groups` section must be specfied at all
+times. If it is missing an error will be generated. In case there is no need
+for attributes, it is okay to use `["none"]` or any other value to indicate
+that there are no attributes defined.
+
 The value part after the `:` tells how the group name must be mapped to the
 CUA. For the CUA we have agreed on the `sram-` prefix for example. For some
 groups we want to have more information in the CUA group name and we do so by
 adding the SRAM organisation `{org}` and SRAM CO `{co}` tags. This way, we are
 able to create unique names within the CUA, and thus prevent clashing with
-other users. The CUA has two different types of groups, which require a slightly
-different set of arguments. This distinction is made in the part before the `:`.
-Either a group is a system `sys` type, or a project `prj` type. A third type
-is allowed for conveniences. That is the `ign` and tells the sync script to
-simply ignore this group. One could of course not list those groups in the
-configuration file. It will have the same effect.
+other users. The CUA has two different types of groups, which require a
+slightly different set of arguments. This distinction is made in the part
+before the `:`. Either a group is a system `system` type, or a project
+`project` type. A third type is allowed for conveniences. That is the `ignore`
+and tells the sync script to simply ignore this group. One could of course not
+list those groups in the configuration file. It will have the same effect.
 
 The final part within the `cua` element is the `grace` element. Here you list
 the groups that have a grace period, i.e. a period in which users have been
