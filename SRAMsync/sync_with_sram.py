@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import importlib
 from datetime import datetime, timedelta, timezone
 import json
 
@@ -375,7 +376,7 @@ def remove_superfluous_entries_from_ldap(cfg, status, new_status):
 
 def get_generator(cfg):
     generator_name = cfg["sync"]["generator"]["generator_type"]
-    generator_module = __import__(generator_name)
+    generator_module = importlib.import_module(f"SRAMsync.{generator_name}")
     generator_class = getattr(generator_module, generator_name)
     if "provisional_status_filename" in cfg:
         provisional_status_filename = cfg["provisional_status_filename"]
@@ -396,7 +397,7 @@ def get_generator(cfg):
 
 def get_event_handler(cfg, generator):
     event_name = cfg["sync"]["generator"]["event_handler"]
-    event_module = __import__(event_name)
+    event_module = importlib.import_module(f"SRAMsync.{event_name}")
     event_class = getattr(event_module, event_name)
     event_handler = event_class(generator)
 
