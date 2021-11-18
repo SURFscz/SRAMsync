@@ -1,7 +1,7 @@
 from SRAMsync.EventHandler import EventHandler
 
 
-class TemplateGenerator(EventHandler):
+class DummyGenerator(EventHandler):
     def __init__(self, cfg):
         pass
 

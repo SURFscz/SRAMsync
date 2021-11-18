@@ -1,7 +1,7 @@
 from SRAMsync.EventHandler import EventHandler
 
 
-class DelenaEventHandler(EventHandler):
+class DummyEventHandler(EventHandler):
     def __init__(self, generator):
         self.generator = generator
 
