@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: future_fstrings -*-
 
 import os
 from datetime import datetime, timedelta, timezone
