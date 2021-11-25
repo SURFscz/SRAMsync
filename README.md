@@ -27,16 +27,38 @@ sync-with-sram <configuration>
 ## Installation
 
 Use the following `pip` command to install the SYNCsram package.
+
 ```bash
 pip install git+https://github.com/venekamp/SRAMsync.git#egg=SRAMsync
 ```
+
 This installs the latets from the main branch. If you wish to use a specific
 version you can use the following:
+
 ```bash
 pip install git+https://github.com/venekamp/SRAMsync.git@v1.0.0#egg=SRAMsync
 ```
+
 The exact verions, i.e. the  `@v1.0.0` in the above url, can be found the
 [tags page](https://github.com/venekamp/SRAMsync/tags) at GitHub.
+
+### Remarks for the python-ldap dependency
+
+The python ldap package can be tricky to install, especially if you install it
+from source. In this case you have to install a number of additional packages
+from you distribution. This README does not help you with that, other then
+pointing to the
+[appropriate documentation](https://www.python-ldap.org/en/python-ldap-3.3.0/installing.html).
+
+If you have decided to install python-ldap from your distribution and wish to
+setup a virtual env than please create the virtual like this:
+
+```bash
+python3 -m venv --system-site-packages venv
+```
+
+In doing so you are allowing the virtual env to use system wide installed
+packages and hence saves you from installing from source.
 
 ## Configuration file
 
