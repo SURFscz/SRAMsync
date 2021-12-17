@@ -2,13 +2,34 @@
 
 import os
 import importlib
+import logging
 from datetime import datetime, timedelta, timezone
 import json
 
 import click
 import ldap
+import click_logging
+
+import jsonschema.exceptions
 
 from SRAMsync.config import Config
+
+
+#  By defaukt click does not offer the short '-h' option.
+click_ctx_settings = dict(help_option_names=["-h", "--help"])
+
+#  Adjust some of the default of click_logging.
+click_logging_options = {
+    "default": "WARNING",
+    "metavar": "level",
+    "help": "level should be one of: CRITICAL, ERROR, WARNING, INFO or DEBUG.",
+}
+
+#  Adjust some of the colour style of click_logging.
+click_logging_styles = {"debug": dict(fg="green")}
+
+logger = logging.getLogger(__name__)
+click_logging.basic_config(logger, style_kwargs=click_logging_styles)
 
 
 class MultipleLoginGroups(Exception):
@@ -419,11 +440,18 @@ def keep_new_status(cfg, new_status):
     print(f"new status file has been written to: {filename}")
 
 
-@click.command()
-@click.help_option()
+@click.command(context_settings=click_ctx_settings)
+@click.option("-d", "--debug", is_flag=True, default=False, help="Set log level to DEBUG")
+@click.option(
+    "-v",
+    "--verbose",
+    count=True,
+    help="Set log level to INFO, WARNING or DEBUG, depending depending on the count",
+)
 @click.version_option()
+@click_logging.simple_verbosity_option(logger, "--loglevel", "-l", **click_logging_options)
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=False))
-def cli(configuration):
+def cli(configuration, debug, verbose):
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
 
@@ -448,7 +476,20 @@ def cli(configuration):
     script.
     """
 
+    if debug:
+        logging.getLogger(__name__).setLevel(logging.DEBUG)
+
+    if verbose > 0:
+        if verbose > 2:
+            logger.warning("verbose option supports two level only. Additional levels are ignored.")
+            verbose = 2
+        verbose_logging = ["INFO", "DEBUG"]
+        logging.getLogger(__name__).setLevel(verbose_logging[verbose - 1])
+
+    logger.critical(f"fhjdsfhdksjfhsdk: {logger.level}")
     try:
+        logger.info(f"Started syncing with SRAM")
+
         new_status = {"users": {}, "groups": {}}
         cfg = Config(configuration)
 
@@ -465,14 +506,18 @@ def cli(configuration):
         event_handler.finialize()
 
         keep_new_status(cfg, new_status)
+        logger.info("Finished syncing with SRAM")
     except IOError as e:
-        print(e)
+        logger.error(e)
     except ldap.NO_SUCH_OBJECT as e:
         if "desc" in e.args[0]:
-            print(e.args[0]["desc"])
+            logger.error(e.args[0]["desc"])
     except ldap.INVALID_CREDENTIALS:
-        print("Invalid credentials. Please check your configuration file.")
+        logger.error("Invalid credentials. Please check your configuration file.")
+    except ldap.SERVER_DOWN as e:
+        if "desc" in e.args[0]:
+            logger.error(e.args[0]["desc"])
     except ModuleNotFoundError as e:
-        print(f"{e}. Please check your config file.")
+        logger.error(f"{e}. Please check your config file.")
     except MultipleLoginGroups:
-        print("Multiple login groups have been defined in the config file. Only one is allowed.")
+        logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
