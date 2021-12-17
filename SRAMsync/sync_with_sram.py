@@ -509,6 +509,12 @@ def cli(configuration, debug, verbose):
         logger.info("Finished syncing with SRAM")
     except IOError as e:
         logger.error(e)
+    except jsonschema.exceptions.ValidationError as e:
+        msg = "Error in configuration file."
+        if logger.level > logging.DEBUG:
+            msg = msg + f" Rerun with --log-level=DEBUG to get more information"
+        logger.error(msg)
+        logger.debug(e)
     except ldap.NO_SUCH_OBJECT as e:
         if "desc" in e.args[0]:
             logger.error(e.args[0]["desc"])
