@@ -486,7 +486,6 @@ def cli(configuration, debug, verbose):
         verbose_logging = ["INFO", "DEBUG"]
         logging.getLogger(__name__).setLevel(verbose_logging[verbose - 1])
 
-    logger.critical(f"fhjdsfhdksjfhsdk: {logger.level}")
     try:
         logger.info(f"Started syncing with SRAM")
 
