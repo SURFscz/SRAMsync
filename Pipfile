@@ -8,6 +8,7 @@ click = "*"
 python-ldap = ">=3.4"
 jsonschema = "*"
 pyyaml = "*"
+click-logging = "*"
 
 [dev-packages]
 
