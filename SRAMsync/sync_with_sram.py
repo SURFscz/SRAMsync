@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import importlib
 import logging
 from datetime import datetime, timedelta, timezone
@@ -473,6 +474,8 @@ def cli(configuration, debug, verbose):
     script.
     """
 
+    clean_exit = False
+
     if debug:
         logging.getLogger(__name__).setLevel(logging.DEBUG)
 
@@ -503,6 +506,7 @@ def cli(configuration, debug, verbose):
 
         keep_new_status(cfg, new_status)
         logger.info("Finished syncing with SRAM")
+        clean_exit = True
     except IOError as e:
         logger.error(e)
     except jsonschema.exceptions.ValidationError as e:
@@ -523,3 +527,6 @@ def cli(configuration, debug, verbose):
         logger.error(f"{e}. Please check your config file.")
     except MultipleLoginGroups:
         logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
+
+    if not clean_exit:
+        sys.exit(1)
