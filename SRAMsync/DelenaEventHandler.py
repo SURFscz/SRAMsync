@@ -1,4 +1,5 @@
 from tempfile import NamedTemporaryFile
+from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
 
 
@@ -41,7 +42,7 @@ class DelenaEventHandler(EventHandler):
                 self.generator.print(f"mail -s '{subject}' {cfg['mail-recipiant']} < '{f.name}'")
                 self.generator.print(f"rm {f.name}\n")
         else:
-            print("Error: cannot send mail.")
+            logger.error("Cannot send mail.")
 
         return super().remove_graced_user_from_group(group, user, attributes)
 

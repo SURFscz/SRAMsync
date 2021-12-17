@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
 
 
@@ -93,10 +94,10 @@ class CuaScriptGenerator(EventHandler):
         elif "project_group" in attributes:
             self.add_new_project_group(group)
         else:
-            print("Could not determine group type (system_group or project_group) for {group}.")
+            logger.error("Could not determine group type (system_group or project_group) for {group}.")
 
     def add_new_system_group(self, group):
-        print(f"Ignoring adding system group {group}. It should be done by the CUA team.")
+        logger.warning(f"Ignoring adding system group {group}. It should be done by the CUA team.")
 
     def add_new_project_group(self, group):
         line = f"sram_group:description:dummy:{group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"

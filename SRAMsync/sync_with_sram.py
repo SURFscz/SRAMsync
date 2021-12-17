@@ -59,9 +59,9 @@ def get_previous_status(cfg):
     status = {"users": {}, "groups": {}}
 
     if "provisional_status_filename" in cfg and os.path.isfile(cfg["provisional_status_filename"]):
-        print(f"Warning: Found unexpected provisional status file: {cfg['provisional_status_filename']}.")
-        print("         Possible reason is that the generated script has not been run yet.")
-        print("         It is okay to continue this sync and generate a new up-to-date script.")
+        logger.warning(f"Found unexpected provisional status file: {cfg['provisional_status_filename']}.")
+        logger.warning("Possible reason is that the generated script has not been run yet.")
+        logger.warning("It is okay to continue this sync and generate a new up-to-date script.")
 
     service = cfg["sync"]["servicename"]  # service might be accessed indirectly
     filename = cfg["status_filename"]
@@ -121,7 +121,7 @@ def get_login_users(cfg, service):
                     uid = dn2rdns(member)["uid"][0]
                     login_users.append(uid)
         except ldap.NO_SUCH_OBJECT:
-            print(f"Warning: login group '{group}' has been defined but could not be found for CO '{co}'.")
+            logger.warning(f"login group '{group}' has been defined but could not be found for CO '{co}'.")
 
     return login_users
 
@@ -165,7 +165,7 @@ def process_user_data(cfg, fq_co, co, status, new_status):
 
                 new_status["users"][user] = {}
                 if user not in status["users"]:
-                    print(f"  Found new user: {user}")
+                    logger.debug(f"  Found new user: {user}")
                     event_handler.add_new_user(group, givenname, sn, user, mail)
 
                 if "sshPublicKey" in entry:
@@ -183,15 +183,15 @@ def process_user_data(cfg, fq_co, co, status, new_status):
                     dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
 
                     for key in new_sshPublicKeys:
-                        print(f"    Adding public SSH key: {key[:50]}…")
+                        logger.debug(f"    Adding public SSH key: {key[:50]}…")
                         event_handler.add_public_ssh_key(user, key)
 
                     for key in dropped_sshPublicKeys:
-                        print(f"    Removing public SSH key: {key[:50]}…")
+                        logger.debug(f"    Removing public SSH key: {key[:50]}…")
                         event_handler.delete_public_ssh_key(user, key)
 
     except ldap.NO_SUCH_OBJECT as e:
-        print("The basedn does not exists.")
+        logger.error("The basedn does not exists.")
 
     return new_status
 
@@ -240,7 +240,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
                     "members": [],
                     "attributes": group_attributes,
                 }
-                print(f"  Adding group: {dest_group_name}")
+                logger.debug(f"  Adding group: {dest_group_name}")
                 event_handler.add_new_group(dest_group_name, group_attributes)
 
             if dest_group_name not in new_status["groups"]:
@@ -260,7 +260,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
                     if user not in status["groups"][dest_group_name]["members"]:
                         event_handler.add_user_to_group(dest_group_name, user, group_attributes)
         except ldap.NO_SUCH_OBJECT:
-            print(f"  Warning: service '{fq_co}' does not contain group '{sram_group}'")
+            logger.warning(f"service '{fq_co}' does not contain group '{sram_group}'")
         except:
             raise
 
@@ -294,7 +294,7 @@ def add_missing_entries_to_ldap(cfg, status, new_status):
         fq_co = entry["o"][0].decode("UTF-8")
         org, co = fq_co.split(".")
         event_handler.start_of_service_processing(co)
-        print(f"Processing CO: {co}")
+        logger.debug(f"Processing CO: {co}")
 
         new_status = process_user_data(cfg, fq_co, co, status, new_status)
         new_status = process_group_data(cfg, fq_co, org, co, status, new_status)
@@ -310,7 +310,7 @@ def remove_graced_users(cfg, status, new_status) -> dict:
 
     for group, v in status["groups"].items():
         if "graced_users" in v:
-            print(f"Checking graced users for group: {group}")
+            logger.debug(f"Checking graced users for group: {group}")
             for user, grace_until_str in v["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
@@ -319,7 +319,7 @@ def remove_graced_users(cfg, status, new_status) -> dict:
                     # copied over to new_status if it needs to be preserved. Not doing
                     # so automatically disregards this information automatically and
                     # it is the intended behaviour
-                    print(f"Grace time ended for user {user} in {group}")
+                    logger.info(f"Grace time ended for user {user} in {group}")
                     group_attributes = cfg["sync"]["groups"][group]["attributes"]
                     event_handler.remove_graced_user_from_group(group, user, group_attributes)
                 else:
@@ -328,7 +328,7 @@ def remove_graced_users(cfg, status, new_status) -> dict:
                     new_status["groups"][group]["graced_users"][user] = grace_until_str
 
                     remaining_time = grace_until - now
-                    print(f"{user} from {group} has {remaining_time} left of its grace time.")
+                    logger.info(f"{user} from {group} has {remaining_time} left of its grace time.")
     return new_status
 
 
@@ -345,14 +345,16 @@ def remove_deleted_users_from_groups(cfg, status, new_status) -> dict:
                         cfg["sync"]["grace"][group]["grace_period"]
                     )
                     remaining_time = grace_until - datetime.now(timezone.utc)
-                    print(
+                    logger.info(
                         f'User "{user}" has been removed but not deleted due to grace time. Remaining time: {remaining_time}'
                     )
                     new_status["groups"][group]["graced_users"] = {
                         user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
                     }
                 else:
-                    print(f'Grace has not been defined for group "{group}" in the configuration file.')
+                    logger.warning(
+                        f'Grace has not been defined for group "{group}" in the configuration file.'
+                    )
             else:
                 event_handler.remove_user_from_group(group, v["attributes"], user)
 
@@ -371,7 +373,7 @@ def remove_deleted_groups(cfg, status, new_status):
 
         new_status = remove_deleted_users_from_groups(cfg, t, t2)
 
-        print(f"Removing group: '{group}'")
+        logger.debug(f"Removing group: '{group}'")
         event_handler.remove_group(group, status["groups"][group]["attributes"])
 
     return new_status
@@ -432,7 +434,7 @@ def keep_new_status(cfg, new_status):
     with open(filename, "w") as status_file:
         json.dump(new_status, status_file, indent=2)
 
-    print(f"new status file has been written to: {filename}")
+    logger.info(f"new status file has been written to: {filename}")
 
 
 @click.command(context_settings=click_ctx_settings)
