@@ -36,7 +36,7 @@ This installs the latets from the main branch. If you wish to use a specific
 version you can use the following:
 
 ```bash
-pip install git+https://github.com/venekamp/SRAMsync.git@v1.1.0#egg=SRAMsync
+pip install git+https://github.com/venekamp/SRAMsync.git@v1.1.1#egg=SRAMsync
 ```
 
 The exact verions, i.e. the  `@v1.0.0` in the above url, can be found the
