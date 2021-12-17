@@ -9,6 +9,7 @@ import json
 import click
 import ldap
 import click_logging
+from SRAMsync.SRAMlogger import logger
 
 import jsonschema.exceptions
 
@@ -24,12 +25,6 @@ click_logging_options = {
     "metavar": "level",
     "help": "level should be one of: CRITICAL, ERROR, WARNING, INFO or DEBUG.",
 }
-
-#  Adjust some of the colour style of click_logging.
-click_logging_styles = {"debug": dict(fg="green")}
-
-logger = logging.getLogger(__name__)
-click_logging.basic_config(logger, style_kwargs=click_logging_styles)
 
 
 class MultipleLoginGroups(Exception):
