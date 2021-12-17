@@ -443,7 +443,7 @@ def keep_new_status(cfg, new_status):
     "-v",
     "--verbose",
     count=True,
-    help="Set log level to INFO, WARNING or DEBUG, depending depending on the count",
+    help="Set log level to INFO or DEBUG, depending depending on the count",
 )
 @click.version_option()
 @click_logging.simple_verbosity_option(logger, "--loglevel", "-l", **click_logging_options)
