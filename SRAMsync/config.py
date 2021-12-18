@@ -40,14 +40,14 @@ class Config:
                             },
                         },
                     },
-                    "generator": {
+                    "event_handler": {
                         "type": "object",
                         "properties": {
-                            "generator_type": {"type": "string"},
-                            "event_handler": {"type": "string"},
-                            "input": {"type": "object"},
+                            "name": {"type": "string"},
+                            "config": {"type": "object"},
                         },
-                        "required": ["generator_type", "event_handler", "input"],
+                        "required": ["name"],
+                        "optional": ["config"],
                     },
                     "grace": {
                         "type": "object",
@@ -62,7 +62,7 @@ class Config:
                         "additionalProperties": False,
                     },
                 },
-                "required": ["servicename", "groups", "generator"],
+                "required": ["servicename", "groups", "event_handler"],
             },
             "status_filename": {"type": "string"},
             "provisional_status_filename": {"type": "string"},

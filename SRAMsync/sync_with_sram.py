@@ -393,32 +393,15 @@ def remove_superfluous_entries_from_ldap(cfg, status, new_status):
     return new_status
 
 
-def get_generator(cfg):
-    generator_name = cfg["sync"]["generator"]["generator_type"]
-    generator_module = importlib.import_module(f"SRAMsync.{generator_name}")
-    generator_class = getattr(generator_module, generator_name)
-    if "provisional_status_filename" in cfg:
-        provisional_status_filename = cfg["provisional_status_filename"]
-    else:
-        provisional_status_filename = None
-
-    generator = generator_class(
-        {
-            "servicename": cfg["sync"]["servicename"],
-            "status_filename": cfg["status_filename"],
-            "provisional_status_filename": provisional_status_filename,
-            **cfg["sync"]["generator"]["input"],
-        }
-    )
-
-    return generator
-
-
-def get_event_handler(cfg, generator):
-    event_name = cfg["sync"]["generator"]["event_handler"]
+def get_event_handler(cfg):
+    event_name = cfg["sync"]["event_handler"]["name"]
     event_module = importlib.import_module(f"SRAMsync.{event_name}")
     event_class = getattr(event_module, event_name)
-    event_handler = event_class(generator)
+    event_handler_config = None
+    if "config" in cfg["sync"]["event_handler"]:
+        event_handler_config = cfg["sync"]["event_handler"]["config"]
+
+    event_handler = event_class(event_handler_config)
 
     return event_handler
 
@@ -492,8 +475,7 @@ def cli(configuration, debug, verbose):
         new_status = {"users": {}, "groups": {}}
         cfg = Config(configuration)
 
-        generator = get_generator(cfg)
-        event_handler = get_event_handler(cfg, generator)
+        event_handler = get_event_handler(cfg)
         cfg.setEventHandler(event_handler)
 
         ldap_conn = init_ldap(cfg["sram"])
