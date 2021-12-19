@@ -460,14 +460,14 @@ def cli(configuration, debug, verbose):
     clean_exit = False
 
     if debug:
-        logging.getLogger(__name__).setLevel(logging.DEBUG)
+        logging.getLogger("SRAMsync").setLevel(logging.DEBUG)
 
     if verbose > 0:
         if verbose > 2:
             logger.warning("verbose option supports two level only. Additional levels are ignored.")
             verbose = 2
         verbose_logging = ["INFO", "DEBUG"]
-        logging.getLogger(__name__).setLevel(verbose_logging[verbose - 1])
+        logging.getLogger("SRAMsync").setLevel(verbose_logging[verbose - 1])
 
     try:
         logger.info(f"Started syncing with SRAM")
