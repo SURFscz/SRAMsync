@@ -1,7 +1,9 @@
+import importlib
 from datetime import datetime
 
 from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
+from SRAMsync.DummyEventHandler import DummyEventHandler
 
 
 class CuaScriptGenerator(EventHandler):
@@ -11,6 +13,11 @@ class CuaScriptGenerator(EventHandler):
     cua_group_types = {"system_group", "project_group"}
 
     def __init__(self, cfg):
+        if "auxiliary_event_handler" in cfg:
+            self.notify = self.get_auxiliary_notificaion_instance(cfg["auxiliary_event_handler"], cfg)
+        else:
+            self.notify = DummyEventHandler(cfg)
+
         self.cfg = cfg
         keywordPresent = [k in cfg.keys() for k in self.requiredKeywords]
         if all(keywordPresent):
@@ -37,6 +44,12 @@ class CuaScriptGenerator(EventHandler):
     def __del__(self):
         if self.script_file_descriptor:
             self.script_file_descriptor.close()
+
+    def get_auxiliary_notificaion_instance(self, handler_name, cfg):
+        event_module = importlib.import_module(f"SRAMsync.{handler_name}")
+        event_class = getattr(event_module, handler_name)
+
+        return event_class(cfg)
 
     def GenerateHeader(self):
         self.print("#" * 80)
@@ -80,13 +93,19 @@ class CuaScriptGenerator(EventHandler):
             f'  {{\n    echo "{line}" | {self.add_user_cmd} -f-\n    {self.modify_user_cmd} --service sram:{self.service_name} {user}\n  }}\n'
         )
 
+        self.notify.add_new_user(group, givenname, sn, user, mail)
+
     def add_public_ssh_key(self, user, key):
         self.print(f"### SSH Public key: {key[:30]}...{key[-40:]}")
         self.print(f'{self.modify_user_cmd} --ssh-public-key "{key}" {user}\n')
 
+        self.notify.add_public_ssh_key(user, key)
+
     def delete_public_ssh_key(self, user, key):
         self.print(f"### Remove SSH Public key: {key}")
         self.print(f'{self.modify_user_cmd} -r --ssh-public-key "{key}" {user}\n')
+
+        self.notify.delete_public_ssh_key(user, key)
 
     def add_new_group(self, group, attributes):
         if "system_group" in attributes:
@@ -95,6 +114,8 @@ class CuaScriptGenerator(EventHandler):
             self.add_new_project_group(group)
         else:
             logger.error("Could not determine group type (system_group or project_group) for {group}.")
+
+        self.notify.add_new_group(group, attributes)
 
     def add_new_system_group(self, group):
         logger.warning(f"Ignoring adding system group {group}. It should be done by the CUA team.")
@@ -109,17 +130,25 @@ class CuaScriptGenerator(EventHandler):
     def remove_group(self, group, attributes):
         self.print("#!!! Remove group")
 
+        self.notify.remove_group(group, attributes)
+
     def add_user_to_group(self, group, user, attributes: list):
         self.print(f"# Add {user} to group {group}")
         self.update_user_in_group(group, user, attributes, add=True)
+
+        self.notify.add_user_to_group(group, user, attributes)
 
     def remove_user_from_group(self, group, user, attributes):
         self.print(f"# Remove {user} from group {group}")
         self.update_user_in_group(group, user, attributes, add=False)
 
+        self.notify.remove_user_from_group(group, user, attributes)
+
     def remove_graced_user_from_group(self, group, user, attributes):
         self.print(f"# Grace time has ended for user {user} from group {group}")
         self.remove_user_from_group(group, user, attributes)
+
+        self.notify.remove_graced_user_from_group(group, user, attributes)
 
     def update_user_in_group(self, group, user, attributes, add):
         attr = set(attributes)
@@ -168,3 +197,5 @@ class CuaScriptGenerator(EventHandler):
         self.print("#  Script generation ended successfully.  #")
         self.print("#" + " " * 41 + "#")
         self.print("#" * 43)
+
+        self.notify.finialize()
