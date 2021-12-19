@@ -397,11 +397,20 @@ def get_event_handler(cfg):
     event_name = cfg["sync"]["event_handler"]["name"]
     event_module = importlib.import_module(f"SRAMsync.{event_name}")
     event_class = getattr(event_module, event_name)
-    event_handler_config = None
-    if "config" in cfg["sync"]["event_handler"]:
-        event_handler_config = cfg["sync"]["event_handler"]["config"]
 
-    event_handler = event_class(event_handler_config)
+    handler_cfg = {}
+    if "config" in cfg["sync"]["event_handler"]:
+        handler_cfg = cfg["sync"]["event_handler"]["config"]
+
+    if "servicename" in cfg["sync"]:
+        handler_cfg.update({"servicename": cfg["sync"]["servicename"]})
+
+    handler_cfg.update({"status_filename": cfg["status_filename"]})
+
+    if "provisional_status_filename" in cfg:
+        handler_cfg.update({"provisional_status_filename": cfg["provisional_status_filename"]})
+
+    event_handler = event_class(handler_cfg)
 
     return event_handler
 
