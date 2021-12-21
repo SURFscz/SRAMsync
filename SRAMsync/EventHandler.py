@@ -42,5 +42,5 @@ class EventHandler(ABC):
         self.generator.remove_graced_user_from_group(group, user, attributes)
 
     @abstractmethod
-    def finialize(self):
-        self.generator.finialize()
+    def finalize(self):
+        self.generator.finalize()

@@ -493,7 +493,7 @@ def cli(configuration, debug, verbose):
         new_status = add_missing_entries_to_ldap(cfg, status, new_status)
         new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
 
-        event_handler.finialize()
+        event_handler.finalize()
 
         keep_new_status(cfg, new_status)
         logger.info("Finished syncing with SRAM")

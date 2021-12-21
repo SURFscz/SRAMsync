@@ -46,5 +46,5 @@ class DelenaEventHandler(EventHandler):
 
         return super().remove_graced_user_from_group(group, user, attributes)
 
-    def finialize(self):
-        return super().finialize()
+    def finalize(self):
+        return super().finalize()

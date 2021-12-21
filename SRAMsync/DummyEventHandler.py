@@ -44,6 +44,6 @@ class DummyEventHandler(EventHandler):
         logger.debug(f"  remove_graced_user_from_group({group}, {user}, {attributes})")
         return
 
-    def finialize(self):
-        logger.debug(f"  finialize()")
+    def finalize(self):
+        logger.debug(f"  finalize()")
         return

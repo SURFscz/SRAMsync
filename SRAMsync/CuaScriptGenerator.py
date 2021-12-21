@@ -173,7 +173,7 @@ class CuaScriptGenerator(EventHandler):
             error = f'\'{", ".join(self.cua_group_types)}\' are mutually exclusive in the attributes of group: {group}.'
             raise ValueError(error)
 
-    def finialize(self):
+    def finalize(self):
         if self.cfg["provisional_status_filename"]:
             service = self.service_name
             status_filename = self.cfg["status_filename"]
@@ -198,4 +198,4 @@ class CuaScriptGenerator(EventHandler):
         self.print("#" + " " * 41 + "#")
         self.print("#" * 43)
 
-        self.notify.finialize()
+        self.notify.finalize()
