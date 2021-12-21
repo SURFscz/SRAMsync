@@ -1,5 +1,6 @@
 import importlib
 from datetime import datetime
+from jsonschema import validate
 
 from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
@@ -7,49 +8,59 @@ from SRAMsync.DummyEventHandler import DummyEventHandler
 
 
 class CuaScriptGenerator(EventHandler):
+    _schema = {
+        "$schema": "http://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+            "filename": {"type": "string"},
+            "servicename": {"type": "string"},
+            "add_user_cmd": {"type": "string"},
+            "modify_user_cmd": {"type": "string"},
+            "auxiliary_event_handler": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "config": {"type": "object"},
+                },
+                "required": ["name", "config"],
+            },
+        },
+        "required": ["filename", "servicename", "add_user_cmd", "modify_user_cmd"],
+        "optional": ["auxiliary_event_handler"],
+    }
+
     script_file_descriptor = None
 
-    requiredKeywords = ("filename", "servicename", "add_user_cmd", "modify_user_cmd")
     cua_group_types = {"system_group", "project_group"}
 
     def __init__(self, cfg):
+        validate(schema=self._schema, instance=cfg)
+        service = cfg["servicename"]
+
         if "auxiliary_event_handler" in cfg:
-            self.notify = self.get_auxiliary_notificaion_instance(cfg["auxiliary_event_handler"], cfg)
+            self.notify = self.get_auxiliary_notificaion_instance(
+                cfg["auxiliary_event_handler"]["name"], cfg["auxiliary_event_handler"]["config"], service
+            )
         else:
             self.notify = DummyEventHandler(cfg)
 
         self.cfg = cfg
-        keywordPresent = [k in cfg.keys() for k in self.requiredKeywords]
-        if all(keywordPresent):
-            service = cfg["servicename"]
-            script_name = f"{cfg['filename']}".format(**locals())
-            self.script_file_descriptor = open(script_name, "w+")
-            self.add_user_cmd = cfg["add_user_cmd"]
-            self.modify_user_cmd = cfg["modify_user_cmd"]
-            self.service_name = cfg["servicename"]
-            self.GenerateHeader()
-        else:
-            className = self.__class__.__name__
-            missingKeywords = list(set(self.requiredKeywords) - set(cfg.keys()))
-
-            errorString = f"Instantion of '{className}' class takes exacly {len(self.requiredKeywords)} arguments: {', '.join(self.requiredKeywords)}. "
-
-            if len(missingKeywords) == 1:
-                errorString = errorString + f"{missingKeywords[0]} is missing."
-            else:
-                errorString = errorString + f"{', '.join(missingKeywords)} are missing."
-
-            raise TypeError(errorString)
+        script_name = f"{cfg['filename']}".format(**locals())
+        self.script_file_descriptor = open(script_name, "w+")
+        self.add_user_cmd = cfg["add_user_cmd"]
+        self.modify_user_cmd = cfg["modify_user_cmd"]
+        self.service_name = cfg["servicename"]
+        self.GenerateHeader()
 
     def __del__(self):
         if self.script_file_descriptor:
             self.script_file_descriptor.close()
 
-    def get_auxiliary_notificaion_instance(self, handler_name, cfg):
+    def get_auxiliary_notificaion_instance(self, handler_name, cfg, service):
         event_module = importlib.import_module(f"SRAMsync.{handler_name}")
         event_class = getattr(event_module, handler_name)
 
-        return event_class(cfg)
+        return event_class(cfg, service)
 
     def GenerateHeader(self):
         self.print("#" * 80)
@@ -83,6 +94,7 @@ class CuaScriptGenerator(EventHandler):
 
     def start_of_service_processing(self, co):
         self.print(f"\n# service: {self.service_name}/{co}")
+        self.notify.start_of_service_processing(co)
 
     def add_new_user(self, group, givenname, sn, user, mail):
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
