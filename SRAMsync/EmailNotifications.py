@@ -66,7 +66,7 @@ class SMTPclient:
 
         self.server.login(login_name, passwd)
 
-    def send_message(self, message):
+    def send_message(self, message, service, co):
         msg = EmailMessage()
         msg["to"] = self.mail_to
         msg["from"] = self.mail_from
@@ -127,6 +127,8 @@ class EmailNotifications(EventHandler):
     def __init__(self, cfg, service):
         validate(schema=self._schema, instance=cfg)
 
+        self.service = service
+
         if "smtp" in cfg:
             self.smtp_client = SMTPclient(
                 cfg=cfg["smtp"],
@@ -168,7 +170,7 @@ class EmailNotifications(EventHandler):
 
                 m = m + msg
 
-            self.smtp_client.send_message(m[:-1])
+            self.smtp_client.send_message(m[:-1], self.service, co)
 
     def add_event_message(self, event, **args):
         if event in self.report_events:

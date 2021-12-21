@@ -13,7 +13,6 @@ class CuaScriptGenerator(EventHandler):
         "type": "object",
         "properties": {
             "filename": {"type": "string"},
-            "servicename": {"type": "string"},
             "add_user_cmd": {"type": "string"},
             "modify_user_cmd": {"type": "string"},
             "auxiliary_event_handler": {
@@ -25,7 +24,7 @@ class CuaScriptGenerator(EventHandler):
                 "required": ["name", "config"],
             },
         },
-        "required": ["filename", "servicename", "add_user_cmd", "modify_user_cmd"],
+        "required": ["filename", "add_user_cmd", "modify_user_cmd"],
         "optional": ["auxiliary_event_handler"],
     }
 
@@ -33,9 +32,8 @@ class CuaScriptGenerator(EventHandler):
 
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, cfg):
+    def __init__(self, service, cfg):
         validate(schema=self._schema, instance=cfg)
-        service = cfg["servicename"]
 
         if "auxiliary_event_handler" in cfg:
             self.notify = self.get_auxiliary_notificaion_instance(
@@ -49,7 +47,7 @@ class CuaScriptGenerator(EventHandler):
         self.script_file_descriptor = open(script_name, "w+")
         self.add_user_cmd = cfg["add_user_cmd"]
         self.modify_user_cmd = cfg["modify_user_cmd"]
-        self.service_name = cfg["servicename"]
+        self.service_name = service
         self.GenerateHeader()
 
     def __del__(self):

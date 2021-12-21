@@ -13,6 +13,7 @@ class Config:
         "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+            "service": {"type": "string"},
             "sram": {
                 "type": "object",
                 "properties": {
@@ -26,7 +27,6 @@ class Config:
             "sync": {
                 "type": "object",
                 "properties": {
-                    "servicename": {"type": "string"},
                     "groups": {
                         "type": "object",
                         "patternProperties": {
@@ -62,12 +62,12 @@ class Config:
                         "additionalProperties": False,
                     },
                 },
-                "required": ["servicename", "groups", "event_handler"],
+                "required": ["groups", "event_handler"],
             },
             "status_filename": {"type": "string"},
             "provisional_status_filename": {"type": "string"},
         },
-        "required": ["sram", "sync", "status_filename"],
+        "required": ["service", "sram", "sync", "status_filename"],
     }
 
     def __init__(self, config_file):

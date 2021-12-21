@@ -64,7 +64,7 @@ def get_previous_status(cfg):
         logger.warning("Possible reason is that the generated script has not been run yet.")
         logger.warning("It is okay to continue this sync and generate a new up-to-date script.")
 
-    service = cfg["sync"]["servicename"]  # service might be accessed indirectly
+    service = cfg["service"]  # service might be accessed indirectly
     filename = cfg["status_filename"]
     filename = f"{filename}".format(**locals())
     try:
@@ -145,7 +145,7 @@ def process_user_data(cfg, fq_co, co, status, new_status):
 
     ldap_conn = cfg.getLDAPconnector()
     event_handler = cfg.event_handler
-    group = f"{cfg['sync']['servicename']}_login"
+    group = f"{cfg['service']}_login"
 
     login_users = get_login_users(cfg, fq_co)
 
@@ -216,7 +216,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
 
     event_handler = cfg.event_handler
     ldap_conn = cfg.getLDAPconnector()
-    service = cfg["sync"]["servicename"]  # service might be accessed indirectly
+    service = cfg["service"]  # service might be accessed indirectly
 
     for sram_group, v in cfg["sync"]["groups"].items():
         group_attributes = v["attributes"]
@@ -402,15 +402,12 @@ def get_event_handler(cfg):
     if "config" in cfg["sync"]["event_handler"]:
         handler_cfg = cfg["sync"]["event_handler"]["config"]
 
-    if "servicename" in cfg["sync"]:
-        handler_cfg.update({"servicename": cfg["sync"]["servicename"]})
-
     handler_cfg.update({"status_filename": cfg["status_filename"]})
 
     if "provisional_status_filename" in cfg:
         handler_cfg.update({"provisional_status_filename": cfg["provisional_status_filename"]})
 
-    event_handler = event_class(handler_cfg)
+    event_handler = event_class(cfg["service"], handler_cfg)
 
     return event_handler
 
@@ -421,7 +418,7 @@ def keep_new_status(cfg, new_status):
     else:
         filename = cfg["status_filename"]
 
-    service = cfg["sync"]["servicename"]  # service might be accessed indirectly
+    service = cfg["service"]  # service might be accessed indirectly
     filename = f"{filename}".format(**locals())
 
     with open(filename, "w") as status_file:
