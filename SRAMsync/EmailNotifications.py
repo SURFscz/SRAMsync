@@ -159,18 +159,18 @@ class EmailNotifications(EventHandler):
 
     def send_queued_messages(self):
         for co, event_messages in self._messages.items():
-            m = ""
-            for event, messages in event_messages.items():
-                msg = ""
-                for message in messages:
-                    msg = f"{msg}{message}\n"
+            final_message = ""
+            for event, message_lines in event_messages.items():
+                message_line = ""
+                for line in message_lines:
+                    message_line = f"{message_line}{line}\n"
                 if event in self.report_events and "header" in self.report_events[event]:
                     header = self.report_events[event]["header"]
-                    msg = f"{header}\n{msg}"
+                    message_line = f"{header}\n{message_line}"
 
-                m = m + msg
+                final_message = final_message + message_line
 
-            self.smtp_client.send_message(m[:-1], self.service, co)
+            self.smtp_client.send_message(final_message[:-1], self.service, co)
 
     def add_event_message(self, event, **args):
         if event in self.report_events:
