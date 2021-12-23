@@ -80,10 +80,6 @@ In fact, the above defined events are from the abstract base class found in the
 `EventHandler` class. In case you wish to create your own  EventHandler,
 you should derive such class from the `EventHandler` abstract base class.
 
-## Tags and substitution
-
-TODO:
-
 ## Configuration details
 
 The executable `sync-with-sram` needs a configuration file in order to know
@@ -243,9 +239,44 @@ expermiment_B. A DummyEventHandler class is used to deal the emitted events
 from the main loop. In case of the DummyEventHandler nothing is done except
 printing debug messages to stdout.
 
+## Tag substitution
+
+The configuration has support for tag substitution. This means that certain
+keywords between curly brackets are substituted by their value. For example,
+the configuration allows for defining the service name with the `service:` key.
+When defining destination names for groups, the `{service}` tag can be used and
+is replaced by the key value at run time. Given the following configuration
+snippet:
+
+```yaml
+service: cloud
+sync:
+  groups:
+    login_users:
+      destination: "{service}-login_users"
+```
+
+The `{service}` tag is replace by `compute` and the following snippet is
+equal to the previous one:
+
+```yaml
+service: cloud
+sync:
+  groups:
+    login_users:
+      destination: "compute-login_users"
+```
+
+In case you need to sync multiple services, you could also use the `{service}`
+tag for the status_filename and provisional_status_filename to easily distinguish
+status files for different services.
+
 ## Removal of the status file
 
-TODO:
+When the status file is removed, it effectively means that all SRAM LDAP entries
+appear as new and thus each entry will be up for synchronization. Weather this is
+a problem or not depends on the EventHandler. In case of the `CuaScriptGenerator`
+it is not and removing of the status file can be done safely.
 
 ## Logging
 
@@ -424,4 +455,15 @@ sync:
 ```
 
 For available tags in formatting headers and lines, please also refer to
-[tags and substitution](#tags-and-substitution)
+[Tag substitution](#tag-substitution) and [Events](#events). The italic
+keywords in the Event section are available as tags for both `header:` and
+`line:` keys.
+
+```yaml
+event_handler:
+  name: EmailNotifications
+    config:
+      report_events:
+        add-new-user:
+          line: "Add new user {user}"
+```
