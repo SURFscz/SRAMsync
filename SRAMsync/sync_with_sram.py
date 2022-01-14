@@ -426,11 +426,12 @@ def keep_new_status(cfg, new_status):
 def get_configurations(path):
     if os.path.isdir(path):
         paths = os.listdir(path)
-        paths = sorted([os.path.join(path, x) for x in paths if x.endswith(('yaml', 'yml'))])
+        paths = sorted([os.path.join(path, x) for x in paths if x.endswith(("yaml", "yml"))])
     else:
         paths = [path]
 
     return paths
+
 
 @click.command(context_settings=click_ctx_settings)
 @click.option("-d", "--debug", is_flag=True, default=False, help="Set log level to DEBUG")
