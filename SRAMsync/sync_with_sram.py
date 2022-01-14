@@ -93,7 +93,7 @@ def is_user_eligible(uid, login_users, entry):
     return True
 
 
-def get_login_users(cfg, service):
+def get_login_users(cfg, service, co):
     """
     Check if there is at least one group that controls which users are
     allowed to login. If there are none, it's okay to use all known users.
@@ -144,7 +144,7 @@ def process_user_data(cfg, fq_co, co, status, new_status):
     event_handler = cfg.event_handler
     group = f"{cfg['service']}_login"
 
-    login_users = get_login_users(cfg, fq_co)
+    login_users = get_login_users(cfg, fq_co, co)
 
     try:
         dns = ldap_conn.search_s(
