@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
 
+import importlib
+import json
+import logging
 import os
 import sys
-import importlib
-import logging
 from datetime import datetime, timedelta, timezone
-import json
 
 import click
-import ldap
 import click_logging
-from SRAMsync.common import render_templated_string
-from SRAMsync.SRAMlogger import logger
-
 import jsonschema.exceptions
+import ldap
 
+from SRAMsync.common import render_templated_string
 from SRAMsync.config import Config
-
+from SRAMsync.SRAMlogger import logger
 
 #  By defaukt click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
