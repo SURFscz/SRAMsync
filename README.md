@@ -271,6 +271,19 @@ In case you need to sync multiple services, you could also use the `{service}`
 tag for the status_filename and provisional_status_filename to easily distinguish
 status files for different services.
 
+### Availanble tags
+
+The following tags are available:
+
+| Config Item                       | Tags                         |
+|-----------------------------------|------------------------------|
+| status_filename                   | `{service}`                  |
+| provisional_status_filename       | `{service}`                  |
+| mail_subject                      | `{service}`                  |
+| mail_message                      | `{service}`, `{co}`          |
+| sync/users/rename_user            | `{co}`, `{uid}`              |
+| sync/groups/\<group\>/destination | `{service}`, `{org}`, `{co}` |
+
 ## Removal of the status file
 
 When the status file is removed, it effectively means that all SRAM LDAP entries
