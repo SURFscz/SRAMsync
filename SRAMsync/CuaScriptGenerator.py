@@ -2,6 +2,7 @@ import importlib
 from datetime import datetime
 from jsonschema import validate
 
+from SRAMsync.common import render_templated_string
 from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
 from SRAMsync.DummyEventHandler import DummyEventHandler
@@ -43,7 +44,7 @@ class CuaScriptGenerator(EventHandler):
             self.notify = DummyEventHandler(cfg)
 
         self.cfg = cfg
-        script_name = f"{cfg['filename']}".format(**locals())
+        script_name = render_templated_string(cfg['filename'], service=service)
         self.script_file_descriptor = open(script_name, "w+")
         self.add_user_cmd = cfg["add_user_cmd"]
         self.modify_user_cmd = cfg["modify_user_cmd"]
@@ -187,9 +188,9 @@ class CuaScriptGenerator(EventHandler):
         if self.cfg["provisional_status_filename"]:
             service = self.service_name
             status_filename = self.cfg["status_filename"]
-            status_filename = f"{status_filename}".format(**locals())
+            status_filename = render_templated_string(status_filename, service=service)
             provisional_status_filename = self.cfg["provisional_status_filename"]
-            provisional_status_filename = f"{provisional_status_filename}".format(**locals())
+            provisional_status_filename = render_templated_string(provisional_status_filename, service=service)
 
             self.print("\n" + "#" * 32)
             self.print("# Cleaning provisional status. #")

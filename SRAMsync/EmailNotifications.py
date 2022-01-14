@@ -7,6 +7,7 @@ from email.message import EmailMessage
 
 from jsonschema import validate
 
+from SRAMsync.common import render_templated_string
 from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
 
@@ -22,7 +23,7 @@ class SMTPclient:
         self.server = self.conntect_to_smtp_server(cfg)
         self.mail_to = mail_to
         self.mail_from = mail_from
-        self.mail_subject = f"{mail_subject}".format(**locals())
+        self.mail_subject = render_templated_string(mail_subject, service=service)
         self.mail_message = mail_message
 
         if "login" in cfg or "passwd" in cfg:
@@ -72,8 +73,7 @@ class SMTPclient:
         msg["from"] = self.mail_from
         msg["subject"] = self.mail_subject
         msg["Date"] = formatdate(localtime=True)
-        message = f"{message}".format(**locals())
-        content = f"{self.mail_message}".format(**locals())
+        content = render_templated_string(self.mail_message, service=service, co=co, message=message)
         msg.set_content(content)
         self.server.send_message(msg)
 

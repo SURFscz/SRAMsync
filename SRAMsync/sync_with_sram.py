@@ -10,6 +10,7 @@ import json
 import click
 import ldap
 import click_logging
+from SRAMsync.common import render_templated_string
 from SRAMsync.SRAMlogger import logger
 
 import jsonschema.exceptions
@@ -64,9 +65,7 @@ def get_previous_status(cfg):
         logger.warning("Possible reason is that the generated script has not been run yet.")
         logger.warning("It is okay to continue this sync and generate a new up-to-date script.")
 
-    service = cfg["service"]  # service might be accessed indirectly
-    filename = cfg["status_filename"]
-    filename = f"{filename}".format(**locals())
+    filename = render_templated_string(cfg["status_filename"], service=cfg["service"])
     try:
         with open(filename) as json_file:
             status = json.load(json_file)
@@ -233,7 +232,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
                 "(objectClass=groupOfMembers)",
             )
             # The dest_group_name could contain an org reference
-            dest_group_name = f"{dest_group_name}".format(**locals())
+            dest_group_name = render_templated_string(dest_group_name, service=service, org=org, co=co)
 
             # Create groups
             if dest_group_name not in status["groups"]:
@@ -418,8 +417,7 @@ def keep_new_status(cfg, new_status):
     else:
         filename = cfg["status_filename"]
 
-    service = cfg["service"]  # service might be accessed indirectly
-    filename = f"{filename}".format(**locals())
+    filename = render_templated_string(filename, service=cfg["service"])
 
     with open(filename, "w") as status_file:
         json.dump(new_status, status_file, indent=2)
