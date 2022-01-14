@@ -27,6 +27,13 @@ class Config:
             "sync": {
                 "type": "object",
                 "properties": {
+                    "users": {
+                        "type": "object",
+                        "properties": {
+                            "rename_user": { "type": "string"}
+                        },
+                        "required": ["rename_user"]
+                    },
                     "groups": {
                         "type": "object",
                         "patternProperties": {
@@ -62,7 +69,7 @@ class Config:
                         "additionalProperties": False,
                     },
                 },
-                "required": ["groups", "event_handler"],
+                "required": ["users", "groups", "event_handler"],
             },
             "status_filename": {"type": "string"},
             "provisional_status_filename": {"type": "string"},

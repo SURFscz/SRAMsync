@@ -160,7 +160,7 @@ def process_user_data(cfg, fq_co, co, status, new_status):
             if is_user_eligible(uid, login_users, entry):
                 givenname = entry["givenName"][0].decode("UTF-8")
                 sn = entry["sn"][0].decode("UTF-8")
-                user = f"sram-{co}-{uid}"
+                user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=uid)
                 mail = entry["mail"][0].decode("UTF-8")
 
                 new_status["users"][user] = {}
