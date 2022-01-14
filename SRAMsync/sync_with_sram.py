@@ -425,6 +425,15 @@ def keep_new_status(cfg, new_status):
     logger.info(f"new status file has been written to: {filename}")
 
 
+def get_configurations(path):
+    if os.path.isdir(path):
+        paths = os.listdir(path)
+        paths = sorted([os.path.join(path, x) for x in paths if x.endswith(('yaml', 'yml'))])
+    else:
+        paths = [path]
+
+    return paths
+
 @click.command(context_settings=click_ctx_settings)
 @click.option("-d", "--debug", is_flag=True, default=False, help="Set log level to DEBUG")
 @click.option(
@@ -435,7 +444,7 @@ def keep_new_status(cfg, new_status):
 )
 @click.version_option()
 @click_logging.simple_verbosity_option(logger, "--loglevel", "-l", **click_logging_options)
-@click.argument("configuration", type=click.Path(exists=True, dir_okay=False))
+@click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
 def cli(configuration, debug, verbose):
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
@@ -473,30 +482,33 @@ def cli(configuration, debug, verbose):
         verbose_logging = ["INFO", "DEBUG"]
         logging.getLogger("SRAMsync").setLevel(verbose_logging[verbose - 1])
 
+    configurations = get_configurations(configuration)
+
     try:
         logger.info(f"Started syncing with SRAM")
 
-        new_status = {"users": {}, "groups": {}}
-        cfg = Config(configuration)
+        for configuration in configurations:
+            new_status = {"users": {}, "groups": {}}
+            cfg = Config(configuration)
 
-        event_handler = get_event_handler(cfg)
-        cfg.setEventHandler(event_handler)
+            event_handler = get_event_handler(cfg)
+            cfg.setEventHandler(event_handler)
 
-        ldap_conn = init_ldap(cfg["sram"])
-        cfg.setLDAPconnector(ldap_conn)
-        status = get_previous_status(cfg)
-        new_status = add_missing_entries_to_ldap(cfg, status, new_status)
-        new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
+            ldap_conn = init_ldap(cfg["sram"])
+            cfg.setLDAPconnector(ldap_conn)
+            status = get_previous_status(cfg)
+            new_status = add_missing_entries_to_ldap(cfg, status, new_status)
+            new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
 
-        event_handler.finalize()
+            event_handler.finalize()
 
-        keep_new_status(cfg, new_status)
-        logger.info("Finished syncing with SRAM")
-        clean_exit = True
+            keep_new_status(cfg, new_status)
+            logger.info("Finished syncing with SRAM")
+            clean_exit = True
     except IOError as e:
         logger.error(e)
     except jsonschema.exceptions.ValidationError as e:
-        msg = "Error in configuration file."
+        msg = f"Error in configuration file {configuration}."
         if logger.level > logging.DEBUG:
             msg = msg + f" Rerun with --log-level=DEBUG to get more information"
         logger.error(msg)
