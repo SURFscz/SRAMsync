@@ -11,3 +11,7 @@ pyyaml = "*"
 click-logging = "*"
 
 [dev-packages]
+black = "*"
+
+[pipenv]
+allow_prereleases = true
