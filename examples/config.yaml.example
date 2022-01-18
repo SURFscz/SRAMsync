@@ -1,10 +1,12 @@
+servicename: <serive-name>
 ldap:
     uri: ldaps://ldap.scz-vm.net
     basedn: dc=myservice,dc=services,dc=vnet
     binddn: cn=admin,dc=myserive,dc=services,dc=vnet
     passwd: changethispassword
 cua:
-    servicename: <serive-name>
+    users:
+      rename_user: <prefix>-{co}-{uid}
     groups:
         - ai_login:
             {
@@ -14,14 +16,36 @@ cua:
         - ai_dev: { attributes: ["system_group"], destination: "{org}-{co}-ai-dev" }
         - ai_res: { attributes: ["project_group"], destination: "prj:ai_res" }
         - foo: { attributes: ["ignore"], destination: "ign:foo" }
-    generator:
-        generator_type: <Generator>
-        event_handler: <EventHandler>
-        input:
+    event_handler:
+        name: CuaScriptGenerator
+        config:
           filename: ./sync-script.sh
           add_user_cmd: sudo sara_adduser --no-usermail
           modify_user_cmd: sudo sara_modify_users --no-usermail
+          auxiliary_event_handler:
+            name: EmailNotification
+            config:
+              report_events:
+                remove_user_from_group:
+                  line: "Removed {user} from {group}"
+              smtp:
+                host: <smtp host>
+                port: <port>
+                login: <login name>
+                passwd: <password>
+              mail-to: <recipiant>
+              mail-from: <sender>
+              mail-subject: This is a sample subject for service {sevice}
+              mail-message: |
+                {service}/{co}
+
+                This is a sample text.
+
+                {message}
+
+                The end
     grace:
         my-org-my-co-ai-login:
             period: 90
-status_filename: "/home/<user>/status.json"
+status_filename: "/home/<user>/status-{serive}.json"
+provisional_status_filename: "/home/<user>/provisional_status-{service}.json"
