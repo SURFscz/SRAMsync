@@ -12,9 +12,9 @@ import click_logging
 import jsonschema.exceptions
 import ldap
 
-from SRAMsync.common import render_templated_string
-from SRAMsync.config import Config
-from SRAMsync.SRAMlogger import logger
+from .common import render_templated_string
+from .config import Config
+from .SRAMlogger import logger
 
 #  By defaukt click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])

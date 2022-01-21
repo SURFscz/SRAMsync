@@ -1,5 +1,5 @@
-from SRAMsync.SRAMlogger import logger
-from SRAMsync.EventHandler import EventHandler
+from .SRAMlogger import logger
+from .EventHandler import EventHandler
 
 
 class DummyEventHandler(EventHandler):
