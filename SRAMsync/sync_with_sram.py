@@ -27,6 +27,12 @@ click_logging_options = {
 }
 
 
+class ConfigValidationError(jsonschema.exceptions.ValidationError):
+    def __init__(self, exception, path):
+        self.path = path
+        self.exception = exception
+
+
 class MultipleLoginGroups(Exception):
     pass
 
@@ -404,7 +410,7 @@ def get_event_handler(cfg):
     if "provisional_status_filename" in cfg:
         handler_cfg.update({"provisional_status_filename": cfg["provisional_status_filename"]})
 
-    event_handler = event_class(cfg["service"], handler_cfg)
+    event_handler = event_class(cfg["service"], handler_cfg, ["sync", "event_handler", "config"])
 
     return event_handler
 
@@ -507,10 +513,20 @@ def cli(configuration, debug, verbose):
     except IOError as e:
         logger.error(e)
     except jsonschema.exceptions.ValidationError as e:
-        msg = f"Error in configuration file {configuration}."
-        if logger.level > logging.DEBUG:
-            msg = msg + f" Rerun with --log-level=DEBUG to get more information"
-        logger.error(msg)
+        if isinstance(e, ConfigValidationError):
+            path = e.path
+            path.extend(e.exception.relative_path)
+            e = e.exception
+        else:
+            path = e.relative_path
+
+        logger.error(f"Syntax error in configuration file {configuration} at:")
+        indent_level = 0
+        for path_element in path:
+            logger.error(" " * indent_level * 2 + f"{path_element}:")
+            indent_level = indent_level + 1
+        logger.error(" " * indent_level * 2 + e.message)
+
         logger.debug(e)
     except ldap.NO_SUCH_OBJECT as e:
         if "desc" in e.args[0]:

@@ -1,7 +1,8 @@
 import importlib
 from datetime import datetime
-from jsonschema import validate
+from jsonschema import validate, ValidationError
 
+from SRAMsync.sync_with_sram import ConfigValidationError
 from SRAMsync.common import render_templated_string
 from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
@@ -33,33 +34,42 @@ class CuaScriptGenerator(EventHandler):
 
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service, cfg):
-        validate(schema=self._schema, instance=cfg)
+    def __init__(self, service, cfg, path):
+        try:
+            validate(schema=self._schema, instance=cfg)
 
-        if "auxiliary_event_handler" in cfg:
-            self.notify = self.get_auxiliary_notificaion_instance(
-                cfg["auxiliary_event_handler"]["name"], cfg["auxiliary_event_handler"]["config"], service
-            )
-        else:
-            self.notify = DummyEventHandler(cfg)
+            if "auxiliary_event_handler" in cfg:
+                path.append("auxiliary_event_handler")
+                self.notify = self.get_auxiliary_notificaion_instance(
+                    cfg["auxiliary_event_handler"]["name"],
+                    cfg["auxiliary_event_handler"]["config"],
+                    service,
+                    path,
+                )
+            else:
+                self.notify = DummyEventHandler(cfg)
 
-        self.cfg = cfg
-        script_name = render_templated_string(cfg['filename'], service=service)
-        self.script_file_descriptor = open(script_name, "w+")
-        self.add_user_cmd = cfg["add_user_cmd"]
-        self.modify_user_cmd = cfg["modify_user_cmd"]
-        self.service_name = service
-        self.GenerateHeader()
+            self.cfg = cfg
+            script_name = render_templated_string(cfg["filename"], service=service)
+            self.script_file_descriptor = open(script_name, "w+")
+            self.add_user_cmd = cfg["add_user_cmd"]
+            self.modify_user_cmd = cfg["modify_user_cmd"]
+            self.service_name = service
+            self.GenerateHeader()
+        except ConfigValidationError as e:
+            raise e
+        except ValidationError as e:
+            raise ConfigValidationError(e, path)
 
     def __del__(self):
         if self.script_file_descriptor:
             self.script_file_descriptor.close()
 
-    def get_auxiliary_notificaion_instance(self, handler_name, cfg, service):
+    def get_auxiliary_notificaion_instance(self, handler_name, cfg, service, path):
         event_module = importlib.import_module(f"SRAMsync.{handler_name}")
-        event_class = getattr(event_module, handler_name)
+        event_class = getattr(event_module, handler_name, path)
 
-        return event_class(cfg, service)
+        return event_class(cfg, service, path)
 
     def GenerateHeader(self):
         self.print("#" * 80)
@@ -190,7 +200,9 @@ class CuaScriptGenerator(EventHandler):
             status_filename = self.cfg["status_filename"]
             status_filename = render_templated_string(status_filename, service=service)
             provisional_status_filename = self.cfg["provisional_status_filename"]
-            provisional_status_filename = render_templated_string(provisional_status_filename, service=service)
+            provisional_status_filename = render_templated_string(
+                provisional_status_filename, service=service
+            )
 
             self.print("\n" + "#" * 32)
             self.print("# Cleaning provisional status. #")

@@ -5,8 +5,9 @@ import smtplib
 from email.utils import formatdate
 from email.message import EmailMessage
 
-from jsonschema import validate
+from jsonschema import validate, ValidationError
 
+from SRAMsync.sync_with_sram import ConfigValidationError
 from SRAMsync.common import render_templated_string
 from SRAMsync.SRAMlogger import logger
 from SRAMsync.EventHandler import EventHandler
@@ -124,20 +125,23 @@ class EmailNotifications(EventHandler):
     _messages = {}
     _co = "undetermined"
 
-    def __init__(self, cfg, service):
-        validate(schema=self._schema, instance=cfg)
+    def __init__(self, cfg, service, path):
+        try:
+            validate(schema=self._schema, instance=cfg)
 
-        self.service = service
+            self.service = service
 
-        if "smtp" in cfg:
-            self.smtp_client = SMTPclient(
-                cfg=cfg["smtp"],
-                service=service,
-                mail_to=cfg["mail-to"],
-                mail_from=cfg["mail-from"],
-                mail_subject=cfg["mail-subject"],
-                mail_message=cfg["mail-message"],
-            )
+            if "smtp" in cfg:
+                self.smtp_client = SMTPclient(
+                    cfg=cfg["smtp"],
+                    service=service,
+                    mail_to=cfg["mail-to"],
+                    mail_from=cfg["mail-from"],
+                    mail_subject=cfg["mail-subject"],
+                    mail_message=cfg["mail-message"],
+                )
+        except ValidationError as e:
+            raise ConfigValidationError(e, path)
 
         self.report_events = cfg["report_events"]
         self.msg_content = cfg["mail-message"]
