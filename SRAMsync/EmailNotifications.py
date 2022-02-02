@@ -40,17 +40,22 @@ class SMTPclient:
 
     def __del__(self):
         if hasattr(self, "server"):
+            logger.debug("Disconnecting SMTP server")
             self.server.quit()
 
     @staticmethod
     def conntect_to_smtp_server(cfg):
+        msg = f"SMTP: connecting to: {cfg['host']}"
         host = cfg["host"]
         port = 0
 
         if "port" in cfg:
+            msg = msg + f":{cfg['port']}"
             port = cfg["port"]
 
+        logger.debug(msg)
         server = smtplib.SMTP(host, port)
+        logger.debug("SMTP: connected to SMTP host")
 
         return server
 
@@ -64,9 +69,12 @@ class SMTPclient:
         ctx.set_default_verify_paths()
         ctx.verify_mode = ssl.CERT_REQUIRED
 
+        logger.debug("SMTP: starttls")
         self.server.starttls(context=ctx)
 
+        logger.debug("SMTP: trying to login")
         self.server.login(login_name, passwd)
+        logger.debug("SMTP: login successful")
 
     def send_message(self, message, service, co):
         msg = EmailMessage()
@@ -175,6 +183,8 @@ class EmailNotifications(EventHandler):
                 final_message = final_message + message_line
 
             self.smtp_client.send_message(final_message[:-1], self.service, co)
+
+        logger.debug("Finished sending queued messages")
 
     def add_event_message(self, event, **args):
         if event in self.report_events:

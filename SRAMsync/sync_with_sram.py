@@ -50,11 +50,12 @@ def init_ldap(config):
     """
     Initialization and binding an LDAP connection.
     """
+    logger.debug(f"LDAP: connecting to: {config['uri']}")
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)
     ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
     ldap_conn = ldap.initialize(config["uri"])
     ldap_conn.simple_bind_s(config["binddn"], config["passwd"])
-
+    logger.debug("LDAP: connected")
     return ldap_conn
 
 
