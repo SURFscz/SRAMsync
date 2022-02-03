@@ -36,7 +36,7 @@ class CuaScriptGenerator(EventHandler):
 
     def __init__(self, service, cfg, path):
         try:
-            validate(schema=self._schema, instance=cfg)
+            validate(schema=CuaScriptGenerator._schema, instance=cfg)
 
             if "auxiliary_event_handler" in cfg:
                 path.append("auxiliary_event_handler")
