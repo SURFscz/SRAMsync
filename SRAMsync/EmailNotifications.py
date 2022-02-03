@@ -77,14 +77,21 @@ class SMTPclient:
         logger.debug("SMTP: login successful")
 
     def send_message(self, message, service, co):
-        msg = EmailMessage()
-        msg["to"] = self.mail_to
-        msg["from"] = self.mail_from
-        msg["subject"] = self.mail_subject
-        msg["Date"] = formatdate(localtime=True)
-        content = render_templated_string(self.mail_message, service=service, co=co, message=message)
-        msg.set_content(content)
-        self.server.send_message(msg)
+        try:
+            logger.debug("Sending message")
+
+            msg = EmailMessage()
+            msg["to"] = self.mail_to
+            msg["from"] = self.mail_from
+            msg["subject"] = self.mail_subject
+            msg["Date"] = formatdate(localtime=True)
+            content = render_templated_string(self.mail_message, service=service, co=co, message=message)
+            msg.set_content(content)
+            self.server.send_message(msg)
+
+            logger.debug("Message sent")
+        except smtplib.SMTPServerDisconnected as e:
+            logger.error(f"Sending e-mail notifications for {co} has failed. SMTP server has disconnected.")
 
 
 class EmailNotifications(EventHandler):
@@ -137,17 +144,8 @@ class EmailNotifications(EventHandler):
         try:
             validate(schema=self._schema, instance=cfg)
 
+            self.cfg = cfg
             self.service = service
-
-            if "smtp" in cfg:
-                self.smtp_client = SMTPclient(
-                    cfg=cfg["smtp"],
-                    service=service,
-                    mail_to=cfg["mail-to"],
-                    mail_from=cfg["mail-from"],
-                    mail_subject=cfg["mail-subject"],
-                    mail_message=cfg["mail-message"],
-                )
         except ValidationError as e:
             raise ConfigValidationError(e, path)
 
@@ -170,6 +168,17 @@ class EmailNotifications(EventHandler):
         self._messages[self._co][event].append(message)
 
     def send_queued_messages(self):
+        logger.debug("Sending queued messages")
+        if "smtp" in self.cfg:
+            self.smtp_client = SMTPclient(
+                cfg=self.cfg["smtp"],
+                service=self.service,
+                mail_to=self.cfg["mail-to"],
+                mail_from=self.cfg["mail-from"],
+                mail_subject=self.cfg["mail-subject"],
+                mail_message=self.cfg["mail-message"],
+            )
+
         for co, event_messages in self._messages.items():
             final_message = ""
             for event, message_lines in event_messages.items():
