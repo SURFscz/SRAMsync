@@ -12,6 +12,7 @@ click-logging = "*"
 
 [dev-packages]
 black = "*"
+yq = "*"
 
 [pipenv]
 allow_prereleases = true
