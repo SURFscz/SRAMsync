@@ -449,7 +449,7 @@ def get_configurations(path):
     help="Set log level to INFO or DEBUG, depending depending on the count",
 )
 @click.version_option()
-@click_logging.simple_verbosity_option(logger, "--loglevel", "-l", **click_logging_options)
+@click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
 def cli(configuration, debug, verbose):
     """
