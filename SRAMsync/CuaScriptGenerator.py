@@ -195,7 +195,7 @@ class CuaScriptGenerator(EventHandler):
             raise ValueError(error)
 
     def finalize(self):
-        if self.cfg["provisional_status_filename"]:
+        if "provisional_status_filename" in self.cfg:
             service = self.service_name
             status_filename = self.cfg["status_filename"]
             status_filename = render_templated_string(status_filename, service=service)
