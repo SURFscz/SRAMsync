@@ -3,7 +3,7 @@ from .EventHandler import EventHandler
 
 
 class DummyEventHandler(EventHandler):
-    def __init__(self, cfg):
+    def __init__(self, cfg, service, path):
         logger.debug("DummyEventHandler.__init__(cfg)")
         logger.debug(cfg)
         pass
