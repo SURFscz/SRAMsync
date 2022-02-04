@@ -250,7 +250,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
             # Find members
             for _, entry in dns:
                 # Add members
-                members = [m.decode("UTF-8") for m in entry["member"]]
+                members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
                 for member in members:
                     m_uid = dn2rdns(member)["uid"][0]
                     user = f"sram-{co}-{m_uid}"
