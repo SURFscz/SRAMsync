@@ -37,6 +37,10 @@ class MultipleLoginGroups(Exception):
     pass
 
 
+class PasswordNotFound(Exception):
+    pass
+
+
 def dn2rdns(dn):
     rdns = {}
     r = ldap.dn.str2dn(dn)
@@ -46,7 +50,20 @@ def dn2rdns(dn):
     return rdns
 
 
-def init_ldap(config):
+def get_ldap_passwd(config, service):
+    if "passwd" in config:
+        return config["passwd"]
+
+    if "passwd_file" in config:
+        with open(config["passwd_file"]) as fd:
+            passwds = json.load(fd)
+            if service in passwds:
+                return passwds[service]
+
+    raise PasswordNotFound
+
+
+def init_ldap(config, service):
     """
     Initialization and binding an LDAP connection.
     """
@@ -54,7 +71,8 @@ def init_ldap(config):
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)
     ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
     ldap_conn = ldap.initialize(config["uri"])
-    ldap_conn.simple_bind_s(config["binddn"], config["passwd"])
+    passwd = get_ldap_passwd(config, service)
+    ldap_conn.simple_bind_s(config["binddn"], passwd)
     logger.debug("LDAP: connected")
     return ldap_conn
 
@@ -500,7 +518,7 @@ def cli(configuration, debug, verbose):
             event_handler = get_event_handler(cfg)
             cfg.setEventHandler(event_handler)
 
-            ldap_conn = init_ldap(cfg["sram"])
+            ldap_conn = init_ldap(cfg["sram"], cfg["service"])
             cfg.setLDAPconnector(ldap_conn)
             status = get_previous_status(cfg)
             new_status = add_missing_entries_to_ldap(cfg, status, new_status)
@@ -529,6 +547,8 @@ def cli(configuration, debug, verbose):
         logger.error(" " * indent_level * 2 + e.message)
 
         logger.debug(e)
+    except PasswordNotFound as e:
+        logger.error("SRAM LDAP password not found.")
     except ldap.NO_SUCH_OBJECT as e:
         if "desc" in e.args[0]:
             logger.error(e.args[0]["desc"])

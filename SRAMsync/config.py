@@ -20,19 +20,17 @@ class Config:
                     "uri": {"type": "string"},
                     "basedn": {"type": "string"},
                     "binddn": {"type": "string"},
-                    "passwd": {"type": "string"},
                 },
-                "required": ["uri", "basedn", "binddn", "passwd"],
+                "required": ["uri", "basedn", "binddn"],
+                "not": {"required": ["passwd", "passwd_file"]},
             },
             "sync": {
                 "type": "object",
                 "properties": {
                     "users": {
                         "type": "object",
-                        "properties": {
-                            "rename_user": { "type": "string"}
-                        },
-                        "required": ["rename_user"]
+                        "properties": {"rename_user": {"type": "string"}},
+                        "required": ["rename_user"],
                     },
                     "groups": {
                         "type": "object",
