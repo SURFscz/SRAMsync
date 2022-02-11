@@ -52,6 +52,9 @@ def dn2rdns(dn):
 
 
 def get_ldap_passwd(config, service):
+    if "SRAM_LDAP_PASSWD" in os.environ:
+        return os.environ["SRAM_LDAP_PASSWD"]
+
     if "passwd" in config:
         return config["passwd"]
 
@@ -67,12 +70,7 @@ def get_ldap_passwd(config, service):
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Password file not found: '{config['passwd_file']}'")
 
-    try:
-        return os.environ["SRAM_LDAP_PASSWD"]
-    except KeyError:
-        raise PasswordNotFound(
-            "SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD."
-        )
+    raise PasswordNotFound("SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD.")
 
 
 def init_ldap(config, service):
