@@ -290,7 +290,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
                 members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
                 for member in members:
                     m_uid = dn2rdns(member)["uid"][0]
-                    user = f"sram-{co}-{m_uid}"
+                    user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
                     new_status["groups"][dest_group_name]["members"].append(user)
                     if user not in status["groups"][dest_group_name]["members"]:
                         event_handler.add_user_to_group(dest_group_name, user, group_attributes)
