@@ -38,7 +38,8 @@ class MultipleLoginGroups(Exception):
 
 
 class PasswordNotFound(Exception):
-    pass
+    def __init__(self, msg):
+        self.msg = msg
 
 
 def dn2rdns(dn):
@@ -54,13 +55,24 @@ def get_ldap_passwd(config, service):
     if "passwd" in config:
         return config["passwd"]
 
-    if "passwd_file" in config:
+    try:
         with open(config["passwd_file"]) as fd:
             passwds = json.load(fd)
-            if service in passwds:
+            try:
                 return passwds[service]
+            except KeyError:
+                raise PasswordNotFound(f"SRAM LDAP password not found in {config['passwd_file']}")
+    except KeyError:
+        pass
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Password file not found: '{config['passwd_file']}'")
 
-    raise PasswordNotFound
+    try:
+        return os.environ["SRAM_LDAP_PASSWD"]
+    except KeyError:
+        raise PasswordNotFound(
+            "SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD."
+        )
 
 
 def init_ldap(config, service):
@@ -548,12 +560,14 @@ def cli(configuration, debug, verbose):
 
         logger.debug(e)
     except PasswordNotFound as e:
-        logger.error("SRAM LDAP password not found.")
+        logger.error(e.msg)
     except ldap.NO_SUCH_OBJECT as e:
         if "desc" in e.args[0]:
             logger.error(e.args[0]["desc"])
     except ldap.INVALID_CREDENTIALS:
-        logger.error("Invalid credentials. Please check your configuration file.")
+        logger.error(
+            "Invalid credentials. Please check your configuration file or set SRAM_LDAP_PASSWD correctly."
+        )
     except ldap.SERVER_DOWN as e:
         if "desc" in e.args[0]:
             logger.error(e.args[0]["desc"])
