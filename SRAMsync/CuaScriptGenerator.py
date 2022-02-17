@@ -1,5 +1,6 @@
 import importlib
 from datetime import datetime
+import json
 from jsonschema import validate, ValidationError
 
 from .sync_with_sram import ConfigValidationError
@@ -69,7 +70,7 @@ class CuaScriptGenerator(EventHandler):
         event_module = importlib.import_module(f"SRAMsync.{handler_name}")
         event_class = getattr(event_module, handler_name, path)
 
-        return event_class(cfg, service, path)
+        return event_class(service, cfg, path)
 
     def GenerateHeader(self):
         self.print("#" * 80)

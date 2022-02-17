@@ -1,4 +1,6 @@
 from email import message
+from genericpath import exists
+import json
 import ssl
 import smtplib
 
@@ -140,7 +142,7 @@ class EmailNotifications(EventHandler):
     _messages = {}
     _co = "undetermined"
 
-    def __init__(self, cfg, service, path):
+    def __init__(self, service, cfg, path):
         try:
             validate(schema=self._schema, instance=cfg)
 
@@ -153,7 +155,8 @@ class EmailNotifications(EventHandler):
         self.msg_content = cfg["mail-message"]
 
     def __del__(self):
-        self.send_queued_messages()
+        if hasattr(self, "cfg"):
+            self.send_queued_messages()
 
     def set_current_co_group(self, co):
         self._co = co
