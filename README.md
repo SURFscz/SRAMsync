@@ -41,17 +41,17 @@ be called in the destination LDAP.
 
 ## Structure of sync-with-sram
 
-The `sync-with-sram` consists out of a main loop that itterates over the SRAM
+The `sync-with-sram` consists out of a main loop that iterates over the SRAM
 LDAP as defined per configuration. The main loop does not do anything more than
-this itteration. For example, it does not write entries into a destination
-LDAP. In fact, the main loop in unaware what it should do with all encountered
+this iteration. For example, it does not write entries into a destination LDAP.
+In fact, the main loop in unaware what it should do with all encountered
 entries. All it does is emitting events when some action could be required.
 Events are triggered when for example the main loop detects that a new user is
 added to SRAM. Now it is up to whoever is responsible for dealing with such an
 event and what it really means. In case of a new user this should ultimately
 end with a user being added to some destination LDAP, but it is not the
 responsibility of the main loop. Instead the configuration requires an
-`EventHandler` class to be instantiated.
+`EventHandler` class to be instantiated that takes care of this functionality.
 
 A design choice was to dynamically load derived `EventHandler` classes. Thereby
 allowing for multiple implementations of emitted events. This allows for
@@ -77,7 +77,7 @@ SRAMsync defines the following events and their variables:
 * finalize
 
 In fact, the above defined events are from the abstract base class found in the
-`EventHandler` class. In case you wish to create your own  EventHandler,
+`EventHandler` class. In case you wish to create your own EventHandler,
 you should derive such class from the `EventHandler` abstract base class.
 
 ## Configuration details
@@ -103,8 +103,14 @@ As can be noticed from the above, two major blocks can be identified.
 
 The `service` key is for specifying the name of the local service. Both
 `status_filename` and `provisional_status_filename` are file names where
-`sync-with-sram` keeps track of the current state. These two keys are used for
-keeping track of the current state of the synchronization process.
+`sync-with-sram` keeps track of the current state. The `status_filename` is
+read at the beginning so that `sync-with-sram` can determine the state of the
+last sync. `provisional_status_filename` is optional. If you do use it,
+`sync-with-sram` will write its status info to that file instead and not
+`status_filename`. It is expected that the instantiated EventHandler object
+copies the `provisional_status_filename` to `status_filename`. If the
+instantiated object fails to do so, `sync-with-sram` will always see new event
+as the `status_filename` is never updated to the latest sync state.
 
 ### SRAM connection details
 
@@ -121,6 +127,35 @@ sram:
   passwd: <your password>
 ```
 
+ or,
+
+```yaml
+sram:
+  uri: ldaps://ldap.sram.surf.nl
+  basedn: dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
+  binddn: cn=admin,dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
+  passwd_file: <path to password file>
+```
+
+#### Password file format
+The password file is a flat json file. The keys are the service name and its
+value the SRAM LDAP password.
+
+```json
+{
+    "my_service_A": "fh9dFDSf67fsd;fdsgh",
+    "my_service_B": "uirweSD_3$Afdhs!^Z1"
+}
+```
+
+#### Environment variable
+
+One could also use an environment variable (SRAM_LDAP_PASSWD) containing the
+SRAM LDAP password. If it is specified it take precedence over either `passwd`
+or `passwd_file`. If neither `passwd` nor `passwd_file` is specified in the
+configuration, the environment variable must be present. If not an error is
+shown.
+
 ### Synchronization details
 
 The `sync:` holds all information regarding what to sync and in which way
@@ -134,7 +169,7 @@ sync:
   event_handler:
     name: <event handler class name to instantiate>
     config:
-      <configuration for instantiated EventHandler class>
+      <configuration belonging to the instantiated EventHandler class>
   grace:
     <group names for which to apply a grace period>:
       grace_period: <grace period in days>
@@ -144,7 +179,7 @@ sync:
 
 The group block specifies what groups need to be synced from SRAM. You must
 use the short names for groups in SRAM as this is how SRAM CO groups appear
-in the SRAM LDAP. This does not mean that thay must appear with the same
+in the SRAM LDAP. This does not mean that they must appear with the same
 name in the destination LDAP. In order to specify its destination name, you
 must use the `destination:` key.
 
@@ -168,12 +203,27 @@ sync:
 
 The number of groups is unlimited.
 
+##### Exceptions to the rule
+
+The previous sub section stated that the attributes are meaningless to the
+main loop. There are, however, two exceptions: `login_users` and
+`grace_period`. All users within a CO are also available in the `@all`
+entry. A service might wish for a more fine grained control on what users
+are allowed access. For this purpose a group can be marked `login_users`
+through the attributes. This tells `sync-with-sram` that it should not use
+the `@all` group, but rather the group with this attribute. This means that
+`sync-with-sram` will only use this group for adding users. In case there
+is not group with such an attribute, the main loop will you the `@all` instead.
+
+The `grace_period` attribute tells `sync-with-sram` for this particular group
+a grace period must be applied. See also [grace](#grace) section below.
+
 #### event_handler
 
-The `event_handler:` key takes two keys: `name:` and `config:`. The `name:` key
-specifies the class name of which an instance must be created at run time,
-while the `config:` key specifies a YAML configuration that needs to be passed
-on to the instantiation class. The main loop is unconcerned with this
+The `event_handler:` key understands two keys: `name:` and `config:`. The
+`name:` key specifies the class name of which an instance must be created at
+run time, while the `config:` key specifies a YAML configuration that needs to
+be passed on to the instantiation class. The main loop is unconcerned with this
 configuration and ignores its structure. The instantiated class however could
 check for its validity. The specification for `event_handler` is as follows:
 
@@ -186,10 +236,12 @@ sync:
        ...
 ```
 
+The `config:` in the above is optional.
+
 #### grace
 
 The grace key is used when the removal of users should not take place
-immediately, but should be effectuated after a grace period. Noramlly
+immediately, but should be effectuated after a grace period. Normally
 `sync-with-sram` would emit a removal event when it detects that a user is
 no-longer present in a group. This would then trigger an immediate removal of
 that users. The grace key allows for a delay by specifying for which groups a
@@ -206,12 +258,16 @@ sync:
       grace_period: 90
 ```
 
+The `grace:` key is not mandatory, but must be used when at least one group
+has the `grace_period` attribute.
+
 ## Putting it together
 
 In order to get a valid configuration, we need to put together all the needed
 elements. Thus a valid configuration should look like this:
 
 ```yaml
+service: my_service
 sram:
   uri: ldaps://ldap.sram.surf.nl
   basedn: dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
@@ -237,7 +293,8 @@ provisional_status_filename: provisional-status.json
 In the above we see that two groups are synchronized: expermiment_A and
 expermiment_B. A DummyEventHandler class is used to deal the emitted events
 from the main loop. In case of the DummyEventHandler nothing is done except
-printing debug messages to stdout.
+printing debug messages to stdout. It does not take any additional
+configuration and therefor the `config:` key is omitted.
 
 ## Tag substitution
 
@@ -249,7 +306,7 @@ is replaced by the key value at run time. Given the following configuration
 snippet:
 
 ```yaml
-service: cloud
+service: compute
 sync:
   groups:
     login_users:
@@ -260,7 +317,7 @@ The `{service}` tag is replace by `compute` and the following snippet is
 equal to the previous one:
 
 ```yaml
-service: cloud
+service: compute
 sync:
   groups:
     login_users:
@@ -268,10 +325,10 @@ sync:
 ```
 
 In case you need to sync multiple services, you could also use the `{service}`
-tag for the status_filename and provisional_status_filename to easily distinguish
-status files for different services.
+tag for the `status_filename` and `provisional_status_filename` to easily
+distinguish status files for different services.
 
-### Availanble tags
+### Available tags
 
 The following tags are available:
 
@@ -343,7 +400,7 @@ against these kinds of replays.
 The `CuaScriptGenerator` makes use of any additional `EventHandler` class. This
 could be for example the `EmailNotifications` class for mailing events.
 
-#### configuration
+#### Configuration
 
 The `CuaScriptGenerator` class needs to know a few things in order to be able
 to generate a bash script based on the `sara_usertools`. First of all, there is
@@ -419,7 +476,7 @@ The `mail-message:` should contain at a minimum the following text `{message}`,
 if you want the headers and lines from the event to appear in mail. This tag is
 replaced by the headers and lines of the events.
 
-#### configuration
+#### Configuration
 
 ```yaml
 sync:
@@ -478,5 +535,6 @@ event_handler:
     config:
       report_events:
         add-new-user:
+          header: "Adding the following users:"
           line: "Add new user {user}"
 ```
