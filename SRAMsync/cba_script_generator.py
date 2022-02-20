@@ -7,12 +7,12 @@ from jsonschema import validate, ValidationError
 
 from .sync_with_sram import ConfigValidationError
 from .common import render_templated_string
-from .SRAMlogger import logger
+from .sramlogger import logger
 from .EventHandler import EventHandler
 from .CuaScriptGenerator import CuaScriptGenerator
 
 
-class CBAScriptGenerator(CuaScriptGenerator):
+class CbaScriptGenerator(CuaScriptGenerator):
     _schema = {
         "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -25,12 +25,9 @@ class CBAScriptGenerator(CuaScriptGenerator):
 
     def __init__(self, service, cfg, path):
         try:
-            validate(schema=CBAScriptGenerator._schema, instance=cfg)
+            validate(schema=CbaScriptGenerator._schema, instance=cfg)
             super().__init__(service, cfg["cua_config"], path)
         except ConfigValidationError as e:
             raise e
         except ValidationError as e:
-            raise ConfigValidationError(e, path)
-
-    def __del__(self):
-        super().__del__()
+            raise ConfigValidationError(e, path) from e

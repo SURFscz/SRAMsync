@@ -11,8 +11,8 @@ from jsonschema import validate, ValidationError
 
 from .sync_with_sram import ConfigValidationError
 from .common import render_templated_string
-from .SRAMlogger import logger
-from .EventHandler import EventHandler
+from .sramlogger import logger
+from .event_handler import EventHandler
 
 
 class SMTPclient:

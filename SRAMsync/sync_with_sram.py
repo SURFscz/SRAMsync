@@ -1,9 +1,24 @@
-#!/usr/bin/env python3
+"""
+sync-with-sram is a command line untility to help synchronize a locol system,
+e.g. LDAP, with the LDAP provided by SRAM. Keep in mind though that the SRAM
+LDAP provides attributes only and that it does not provide posix account and
+groups.
+
+sync-with-sram consists in essence out of twp part: 1) a main loop that
+iterates over the entries and retrieve attrbites from the SRAM LDAP, 2) an
+event like system that acts on detected changes between the current state of
+the SRAM LDAP and the current state of the destination system.
+
+This event system is modular and what sync-with-sram really does depends on
+what module is configured. It could bea sending a simple email message, or it
+could be interacting with the destination system.
+"""
 
 import importlib
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -14,7 +29,7 @@ import ldap
 
 from .common import render_templated_string
 from .config import Config
-from .SRAMlogger import logger
+from .sramlogger import logger
 
 #  By defaukt click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
@@ -28,30 +43,50 @@ click_logging_options = {
 
 
 class ConfigValidationError(jsonschema.exceptions.ValidationError):
+    """Exception in case the supplied configuration file contains errors"""
+
     def __init__(self, exception, path):
+        super().__init__(exception, path)
         self.path = path
         self.exception = exception
 
 
 class MultipleLoginGroups(Exception):
-    pass
+    """Exception is case multiple login groeps are found."""
 
 
 class PasswordNotFound(Exception):
+    """Exception is case not password has been found."""
+
     def __init__(self, msg):
+        super().__init__(msg)
         self.msg = msg
 
 
-def dn2rdns(dn):
+def dn_to_rdns(dn):
+    """
+    Convert the given dn string represitation info a dictionary, where each
+    key value pair is an rdn.
+    """
+
     rdns = {}
-    r = ldap.dn.str2dn(dn)
-    for rdn in r:
-        a, v, _ = rdn[0]
-        rdns.setdefault(a, []).append(v)
+    rdn_components = ldap.dn.str2dn(dn)
+    for rdn in rdn_components:
+        attribute, value, _ = rdn[0]
+        rdns.setdefault(attribute, []).append(value)
     return rdns
 
 
 def get_ldap_passwd(config, service):
+    """
+    Get the SRAM LDAP.
+
+    The configuration file could contain the password, or a path to a password
+    file. If either is used, retrieve the password through that method. If
+    neither is used or if the environment variable SRAM_DAP_PASSWD is set, use
+    that value instead.
+    """
+
     if "SRAM_LDAP_PASSWD" in os.environ:
         return os.environ["SRAM_LDAP_PASSWD"]
 
@@ -63,12 +98,12 @@ def get_ldap_passwd(config, service):
             passwds = json.load(fd)
             try:
                 return passwds[service]
-            except KeyError:
-                raise PasswordNotFound(f"SRAM LDAP password not found in {config['passwd_file']}")
+            except KeyError as e:
+                raise PasswordNotFound(f"SRAM LDAP password not found in {config['passwd_file']}") from e
     except KeyError:
         pass
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"Password file not found: '{config['passwd_file']}'")
+        raise FileNotFoundError(f"Password file not found: '{config['passwd_file']}'") from e
 
     raise PasswordNotFound("SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD.")
 
@@ -102,7 +137,7 @@ def get_previous_status(cfg):
     try:
         with open(filename) as json_file:
             status = json.load(json_file)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         pass
 
     return status
@@ -121,8 +156,8 @@ def is_user_eligible(uid, login_users, entry):
         return False
 
     if "voPersonStatus" in entry:
-        voPersonStatus = entry["voPersonStatus"][0].decode("UTF-8")
-        if voPersonStatus != "active":
+        vo_person_status = entry["voPersonStatus"][0].decode("UTF-8")
+        if vo_person_status != "active":
             return False
 
     return True
@@ -133,25 +168,25 @@ def get_login_users(cfg, service, co):
     Check if there is at least one group that controls which users are
     allowed to login. If there are none, it's okay to use all known users.
     """
-    ldap_conn = cfg.getLDAPconnector()
+    ldap_conn = cfg.get_ldap_connector()
 
     login_groups = [group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]]
     login_users = []
-    l = len(login_groups)
+    number_of_groups = len(login_groups)
 
-    if l > 1:
+    if number_of_groups > 1:
         raise MultipleLoginGroups()
-    elif l == 1:
+    elif number_of_groups == 1:
         group = login_groups[0]
         try:
             dns = ldap_conn.search_s(
-                f"ou=Groups,o={service},dc=ordered,{cfg.getSRAMbasedn()}",
+                f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
                 ldap.SCOPE_ONELEVEL,
                 f"(cn={group})",
             )
             for _, entry in dns:
                 for member in entry["member"]:
-                    uid = dn2rdns(member)["uid"][0]
+                    uid = dn_to_rdns(member)["uid"][0]
                     login_users.append(uid)
         except ldap.NO_SUCH_OBJECT:
             logger.warning(f"login group '{group}' has been defined but could not be found for CO '{co}'.")
@@ -175,7 +210,7 @@ def process_user_data(cfg, fq_co, co, status, new_status):
     after a successful run of the resulting script.
     """
 
-    ldap_conn = cfg.getLDAPconnector()
+    ldap_conn = cfg.get_ldap_connector()
     event_handler = cfg.event_handler
     group = f"{cfg['service']}_login"
 
@@ -183,7 +218,7 @@ def process_user_data(cfg, fq_co, co, status, new_status):
 
     try:
         dns = ldap_conn.search_s(
-            f"ou=People,o={fq_co},dc=ordered,{cfg.getSRAMbasedn()}",
+            f"ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}",
             ldap.SCOPE_ONELEVEL,
             "(objectClass=person)",
         )
@@ -202,24 +237,24 @@ def process_user_data(cfg, fq_co, co, status, new_status):
                     event_handler.add_new_user(group, givenname, sn, user, mail)
 
                 if "sshPublicKey" in entry:
-                    raw_sshPublicKeys = entry["sshPublicKey"]
-                    sshPublicKeys = set([raw_sshPublicKeys[0].decode("UTF-8").rstrip()])
-                    for key in raw_sshPublicKeys[1:]:
-                        sshPublicKeys = sshPublicKeys | {key.decode("UTF-8").rstrip()}
+                    raw_ssh_public_keys = entry["sshPublicKey"]
+                    ssh_public_keys = set([raw_ssh_public_keys[0].decode("UTF-8").rstrip()])
+                    for key in raw_ssh_public_keys[1:]:
+                        ssh_public_keys = ssh_public_keys | {key.decode("UTF-8").rstrip()}
 
-                    known_sshPublicKeys = set()
+                    known_ssh_public_keys = set()
                     if user in status["users"] and "sshPublicKey" in status["users"][user]:
-                        known_sshPublicKeys = set(status["users"][user]["sshPublicKey"])
-                    new_status["users"][user]["sshPublicKey"] = list(sshPublicKeys)
+                        known_ssh_public_keys = set(status["users"][user]["sshPublicKey"])
+                    new_status["users"][user]["sshPublicKey"] = list(ssh_public_keys)
 
-                    new_sshPublicKeys = sshPublicKeys - known_sshPublicKeys
-                    dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
+                    new_ssh_public_keys = ssh_public_keys - known_ssh_public_keys
+                    dropped_ssh_public_leys = known_ssh_public_keys - ssh_public_keys
 
-                    for key in new_sshPublicKeys:
+                    for key in new_ssh_public_keys:
                         logger.debug(f"    Adding public SSH key: {key[:50]}…")
                         event_handler.add_public_ssh_key(user, key)
 
-                    for key in dropped_sshPublicKeys:
+                    for key in dropped_ssh_public_leys:
                         logger.debug(f"    Removing public SSH key: {key[:50]}…")
                         event_handler.delete_public_ssh_key(user, key)
 
@@ -247,18 +282,18 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
     """
 
     event_handler = cfg.event_handler
-    ldap_conn = cfg.getLDAPconnector()
+    ldap_conn = cfg.get_ldap_connector()
     service = cfg["service"]  # service might be accessed indirectly
 
-    for sram_group, v in cfg["sync"]["groups"].items():
-        group_attributes = v["attributes"]
-        dest_group_name = v["destination"]
+    for sram_group, value in cfg["sync"]["groups"].items():
+        group_attributes = value["attributes"]
+        dest_group_name = value["destination"]
 
         if "ignore" in group_attributes:
             continue
 
         try:
-            basedn = cfg.getSRAMbasedn()
+            basedn = cfg.get_sram_basedn()
             dns = ldap_conn.search_s(
                 f"cn={sram_group},ou=Groups,o={fq_co},dc=ordered,{basedn}",
                 ldap.SCOPE_BASE,
@@ -287,15 +322,13 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
                 # Add members
                 members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
                 for member in members:
-                    m_uid = dn2rdns(member)["uid"][0]
+                    m_uid = dn_to_rdns(member)["uid"][0]
                     user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
                     new_status["groups"][dest_group_name]["members"].append(user)
                     if user not in status["groups"][dest_group_name]["members"]:
                         event_handler.add_user_to_group(dest_group_name, user, group_attributes)
         except ldap.NO_SUCH_OBJECT:
             logger.warning(f"service '{fq_co}' does not contain group '{sram_group}'")
-        except:
-            raise
 
     return new_status
 
@@ -315,8 +348,8 @@ def add_missing_entries_to_ldap(cfg, status, new_status):
     LDAP."""
 
     event_handler = cfg.event_handler
-    ldap_conn = cfg.getLDAPconnector()
-    basedn = cfg.getSRAMbasedn()
+    ldap_conn = cfg.get_ldap_connector()
+    basedn = cfg.get_sram_basedn()
     dns = ldap_conn.search_s(
         f"dc=ordered,{basedn}",
         ldap.SCOPE_ONELEVEL,
@@ -336,15 +369,17 @@ def add_missing_entries_to_ldap(cfg, status, new_status):
 
 
 def remove_graced_users(cfg, status, new_status) -> dict:
+    """Remove users that have passed the grace period."""
+
     if "groups" not in new_status:
         return new_status
 
     event_handler = cfg.event_handler
 
-    for group, v in status["groups"].items():
-        if "graced_users" in v:
+    for group, group_attributes in status["groups"].items():
+        if "graced_users" in group_attributes:
             logger.debug(f"Checking graced users for group: {group}")
-            for user, grace_until_str in v["graced_users"].items():
+            for user, grace_until_str in group_attributes["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
                 if now > grace_until:
@@ -366,20 +401,27 @@ def remove_graced_users(cfg, status, new_status) -> dict:
 
 
 def remove_deleted_users_from_groups(cfg, status, new_status) -> dict:
+    """
+    Determine based on the (old) status and the new_status one which users are to be removed.
+    """
+
     event_handler = cfg.event_handler
 
-    for group, v in status["groups"].items():
-        removed_users = [user for user in v["members"] if user not in new_status["groups"][group]["members"]]
+    for group, group_properties in status["groups"].items():
+        removed_users = [
+            user for user in group_properties["members"] if user not in new_status["groups"][group]["members"]
+        ]
 
         for user in removed_users:
-            if "grace_period" in v["attributes"]:
+            if "grace_period" in group_properties["attributes"]:
                 if "grace" in cfg["sync"] and group in cfg["sync"]["grace"]:
                     grace_until = datetime.now(timezone.utc) + timedelta(
                         cfg["sync"]["grace"][group]["grace_period"]
                     )
                     remaining_time = grace_until - datetime.now(timezone.utc)
                     logger.info(
-                        f'User "{user}" has been removed but not deleted due to grace time. Remaining time: {remaining_time}'
+                        f"User '{user}' has been removed but not deleted due to grace timea. "
+                        f"Remaining time: {remaining_time}"
                     )
                     new_status["groups"][group]["graced_users"] = {
                         user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
@@ -389,22 +431,28 @@ def remove_deleted_users_from_groups(cfg, status, new_status) -> dict:
                         f'Grace has not been defined for group "{group}" in the configuration file.'
                     )
             else:
-                event_handler.remove_user_from_group(group, v["attributes"], user)
+                event_handler.remove_user_from_group(group, group_properties["attributes"], user)
 
     return new_status
 
 
 def remove_deleted_groups(cfg, status, new_status):
+    """
+    Determine based on the (old) status and the new_status which groups are to
+    be removed. If any of those groups contain member, remove those members
+    first from the group.
+    """
+
     event_handler = cfg.event_handler
 
     removed_groups = [group for group in status["groups"] if group not in new_status["groups"]]
 
     for group in removed_groups:
-        t = {"groups": status["groups"][group]}
-        t2 = {"groups": new_status["groups"][group]}
-        t2["groups"][group]["members"] = {}
+        old_group_status = {"groups": status["groups"][group]}
+        new_group_status = {"groups": new_status["groups"][group]}
+        new_group_status["groups"][group]["members"] = {}
 
-        new_status = remove_deleted_users_from_groups(cfg, t, t2)
+        new_status = remove_deleted_users_from_groups(cfg, old_group_status, new_group_status)
 
         logger.debug(f"Removing group: '{group}'")
         event_handler.remove_group(group, status["groups"][group]["attributes"])
@@ -425,9 +473,25 @@ def remove_superfluous_entries_from_ldap(cfg, status, new_status):
     return new_status
 
 
+def pascal_case_to_snake_case(string: str) -> str:
+    """Convert a pascal case string to its snake case equivalant."""
+    string = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", string)
+    string = re.sub(r"([a-z])([A-Z])", r"\1_\2", string)
+
+    return string.lower()
+
+
 def get_event_handler(cfg):
+    """
+    Dynamically load the configured class from the configuration. If the class
+    expects a configuration extraxt that from the configuration and pass it
+    along at instansiation time. Put the status_filename and the optional
+    provisional_status_filename in the class configuration.
+    """
+
     event_name = cfg["sync"]["event_handler"]["name"]
-    event_module = importlib.import_module(f"SRAMsync.{event_name}")
+    event_module_name = pascal_case_to_snake_case(event_name)
+    event_module = importlib.import_module(f"SRAMsync.{event_module_name}")
     event_class = getattr(event_module, event_name)
 
     handler_cfg = {}
@@ -445,6 +509,11 @@ def get_event_handler(cfg):
 
 
 def keep_new_status(cfg, new_status):
+    """
+    Write the new status to the defined status_filename or
+    provisional_status_filename depending on the configuration.
+    """
+
     if "provisional_status_filename" in cfg:
         filename = cfg["provisional_status_filename"]
     else:
@@ -458,7 +527,12 @@ def keep_new_status(cfg, new_status):
     logger.info(f"new status file has been written to: {filename}")
 
 
-def get_configurations(path):
+def get_configuration_paths(path):
+    """
+    Return an array containing paths to configurations in case the provided
+    path was a directory, or a single path if the path was a file.
+    """
+
     if os.path.isdir(path):
         paths = os.listdir(path)
         paths = sorted([os.path.join(path, x) for x in paths if x.endswith(("yaml", "yml"))])
@@ -516,20 +590,22 @@ def cli(configuration, debug, verbose):
         verbose_logging = ["INFO", "DEBUG"]
         logging.getLogger("SRAMsync").setLevel(verbose_logging[verbose - 1])
 
-    configurations = get_configurations(configuration)
-
     try:
-        logger.info(f"Started syncing with SRAM")
+        logger.info("Started syncing with SRAM")
 
-        for configuration in configurations:
+        configuration_paths = get_configuration_paths(configuration)
+
+        for configuration_path in configuration_paths:
+            logger.info(f"Handling configuration: {configuration_path}")
+
             new_status = {"users": {}, "groups": {}}
-            cfg = Config(configuration)
+            cfg = Config(configuration_path)
 
             event_handler = get_event_handler(cfg)
-            cfg.setEventHandler(event_handler)
+            cfg.set_event_handler(event_handler)
 
             ldap_conn = init_ldap(cfg["sram"], cfg["service"])
-            cfg.setLDAPconnector(ldap_conn)
+            cfg.set_set_ldap_connector(ldap_conn)
             status = get_previous_status(cfg)
             new_status = add_missing_entries_to_ldap(cfg, status, new_status)
             new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
@@ -537,8 +613,9 @@ def cli(configuration, debug, verbose):
             event_handler.finalize()
 
             keep_new_status(cfg, new_status)
-            logger.info("Finished syncing with SRAM")
-            clean_exit = True
+
+        logger.info("Finished syncing with SRAM")
+        clean_exit = True
     except IOError as e:
         logger.error(e)
     except jsonschema.exceptions.ValidationError as e:
@@ -549,7 +626,7 @@ def cli(configuration, debug, verbose):
         else:
             path = e.relative_path
 
-        logger.error(f"Syntax error in configuration file {configuration} at:")
+        logger.error(f"Syntax error in configuration file {configuration_path} at:")
         indent_level = 0
         for path_element in path:
             logger.error(" " * indent_level * 2 + f"{path_element}:")

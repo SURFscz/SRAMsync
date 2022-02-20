@@ -1,3 +1,7 @@
+"""
+Singleton logging with click
+"""
+
 import logging
 import click_logging
 
