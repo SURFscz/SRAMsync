@@ -13,6 +13,7 @@ click-logging = "*"
 [dev-packages]
 black = "*"
 yq = "*"
+pylint = "*"
 
 [pipenv]
 allow_prereleases = true
