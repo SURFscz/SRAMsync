@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 class EventHandler(ABC):
     """Abstract implementatation of the EventHandler class."""
 
+    @abstractmethod
     def __init__(self, service, cfg, cfg_path):
         pass
 

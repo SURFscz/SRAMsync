@@ -1,21 +1,26 @@
-from email import message
-from genericpath import exists
-import json
-import ssl
+"""
+Send e-mails for each emited event from the sync-with-sram main loop. For which
+events to send email is configurable and also some basic formatting can be
+applied.
+"""
+
 import smtplib
-
-from email.utils import formatdate
+import ssl
 from email.message import EmailMessage
+from email.utils import formatdate
 
-from jsonschema import validate, ValidationError
+from jsonschema import ValidationError, validate
 
-from .sync_with_sram import ConfigValidationError
 from .common import render_templated_string
-from .sramlogger import logger
+from .config import Config
 from .event_handler import EventHandler
+from .sramlogger import logger
+from .sync_with_sram import ConfigValidationError
 
 
 class SMTPclient:
+    """Class for handling client side SMTP."""
+
     _DEFAULT_CIPHERS = (
         "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+HIGH:"
         "DH+HIGH:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+HIGH:RSA+3DES:!aNULL:"
@@ -47,6 +52,7 @@ class SMTPclient:
 
     @staticmethod
     def conntect_to_smtp_server(cfg):
+        """Connect to an SMTP server."""
         msg = f"SMTP: connecting to: {cfg['host']}"
         host = cfg["host"]
         port = 0
@@ -62,6 +68,7 @@ class SMTPclient:
         return server
 
     def login(self, login_name, passwd):
+        """Log into an SMTP server."""
         ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
 
         ctx.options |= ssl.OP_NO_SSLv2
@@ -79,6 +86,7 @@ class SMTPclient:
         logger.debug("SMTP: login successful")
 
     def send_message(self, message, service, co):
+        """Send a message through an opened SMTP server."""
         try:
             logger.debug("Sending message")
 
@@ -92,11 +100,17 @@ class SMTPclient:
             self.server.send_message(msg)
 
             logger.debug("Message sent")
-        except smtplib.SMTPServerDisconnected as e:
+        except smtplib.SMTPServerDisconnected:
             logger.error(f"Sending e-mail notifications for {co} has failed. SMTP server has disconnected.")
 
 
 class EmailNotifications(EventHandler):
+    """
+    For each emited event by sync-with-sram produce a message discribing the
+    event. Messages are collect and sent upon deletion of the
+    EmailNotifications object.
+    """
+
     _schema = {
         "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -142,26 +156,30 @@ class EmailNotifications(EventHandler):
     _messages = {}
     _co = "undetermined"
 
-    def __init__(self, service, cfg, path):
+    def __init__(self, service, cfg: Config, config_path) -> None:
+        super().__init__(service, cfg, config_path)
         try:
             validate(schema=self._schema, instance=cfg)
 
             self.cfg = cfg
             self.service = service
+            self.smtp_client = None
         except ValidationError as e:
-            raise ConfigValidationError(e, path)
+            raise ConfigValidationError(e, config_path) from e
 
         self.report_events = cfg["report_events"]
         self.msg_content = cfg["mail-message"]
 
-    def __del__(self):
+    def __del__(self) -> None:
         if hasattr(self, "cfg"):
             self.send_queued_messages()
 
-    def set_current_co_group(self, co):
+    def set_current_co_group(self, co) -> None:
+        """Set the current CO message queue."""
         self._co = co
 
-    def add_message_to_current_co_group(self, event, message):
+    def add_message_to_current_co_group(self, event: str, message: str) -> None:
+        """Add the message to the current CO message queue."""
         if self._co not in self._messages:
             self._messages[self._co] = {}
 
@@ -170,7 +188,8 @@ class EmailNotifications(EventHandler):
 
         self._messages[self._co][event].append(message)
 
-    def send_queued_messages(self):
+    def send_queued_messages(self) -> None:
+        """Send all queued message."""
         logger.debug("Sending queued messages")
         if "smtp" in self.cfg:
             self.smtp_client = SMTPclient(
@@ -198,38 +217,49 @@ class EmailNotifications(EventHandler):
 
         logger.debug("Finished sending queued messages")
 
-    def add_event_message(self, event, **args):
+    def add_event_message(self, event: str, **args) -> None:
+        """Add a event message and apply formatting to it."""
         if event in self.report_events:
             message = f"{self.report_events[event]['line']}".format(**args)
             self.add_message_to_current_co_group(event, message)
 
-    def start_of_service_processing(self, co):
+    def start_of_service_processing(self, co: str) -> None:
+        """Add start event message to the message queue."""
         self.set_current_co_group(co)
         self.add_event_message("start", co=co)
 
-    def add_new_user(self, group, givenname, sn, user, mail):
+    def add_new_user(self, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
+        """Add add-new-user event message to the message queue."""
         self.add_event_message("add-new-user", group=group, givenname=givenname, sn=sn, user=user, mail=mail)
 
-    def add_public_ssh_key(self, user, key):
+    def add_public_ssh_key(self, user: str, key: str) -> None:
+        """Add add-shh-key event message to the message queue."""
         self.add_event_message("add-ssh-key", user=user, key=key)
 
-    def delete_public_ssh_key(self, user, key):
+    def delete_public_ssh_key(self, user: str, key: str) -> None:
+        """Add delete-ssh-key event message to the message queue."""
         self.add_event_message("delete-ssh-key", user=user, key=key)
 
-    def add_new_group(self, group, attributes):
+    def add_new_group(self, group: str, attributes: list) -> None:
+        """Add add-group event message to the message queue."""
         self.add_event_message("add-group", group=group, attributes=attributes)
 
-    def remove_group(self, group, attributes):
+    def remove_group(self, group: str, attributes: list) -> None:
+        """Add remove-group event message to the message queue."""
         self.add_event_message("remove-group", group=group, attributes=attributes)
 
-    def add_user_to_group(self, group, user, attributes: list):
+    def add_user_to_group(self, group: str, user: str, attributes: list) -> None:
+        """Add add-user-to-group event message to the message queue."""
         self.add_event_message("add-user-to-group", group=group, user=user, attributes=attributes)
 
-    def remove_user_from_group(self, group, user, attributes: list):
+    def remove_user_from_group(self, group: str, user: str, attributes: list) -> None:
+        """Add remove-user-from-group event message to the message queue."""
         self.add_event_message("remove-user-from-group", group=group, user=user, attributes=attributes)
 
-    def remove_graced_user_from_group(self, group, user, attributes):
+    def remove_graced_user_from_group(self, group: str, user: str, attributes: list) -> None:
+        """Add remove-grace-users-from-group event message to the message queue."""
         self.add_event_message("remove-graced-user-from-group", group=group, user=user, attributes=attributes)
 
-    def finalize(self):
+    def finalize(self) -> None:
+        """Add finalize event message to the message queue."""
         self.add_event_message("finalize")

@@ -14,18 +14,19 @@ what module is configured. It could bea sending a simple email message, or it
 could be interacting with the destination system.
 """
 
-import importlib
 import json
 import logging
 import os
-import re
 import sys
 from datetime import datetime, timedelta, timezone
+from typing import List
 
 import click
 import click_logging
 import jsonschema.exceptions
 import ldap
+from ldap import ldapobject
+from ldap.dn import str2dn
 
 from .common import render_templated_string
 from .config import Config
@@ -63,21 +64,21 @@ class PasswordNotFound(Exception):
         self.msg = msg
 
 
-def dn_to_rdns(dn):
+def dn_to_rdns(dn: str) -> dict:
     """
     Convert the given dn string represitation info a dictionary, where each
     key value pair is an rdn.
     """
 
     rdns = {}
-    rdn_components = ldap.dn.str2dn(dn)
+    rdn_components = str2dn(dn)
     for rdn in rdn_components:
         attribute, value, _ = rdn[0]
         rdns.setdefault(attribute, []).append(value)
     return rdns
 
 
-def get_ldap_passwd(config, service):
+def get_ldap_passwd(config: dict, service: str) -> str:
     """
     Get the SRAM LDAP.
 
@@ -108,21 +109,22 @@ def get_ldap_passwd(config, service):
     raise PasswordNotFound("SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD.")
 
 
-def init_ldap(config, service):
+def init_ldap(config: dict, service: str) -> ldapobject.LDAPObject:
     """
     Initialization and binding an LDAP connection.
     """
     logger.debug(f"LDAP: connecting to: {config['uri']}")
-    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)
-    ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)  # type: ignore pylint: disable=E1101
+    ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore, pylint: disable=E1101
     ldap_conn = ldap.initialize(config["uri"])
     passwd = get_ldap_passwd(config, service)
     ldap_conn.simple_bind_s(config["binddn"], passwd)
     logger.debug("LDAP: connected")
+
     return ldap_conn
 
 
-def get_previous_status(cfg):
+def get_previous_status(cfg: Config) -> dict:
     """
     Get the saved status from disk if it exits. Return an empty status otherwise.
     """
@@ -143,7 +145,7 @@ def get_previous_status(cfg):
     return status
 
 
-def is_user_eligible(uid, login_users, entry):
+def is_user_eligible(uid: str, login_users: List[str], entry: dict) -> bool:
     """
     Check if the user (uid) is eligible for using the service. There are two
     ways to determine it. i) if the users is found to be part of the
@@ -163,7 +165,7 @@ def is_user_eligible(uid, login_users, entry):
     return True
 
 
-def get_login_users(cfg, service, co):
+def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     """
     Check if there is at least one group that controls which users are
     allowed to login. If there are none, it's okay to use all known users.
@@ -176,25 +178,26 @@ def get_login_users(cfg, service, co):
 
     if number_of_groups > 1:
         raise MultipleLoginGroups()
-    elif number_of_groups == 1:
+
+    if number_of_groups == 1:
         group = login_groups[0]
         try:
             dns = ldap_conn.search_s(
                 f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
-                ldap.SCOPE_ONELEVEL,
+                ldap.SCOPE_ONELEVEL,  # type: ignore: pylint: disable=E1101
                 f"(cn={group})",
             )
-            for _, entry in dns:
+            for _, entry in dns:  # type: ignore
                 for member in entry["member"]:
                     uid = dn_to_rdns(member)["uid"][0]
                     login_users.append(uid)
-        except ldap.NO_SUCH_OBJECT:
+        except ldap.NO_SUCH_OBJECT:  # type: ignore: pylint: disable=E1101
             logger.warning(f"login group '{group}' has been defined but could not be found for CO '{co}'.")
 
     return login_users
 
 
-def process_user_data(cfg, fq_co, co, status, new_status):
+def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status: dict) -> dict:
     """
     Process the CO user data as found in SRAM for the service.
 
@@ -219,11 +222,11 @@ def process_user_data(cfg, fq_co, co, status, new_status):
     try:
         dns = ldap_conn.search_s(
             f"ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}",
-            ldap.SCOPE_ONELEVEL,
+            ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
             "(objectClass=person)",
         )
 
-        for _, entry in dns:
+        for _, entry in dns:  # type: ignore
             uid = entry["uid"][0].decode("UTF-8")
             if is_user_eligible(uid, login_users, entry):
                 givenname = entry["givenName"][0].decode("UTF-8")
@@ -258,13 +261,13 @@ def process_user_data(cfg, fq_co, co, status, new_status):
                         logger.debug(f"    Removing public SSH key: {key[:50]}…")
                         event_handler.delete_public_ssh_key(user, key)
 
-    except ldap.NO_SUCH_OBJECT as e:
+    except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
     return new_status
 
 
-def process_group_data(cfg, fq_co, org, co, status, new_status):
+def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict, new_status: dict) -> dict:
     """
     Process the CO group data as found in SRAM for the service. Only those
     groups that are defined in the configuration file are processed.
@@ -296,7 +299,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
             basedn = cfg.get_sram_basedn()
             dns = ldap_conn.search_s(
                 f"cn={sram_group},ou=Groups,o={fq_co},dc=ordered,{basedn}",
-                ldap.SCOPE_BASE,
+                ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
                 "(objectClass=groupOfMembers)",
             )
             # The dest_group_name could contain an org reference
@@ -318,7 +321,7 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
                 }
 
             # Find members
-            for _, entry in dns:
+            for _, entry in dns:  # type: ignore
                 # Add members
                 members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
                 for member in members:
@@ -327,13 +330,13 @@ def process_group_data(cfg, fq_co, org, co, status, new_status):
                     new_status["groups"][dest_group_name]["members"].append(user)
                     if user not in status["groups"][dest_group_name]["members"]:
                         event_handler.add_user_to_group(dest_group_name, user, group_attributes)
-        except ldap.NO_SUCH_OBJECT:
+        except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning(f"service '{fq_co}' does not contain group '{sram_group}'")
 
     return new_status
 
 
-def add_missing_entries_to_ldap(cfg, status, new_status):
+def add_missing_entries_to_ldap(cfg: Config, status: dict, new_status: dict) -> dict:
     """
     Determine which entries in the SRAM LDAP have not been processed before.
 
@@ -352,11 +355,11 @@ def add_missing_entries_to_ldap(cfg, status, new_status):
     basedn = cfg.get_sram_basedn()
     dns = ldap_conn.search_s(
         f"dc=ordered,{basedn}",
-        ldap.SCOPE_ONELEVEL,
+        ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
         "(&(o=*)(ObjectClass=organization))",
     )
 
-    for _, entry in dns:
+    for _, entry in dns:  # type: ignore
         fq_co = entry["o"][0].decode("UTF-8")
         org, co = fq_co.split(".")
         event_handler.start_of_service_processing(co)
@@ -368,7 +371,7 @@ def add_missing_entries_to_ldap(cfg, status, new_status):
     return new_status
 
 
-def remove_graced_users(cfg, status, new_status) -> dict:
+def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
     """Remove users that have passed the grace period."""
 
     if "groups" not in new_status:
@@ -400,7 +403,7 @@ def remove_graced_users(cfg, status, new_status) -> dict:
     return new_status
 
 
-def remove_deleted_users_from_groups(cfg, status, new_status) -> dict:
+def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict) -> dict:
     """
     Determine based on the (old) status and the new_status one which users are to be removed.
     """
@@ -436,7 +439,7 @@ def remove_deleted_users_from_groups(cfg, status, new_status) -> dict:
     return new_status
 
 
-def remove_deleted_groups(cfg, status, new_status):
+def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
     """
     Determine based on the (old) status and the new_status which groups are to
     be removed. If any of those groups contain member, remove those members
@@ -460,7 +463,7 @@ def remove_deleted_groups(cfg, status, new_status):
     return new_status
 
 
-def remove_superfluous_entries_from_ldap(cfg, status, new_status):
+def remove_superfluous_entries_from_ldap(cfg: Config, status: dict, new_status: dict) -> dict:
     """
     Remove entries in the destination LDAP based on the difference between
     status and new_status.
@@ -527,7 +530,7 @@ def keep_new_status(cfg, new_status):
     logger.info(f"new status file has been written to: {filename}")
 
 
-def get_configuration_paths(path):
+def get_configuration_paths(path: str) -> List[str]:
     """
     Return an array containing paths to configurations in case the provided
     path was a directory, or a single path if the path was a file.
@@ -579,6 +582,7 @@ def cli(configuration, debug, verbose):
     """
 
     clean_exit = False
+    configuration_path = ""
 
     if debug:
         logging.getLogger("SRAMsync").setLevel(logging.DEBUG)
@@ -636,14 +640,14 @@ def cli(configuration, debug, verbose):
         logger.debug(e)
     except PasswordNotFound as e:
         logger.error(e.msg)
-    except ldap.NO_SUCH_OBJECT as e:
+    except ldap.NO_SUCH_OBJECT as e:  # type: ignore pylint: disable=E1101
         if "desc" in e.args[0]:
             logger.error(e.args[0]["desc"])
-    except ldap.INVALID_CREDENTIALS:
+    except ldap.INVALID_CREDENTIALS:  # type: ignore pylint: disable=E1101
         logger.error(
             "Invalid credentials. Please check your configuration file or set SRAM_LDAP_PASSWD correctly."
         )
-    except ldap.SERVER_DOWN as e:
+    except ldap.SERVER_DOWN as e:  # type: ignore pylint: disable=E1101
         if "desc" in e.args[0]:
             logger.error(e.args[0]["desc"])
     except ModuleNotFoundError as e:

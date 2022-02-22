@@ -91,7 +91,7 @@ class CuaScriptGenerator(EventHandler):
 
         return event_class(service, cfg, cfg_path)
 
-    def generate_header(self):
+    def generate_header(self) -> None:
         """Generate an explanatory header in the generated script."""
 
         self.print("#" * 80)
@@ -124,7 +124,7 @@ class CuaScriptGenerator(EventHandler):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
-    def start_of_service_processing(self, co):
+    def start_of_service_processing(self, co: str) -> None:
         """
         Print a useful message for the start_of_service_processing event. Call
         the auxiliary event class.
@@ -133,7 +133,7 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"\n# service: {self.service_name}/{co}")
         self.notify.start_of_service_processing(co)
 
-    def add_new_user(self, group, givenname, sn, user, mail):
+    def add_new_user(self, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
         """
         Write the appropriate sara_usertools commands to the bash script for
         adding new users. Call the auxiliary event class.
@@ -152,7 +152,7 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.add_new_user(group, givenname, sn, user, mail)
 
-    def add_public_ssh_key(self, user, key):
+    def add_public_ssh_key(self, user: str, key: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a user's public SSH key. Call the auxiliary event class.
@@ -162,7 +162,7 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.add_public_ssh_key(user, key)
 
-    def delete_public_ssh_key(self, user, key):
+    def delete_public_ssh_key(self, user: str, key: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding deleting user's public SSH key. Call the auxiliary event class.
@@ -172,7 +172,7 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.delete_public_ssh_key(user, key)
 
-    def add_new_group(self, group, attributes):
+    def add_new_group(self, group: str, attributes: list) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new group. This is either a CUA system or project group as
@@ -187,7 +187,8 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.add_new_group(group, attributes)
 
-    def add_new_system_group(self, group):
+    @staticmethod
+    def add_new_system_group(group: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA system group. However, the current version of the
@@ -196,7 +197,7 @@ class CuaScriptGenerator(EventHandler):
         """
         logger.warning(f"Ignoring adding system group {group}. It should be done by the CUA team.")
 
-    def add_new_project_group(self, group):
+    def add_new_project_group(self, group: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
@@ -207,7 +208,7 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"{self.modify_user_cmd} --list {group} ||")
         self.print(f'  {{\n    echo "{line}" | {self.add_user_cmd} -f-\n  }}\n')
 
-    def remove_group(self, group, attributes):
+    def remove_group(self, group: str, attributes: list):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a new CUA project group. Call the auxiliary event class.
@@ -216,7 +217,7 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.remove_group(group, attributes)
 
-    def add_user_to_group(self, group, user, attributes: list):
+    def add_user_to_group(self, group, user, attributes: list) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a user to a group. Call the auxiliary event class.
@@ -226,7 +227,7 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.add_user_to_group(group, user, attributes)
 
-    def remove_user_from_group(self, group, user, attributes):
+    def remove_user_from_group(self, group: str, user: str, attributes: list) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a group. Call the auxiliary event class.
@@ -236,7 +237,7 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.remove_user_from_group(group, user, attributes)
 
-    def remove_graced_user_from_group(self, group, user, attributes):
+    def remove_graced_user_from_group(self, group: str, user: str, attributes: list):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a graced group. Call the auxiliary event class.
@@ -246,7 +247,7 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.remove_graced_user_from_group(group, user, attributes)
 
-    def update_user_in_group(self, group, user, attributes, add):
+    def update_user_in_group(self, group: str, user: str, attributes: list, add: bool) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         updating users in a graced group. Call the auxiliary event class.
@@ -273,7 +274,7 @@ class CuaScriptGenerator(EventHandler):
             error = f'\'{", ".join(self.cua_group_types)}\' are mutually exclusive in the attributes of group: {group}.'
             raise ValueError(error)
 
-    def finalize(self):
+    def finalize(self) -> None:
         if "provisional_status_filename" in self.cfg:
             service = self.service_name
             status_filename = self.cfg["status_filename"]

@@ -3,9 +3,15 @@
   the main configuration. EventHandler classes may extent the
   configuration.
 """
+import importlib
+from typing import Any
 
-from jsonschema import validate
 import yaml
+from jsonschema import validate
+from ldap import ldapobject
+
+from .common import pascal_case_to_snake_case
+from .event_handler import EventHandler
 
 
 class ConfigurationError(Exception):
@@ -89,7 +95,7 @@ class Config:
         "required": ["service", "sram", "sync", "status_filename"],
     }
 
-    def __init__(self, config_file):
+    def __init__(self, config_file: str) -> None:
         with open(config_file) as fd:
             config = yaml.safe_load(fd)
 
@@ -100,27 +106,27 @@ class Config:
         self._ldap_connector = None
         self.event_handler = None
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> Any:
         return self.config[item]
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return item in self.config
 
     def get_sram_basedn(self):
         """Get the base DN"""
         return self.config["sram"]["basedn"]
 
-    def get_ldap_connector(self):
+    def get_ldap_connector(self) -> ldapobject.LDAPObject:
         """Get the LDAP connector."""
         if self._ldap_connector:
             return self._ldap_connector
 
         raise ConfigurationError("ldap_connection is uninitialized.")
 
-    def set_set_ldap_connector(self, ldap_connector):
+    def set_set_ldap_connector(self, ldap_connector: ldapobject.LDAPObject) -> None:
         """Set the LDAP connector."""
         self._ldap_connector = ldap_connector
 
-    def set_event_handler(self, event_handler):
+    def set_event_handler(self, event_handler: EventHandler) -> None:
         """Set the event handler."""
         self.event_handler = event_handler
