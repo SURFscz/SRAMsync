@@ -104,7 +104,7 @@ class Config:
         self.config_filename = config_file
         self.config = config
         self._ldap_connector = None
-        self.event_handler = None
+        self.event_handler = self.get_event_handler()
 
     def __getitem__(self, item: str) -> Any:
         return self.config[item]
@@ -112,7 +112,33 @@ class Config:
     def __contains__(self, item: str) -> bool:
         return item in self.config
 
-    def get_sram_basedn(self):
+    def get_event_handler(self) -> EventHandler:
+        """
+        Dynamically load the configured class from the configuration. If the class
+        expects a configuration extraxt that from the configuration and pass it
+        along at instansiation time. Put the status_filename and the optional
+        provisional_status_filename in the class configuration.
+        """
+
+        event_name = self.config["sync"]["event_handler"]["name"]
+        event_module_name = pascal_case_to_snake_case(event_name)
+        event_module = importlib.import_module(f"SRAMsync.{event_module_name}")
+        event_class = getattr(event_module, event_name)
+
+        handler_cfg = {}
+        if "config" in self.config["sync"]["event_handler"]:
+            handler_cfg = self.config["sync"]["event_handler"]["config"]
+
+        handler_cfg.update({"status_filename": self.config["status_filename"]})
+
+        if "provisional_status_filename" in self.config:
+            handler_cfg.update({"provisional_status_filename": self.config["provisional_status_filename"]})
+
+        event_handler = event_class(self.config["service"], handler_cfg, ["sync", "event_handler", "config"])
+
+        return event_handler
+
+    def get_sram_basedn(self) -> str:
         """Get the base DN"""
         return self.config["sram"]["basedn"]
 

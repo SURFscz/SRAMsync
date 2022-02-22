@@ -476,42 +476,7 @@ def remove_superfluous_entries_from_ldap(cfg: Config, status: dict, new_status: 
     return new_status
 
 
-def pascal_case_to_snake_case(string: str) -> str:
-    """Convert a pascal case string to its snake case equivalant."""
-    string = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", string)
-    string = re.sub(r"([a-z])([A-Z])", r"\1_\2", string)
-
-    return string.lower()
-
-
-def get_event_handler(cfg):
-    """
-    Dynamically load the configured class from the configuration. If the class
-    expects a configuration extraxt that from the configuration and pass it
-    along at instansiation time. Put the status_filename and the optional
-    provisional_status_filename in the class configuration.
-    """
-
-    event_name = cfg["sync"]["event_handler"]["name"]
-    event_module_name = pascal_case_to_snake_case(event_name)
-    event_module = importlib.import_module(f"SRAMsync.{event_module_name}")
-    event_class = getattr(event_module, event_name)
-
-    handler_cfg = {}
-    if "config" in cfg["sync"]["event_handler"]:
-        handler_cfg = cfg["sync"]["event_handler"]["config"]
-
-    handler_cfg.update({"status_filename": cfg["status_filename"]})
-
-    if "provisional_status_filename" in cfg:
-        handler_cfg.update({"provisional_status_filename": cfg["provisional_status_filename"]})
-
-    event_handler = event_class(cfg["service"], handler_cfg, ["sync", "event_handler", "config"])
-
-    return event_handler
-
-
-def keep_new_status(cfg, new_status):
+def keep_new_status(cfg: Config, new_status: dict) -> None:
     """
     Write the new status to the defined status_filename or
     provisional_status_filename depending on the configuration.
@@ -618,16 +583,13 @@ def cli(configuration, debug, verbose):
             new_status = {"users": {}, "groups": {}}
             cfg = Config(configuration_path)
 
-            event_handler = get_event_handler(cfg)
-            cfg.set_event_handler(event_handler)
-
             ldap_conn = init_ldap(cfg["sram"], cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)
             status = get_previous_status(cfg)
             new_status = add_missing_entries_to_ldap(cfg, status, new_status)
             new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
 
-            event_handler.finalize()
+            cfg.event_handler.finalize()
 
             keep_new_status(cfg, new_status)
 
