@@ -545,6 +545,19 @@ def get_configuration_paths(path: str) -> List[str]:
     return paths
 
 
+def show_configuration_error(
+    configuration_path: str, path: dict, exception: jsonschema.exceptions.ValidationError
+) -> None:
+    """Display the path in the configuration where the error occured."""
+    logger.error(f"Syntax error in configuration file {configuration_path} at:")
+
+    indent_level = 0
+    for path_element in path:
+        logger.error(" " * indent_level * 2 + f"{path_element}:")
+        indent_level = indent_level + 1
+    logger.error(" " * indent_level * 2 + exception.message)
+
+
 @click.command(context_settings=click_ctx_settings)
 @click.option("-d", "--debug", is_flag=True, default=False, help="Set log level to DEBUG")
 @click.option(
@@ -622,21 +635,14 @@ def cli(configuration, debug, verbose):
         clean_exit = True
     except IOError as e:
         logger.error(e)
+    except ConfigValidationError as e:
+        path = e.path
+        path.extend(e.exception.relative_path)
+        show_configuration_error(configuration_path, path, e)
+        logger.debug(e.exception)
     except jsonschema.exceptions.ValidationError as e:
-        if isinstance(e, ConfigValidationError):
-            path = e.path
-            path.extend(e.exception.relative_path)
-            e = e.exception
-        else:
-            path = e.relative_path
-
-        logger.error(f"Syntax error in configuration file {configuration_path} at:")
-        indent_level = 0
-        for path_element in path:
-            logger.error(" " * indent_level * 2 + f"{path_element}:")
-            indent_level = indent_level + 1
-        logger.error(" " * indent_level * 2 + e.message)
-
+        path = e.relative_path  # type: ignore
+        show_configuration_error(configuration_path, path, e)
         logger.debug(e)
     except PasswordNotFound as e:
         logger.error(e.msg)
