@@ -11,8 +11,10 @@ import importlib
 from datetime import datetime
 from jsonschema import validate, ValidationError
 
+from SRAMsync.config import Config
+
 from .sync_with_sram import ConfigValidationError
-from .common import render_templated_string
+from .common import pascal_case_to_snake_case, render_templated_string
 from .sramlogger import logger
 from .event_handler import EventHandler
 from .dummy_event_handler import DummyEventHandler
@@ -83,13 +85,16 @@ class CuaScriptGenerator(EventHandler):
             self.script_file_descriptor.close()
 
     @staticmethod
-    def get_auxiliary_notificaion_instance(handler_name, cfg, service, cfg_path):
+    def get_auxiliary_notificaion_instance(
+        event_handler_class_name: str, cfg: Config, service: str, cfg_path: str
+    ) -> EventHandler:
         """Load the auxiliary event handler class."""
 
-        event_module = importlib.import_module(f"SRAMsync.{handler_name}")
-        event_class = getattr(event_module, handler_name, cfg_path)
+        event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
+        event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
+        event_handler_class = getattr(event_handler_module, event_handler_class_name)
 
-        return event_class(service, cfg, cfg_path)
+        return event_handler_class(service, cfg, cfg_path)
 
     def generate_header(self) -> None:
         """Generate an explanatory header in the generated script."""
@@ -271,7 +276,10 @@ class CuaScriptGenerator(EventHandler):
             error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
             raise ValueError(error)
         else:
-            error = f'\'{", ".join(self.cua_group_types)}\' are mutually exclusive in the attributes of group: {group}.'
+            error = (
+                f'\'{", ".join(self.cua_group_types)}\' are mutually exclusive in the attributes '
+                f"of group: {group}."
+            )
             raise ValueError(error)
 
     def finalize(self) -> None:

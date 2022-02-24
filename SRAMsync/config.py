@@ -120,10 +120,10 @@ class Config:
         provisional_status_filename in the class configuration.
         """
 
-        event_name = self.config["sync"]["event_handler"]["name"]
-        event_module_name = pascal_case_to_snake_case(event_name)
-        event_module = importlib.import_module(f"SRAMsync.{event_module_name}")
-        event_class = getattr(event_module, event_name)
+        event_handler_class_name = self.config["sync"]["event_handler"]["name"]
+        event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
+        event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
+        event_handler_class = getattr(event_handler_module, event_handler_class_name)
 
         handler_cfg = {}
         if "config" in self.config["sync"]["event_handler"]:
@@ -134,9 +134,11 @@ class Config:
         if "provisional_status_filename" in self.config:
             handler_cfg.update({"provisional_status_filename": self.config["provisional_status_filename"]})
 
-        event_handler = event_class(self.config["service"], handler_cfg, ["sync", "event_handler", "config"])
+        event_handler_instance = event_handler_class(
+            self.config["service"], handler_cfg, ["sync", "event_handler", "config"]
+        )
 
-        return event_handler
+        return event_handler_instance
 
     def get_sram_basedn(self) -> str:
         """Get the base DN"""
