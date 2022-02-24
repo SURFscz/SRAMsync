@@ -138,6 +138,7 @@ sram:
 ```
 
 #### Password file format
+
 The password file is a flat json file. The keys are the service name and its
 value the SRAM LDAP password.
 
@@ -421,7 +422,8 @@ The following is the configuration for the `CuaScriptGenerator` class:
 
 ```yaml
 sync:
-  event_handler: CuaScriptGenerator
+  event_handler:
+  name: CuaScriptGenerator
   config:
     filename: <filename>
     add_user_cmd: sudo sara_adduser --no-usermail
@@ -431,6 +433,45 @@ sync:
       config:
         <EmailNotifications configuration>
 ```
+
+### CbaScriptGenerator
+
+The CbaScriptGenerator is tightly coupled to the CuaScriptGenerator class.
+Therefore the CbaScriptGenerator cannot be used independently from the
+CuaScriptGenerator. This means that if you use this class, you will need to
+provide a configuration for the CuaScriptGenerator class as well.
+
+The purpose of the CbaScriptGenerator class is to enhance the generated bash
+script of the CuaScriptGenerator class. When a user gets added and CBS
+accounting is need, this class inject the appropriate command for this. The
+same holds true for removing a user. The resulting bash script needs to
+executing in order for the generated command to take affect.
+
+#### Configuration
+
+The CbaScriptGenerator class introduced the following configuration:
+
+```yaml
+sync:
+  event_handler:
+    name: CbaScriptGenerator
+    config:
+      cba_add_cmd: <CBA command for adding a user>
+      cba_del_cmd: <CBA command for deleting a user>
+      cba_machine: <CBA machine name>
+      cba_budget_account: <CBA budget account>
+      cua_config:
+        ...
+```
+
+When using the CbaScriptGenerator class, four required configuration
+fields must be present: `cba_add_cmd`, `cba_del_cmd`, `cba_machine` and
+`cba_budget_account`. The fifth, `cua_config` is also required and marks the
+start of the CUA configuration. Please refer to
+[CuaScriptGenerator](#CuaScriptGenerator) for additional information on the
+CuaScriptGenerator class and how it is configured. Note that the what follows
+the `config` CuaScriptGenerator class should follow the `cua_config` for the
+CbaScriptGenerator configuration.
 
 ### EmailNotifications
 
@@ -480,7 +521,8 @@ replaced by the headers and lines of the events.
 
 ```yaml
 sync:
-  event_handler: EmailNotifications
+  event_handler:
+  name: EmailNotifications
   config:
     report_events:
       start:
