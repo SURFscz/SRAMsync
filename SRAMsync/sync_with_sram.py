@@ -188,9 +188,10 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
                 f"(cn={group})",
             )
             for _, entry in dns:  # type: ignore
-                for member in entry["member"]:
-                    uid = dn_to_rdns(member)["uid"][0]
-                    login_users.append(uid)
+                if "member" in entry:
+                    for member in entry["member"]:
+                        uid = dn_to_rdns(member)["uid"][0]
+                        login_users.append(uid)
         except ldap.NO_SUCH_OBJECT:  # type: ignore: pylint: disable=E1101
             logger.warning(f"login group '{group}' has been defined but could not be found for CO '{co}'.")
 
