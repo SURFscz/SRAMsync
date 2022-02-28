@@ -12,10 +12,9 @@ from email.utils import formatdate
 from jsonschema import ValidationError, validate
 
 from .common import render_templated_string
-from .config import Config
 from .event_handler import EventHandler
 from .sramlogger import logger
-from .sync_with_sram import ConfigValidationError
+from .sync_with_sram import ConfigValidationError, PasswordNotFound
 
 
 class SMTPclient:
@@ -133,10 +132,20 @@ class EmailNotifications(EventHandler):
                     "host": {"type": "string"},
                     "port": {"type": "integer"},
                     "login": {"type": "string"},
-                    "passwd": {"type": "string"},
                 },
                 "required": ["host"],
-                "optional": ["port", "login", "passwd"],
+                "dependentSchemas": {
+                    "login": {
+                        "oneOf": [
+                            {"properties": {"passwd": {"type": "string"}}, "required": ["passwd"]},
+                            {
+                                "properties": {"passwd_from_secrets": {"type": "boolean"}},
+                                "required": ["passwd_from_secrets"],
+                            },
+                        ]
+                    }
+                },
+                "dependentRequired": {"passwd": ["login"], "passwd_from_secrets": ["login"]},
             },
             "mail-from": {"type": "string"},
             "mail-to": {"type": "string"},
@@ -156,16 +165,23 @@ class EmailNotifications(EventHandler):
     _messages = {}
     _co = "undetermined"
 
-    def __init__(self, service, cfg: Config, config_path) -> None:
+    def __init__(self, service, cfg: dict, config_path) -> None:
         super().__init__(service, cfg, config_path)
         try:
             validate(schema=self._schema, instance=cfg)
+
+            if "passwd_from_secrets" in cfg["smtp"]:
+                login_name = cfg["smtp"]["login"]
+                host = cfg["smtp"]["host"]
+                cfg["smtp"]["passwd"] = cfg["secrets"]["smtp"][host][login_name]
 
             self.cfg = cfg
             self.service = service
             self.smtp_client = None
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
+        except KeyError as e:
+            raise PasswordNotFound("Password not found. Check your password source.") from e
 
         self.report_events = cfg["report_events"]
         self.msg_content = cfg["mail-message"]

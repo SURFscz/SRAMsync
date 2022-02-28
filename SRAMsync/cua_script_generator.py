@@ -11,8 +11,6 @@ import importlib
 from datetime import datetime
 from jsonschema import validate, ValidationError
 
-from SRAMsync.config import Config
-
 from .sync_with_sram import ConfigValidationError
 from .common import pascal_case_to_snake_case, render_templated_string
 from .sramlogger import logger
@@ -59,9 +57,15 @@ class CuaScriptGenerator(EventHandler):
 
             if "auxiliary_event_handler" in cfg:
                 cfg_path.append("auxiliary_event_handler")
+
+                auxiliary_config = {}
+                if "secrets" in cfg:
+                    auxiliary_config["secrets"] = cfg["secrets"]
+                auxiliary_config.update(cfg["auxiliary_event_handler"]["config"])
+
                 self.notify = self.get_auxiliary_notificaion_instance(
                     cfg["auxiliary_event_handler"]["name"],
-                    cfg["auxiliary_event_handler"]["config"],
+                    auxiliary_config,
                     service,
                     cfg_path,
                 )
@@ -86,7 +90,7 @@ class CuaScriptGenerator(EventHandler):
 
     @staticmethod
     def get_auxiliary_notificaion_instance(
-        event_handler_class_name: str, cfg: Config, service: str, cfg_path: str
+        event_handler_class_name: str, cfg: dict, service: str, cfg_path: str
     ) -> EventHandler:
         """Load the auxiliary event handler class."""
 

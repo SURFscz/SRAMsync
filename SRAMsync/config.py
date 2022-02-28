@@ -4,6 +4,7 @@
   configuration.
 """
 import importlib
+import json
 from typing import Any
 
 import yaml
@@ -34,15 +35,23 @@ class Config:
         "type": "object",
         "properties": {
             "service": {"type": "string"},
+            "secrets": {
+                "type": "object",
+                "properties": {"file": {"type": "string"}},
+                "required": ["file"],
+                "additionalProperties": False,
+            },
             "sram": {
                 "type": "object",
                 "properties": {
                     "uri": {"type": "string"},
                     "basedn": {"type": "string"},
                     "binddn": {"type": "string"},
+                    "passwd": {"type": "string"},
+                    "passwd_from_file": {"type": "boolean"},
                 },
                 "required": ["uri", "basedn", "binddn"],
-                "not": {"required": ["passwd", "passwd_file"]},
+                "not": {"required": ["passwd", "passwd_from_file"]},
             },
             "sync": {
                 "type": "object",
@@ -51,6 +60,7 @@ class Config:
                         "type": "object",
                         "properties": {"rename_user": {"type": "string"}},
                         "required": ["rename_user"],
+                        "additionalProperties": False,
                     },
                     "groups": {
                         "type": "object",
@@ -72,7 +82,7 @@ class Config:
                             "config": {"type": "object"},
                         },
                         "required": ["name"],
-                        "optional": ["config"],
+                        "additionalProperties": False,
                     },
                     "grace": {
                         "type": "object",
@@ -93,6 +103,7 @@ class Config:
             "provisional_status_filename": {"type": "string"},
         },
         "required": ["service", "sram", "sync", "status_filename"],
+        "additionalProperties": False,
     }
 
     def __init__(self, config_file: str) -> None:
@@ -104,6 +115,12 @@ class Config:
         self.config_filename = config_file
         self.config = config
         self._ldap_connector = None
+
+        self.secrets = {}
+        if "secrets" in config:
+            with open(config["secrets"]["file"]) as fd:
+                self.secrets = json.load(fd)
+
         self.event_handler = self.get_event_handler()
 
     def __getitem__(self, item: str) -> Any:
@@ -133,6 +150,9 @@ class Config:
 
         if "provisional_status_filename" in self.config:
             handler_cfg.update({"provisional_status_filename": self.config["provisional_status_filename"]})
+
+        if hasattr(self, "secrets"):
+            handler_cfg["secrets"] = self.secrets
 
         event_handler_instance = event_handler_class(
             self.config["service"], handler_cfg, ["sync", "event_handler", "config"]

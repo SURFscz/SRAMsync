@@ -78,7 +78,7 @@ def dn_to_rdns(dn: str) -> dict:
     return rdns
 
 
-def get_ldap_passwd(config: dict, service: str) -> str:
+def get_ldap_passwd(config: dict, secrets: dict, service: str) -> str:
     """
     Get the SRAM LDAP.
 
@@ -95,21 +95,20 @@ def get_ldap_passwd(config: dict, service: str) -> str:
         return config["passwd"]
 
     try:
-        with open(config["passwd_file"]) as fd:
-            passwds = json.load(fd)
-            try:
-                return passwds[service]
-            except KeyError as e:
-                raise PasswordNotFound(f"SRAM LDAP password not found in {config['passwd_file']}") from e
+        if config["passwd_from_secrets"] is True:
+            return secrets["sram-ldap"][service]
+
+        logger.error(
+            "In the config file passwd_from_secrets is set to false and no environment "
+            "variable has been set."
+        )
     except KeyError:
         pass
-    except FileNotFoundError as e:
-        raise FileNotFoundError(f"Password file not found: '{config['passwd_file']}'") from e
 
     raise PasswordNotFound("SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD.")
 
 
-def init_ldap(config: dict, service: str) -> ldapobject.LDAPObject:
+def init_ldap(config: dict, secrets: dict, service: str) -> ldapobject.LDAPObject:
     """
     Initialization and binding an LDAP connection.
     """
@@ -117,7 +116,7 @@ def init_ldap(config: dict, service: str) -> ldapobject.LDAPObject:
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)  # type: ignore pylint: disable=E1101
     ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore, pylint: disable=E1101
     ldap_conn = ldap.initialize(config["uri"])
-    passwd = get_ldap_passwd(config, service)
+    passwd = get_ldap_passwd(config, secrets, service)
     ldap_conn.simple_bind_s(config["binddn"], passwd)
     logger.debug("LDAP: connected")
 
@@ -584,7 +583,7 @@ def cli(configuration, debug, verbose):
             new_status = {"users": {}, "groups": {}}
             cfg = Config(configuration_path)
 
-            ldap_conn = init_ldap(cfg["sram"], cfg["service"])
+            ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)
             status = get_previous_status(cfg)
             new_status = add_missing_entries_to_ldap(cfg, status, new_status)
