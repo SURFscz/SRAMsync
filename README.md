@@ -80,6 +80,127 @@ In fact, the above defined events are from the abstract base class found in the
 `EventHandler` class. In case you wish to create your own EventHandler,
 you should derive such class from the `EventHandler` abstract base class.
 
+### When are events emitted
+
+Event are emitted from the main loop of `sync-with-sram`. Some event are always
+emitted at the appropriate moment like: `start_of_service_processing` and `finalize`.
+The emitting of other events depends on the current state of SRAM LDAP and the
+destination. If there are no differences not events will be emitted.
+
+#### start_of_service_processing
+
+| Input | Description |
+|:------|:------------|
+| co    | CO name for which the synchronization has started.|
+
+Emitted at the beginning and before any other event. This is to signal that the
+synchronization process has started for CO `co` and is always emitted.
+
+#### add_new_user
+
+| Input     | Description |
+|:----------|:------------|
+| group     | Group to which the user needs to be added.        |
+| givenname | First name of the user as it is known to SRAM.    |
+| sn        | Last name of the user as it is known to SRAM.     |
+| user      | User name of the user at the destination.         |
+| mail      | E-mail address of the user as it is known to SRAM.|
+
+When a new user is detected in the SRAM LDAP, this event will be emitted for
+each new users that is part of a `login_group` or the `@all` reserved group
+which holds all CO members by default. See [group](#groups) for more details on
+`login_group` and how to define one.
+
+#### add_public_ssh_key
+
+| Input | Description |
+|:------|:------------|
+| user  | User name as it is used on the destination.|
+| key   | Public SSH key of the user.|
+
+When a user adds a new public SSH key to its profile in SRAM, this event will
+be emitted. Note that an update of an SSH key will not be detected as a change,
+but rather as removal of an old key and adding a new key instead.
+
+#### delete_public_ssh_key
+
+| Input | Description |
+|:------|:------------|
+| user  | User name as it is used on the destination. |
+| key   | Public SSH key of the user|
+
+When a users deletes a public SSH key in its profile in SRAM, this event will
+be emitted. Note that an update of an SSH key will not be detected as a change,
+but rather as removal of an old key and adding a new key instead.
+
+#### add_new_group
+
+| Input      | Description |
+|:-----------|:------------|
+| group      | Name of the group that exists in SRAM but not yet at the destination.|
+| attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
+
+When a new group appears in the SRAM LDAP for for the current CO, this event
+will be emitted. The attributes from the configuration file are send along for
+possible further processing.
+
+#### remove_group
+
+| Input      | Description |
+|:-----------|:------------|
+| group      | Name of the group that exists in SRAM but not yet at the destination.|
+| attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
+
+When a group is removed in the SRAM LDAP for for the current CO, this event
+will be emitted. The attributes from the configuration file are send along for
+possible further processing.
+
+#### add_user_to_group
+
+| Input     | Description |
+|:----------|:------------|
+| group     | Name of the group that exists in SRAM but not yet at the destination.|
+| user      | User name of the user at the destination.|
+| attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
+
+When in SRAM a user is added to a group, this event will be emitted. This is
+different from the `add_new_user` event as that one is emitted for
+`login_group`s and this one for all other groups. In other words, the `user` is
+already provisioned at the destination, but not yet added to the `group`.
+
+#### remove_user_from_group
+
+| Input     | Description |
+|:----------|:------------|
+| group     | Name of the group that exists in SRAM but not yet at the destination.|
+| user      | User name of the user at the destination.|
+| attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
+
+When a `user` is removed from a `group`, this event will be emitted. However,
+if the `group` has the `grace_period` attribute set, the user will not be
+removed until the grace period has ended. This event will be emitted non the
+less that the user has been removed from the group.
+
+#### remove_graced_user_from_group
+
+| Input     | Description |
+|:----------|:------------|
+| group     | Name of the group that exists in SRAM but not yet at the destination.|
+| user      | User name of the user at the destination.|
+| attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
+
+When a `user` has been removed from a `group`, for which the `grace_period`
+attribute was set, and the grace period of the user has passed, this event will
+be emitted. This also means that `sync-with-sram` will remove this user from
+the group defiantly.
+
+#### finalize
+
+Input: *none*
+
+This is the very last event to be emitted. It signals that the synchronization has
+finished and is always emitted
+
 ## Configuration details
 
 The executable `sync-with-sram` needs a configuration file in order to know
@@ -109,7 +230,7 @@ last sync. `provisional_status_filename` is optional. If you do use it,
 `sync-with-sram` will write its status info to that file instead and not
 `status_filename`. It is expected that the instantiated EventHandler object
 copies the `provisional_status_filename` to `status_filename`. If the
-instantiated object fails to do so, `sync-with-sram` will always see new event
+instGantiated object fails to do so, `sync-with-sram` will always see new event
 as the `status_filename` is never updated to the latest sync state.
 
 ### SRAM connection details
@@ -134,20 +255,58 @@ sram:
   uri: ldaps://ldap.sram.surf.nl
   basedn: dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
   binddn: cn=admin,dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
-  passwd_file: <path to password file>
+  passwd_from_secrets: true or false
 ```
 
 #### Password file format
 
-The password file is a flat json file. The keys are the service name and its
-value the SRAM LDAP password.
+The password file can contain passwords for multiple sources. The file name is
+configured in the `secrets` block. Currently only loading passwords from file
+is supported. The `secrets` block is defines as follows:
+
+```yaml
+secrets:
+  file: <file name>
+```
+
+When the above is specified in the configuration file, the secrets in it will
+be loaded regardless of being used in the configuration file. One could have
+the secrets being loaded and still use plain text passwords for for example the
+SRAM LDAP. Currently it can hold passwords for both the SRAM LDAP and for SMTP
+connections. Each source has its own part in the password file. All SRAM LDAP
+related passwords for example are grouped under `sram-ldap`, while the SMTP
+passwords are bundled under `smtp`. Below is an example of a password file.
 
 ```json
 {
+  "sram-ldap": {
     "my_service_A": "fh9dFDSf67fsd;fdsgh",
     "my_service_B": "uirweSD_3$Afdhs!^Z1"
+  },
+  "smtp": {
+    "<smtp host name>": {
+      "<smtp login>": "fsdf,mm$$fgsff"
+    }
+  }
 }
 ```
+
+If you do use the `EmailNotifications` class for sending notification by e-mail,
+you don't have to have the `smtp` block in your password file.
+
+##### SRAM LDAP passwords
+
+The passwords for the SRAM LDAP are listed as key value pairs. The key is the name
+of the service, i.e. the `service` part in a `sync-with-sram` configuration and the
+value is the password for the SRAM LDAP subtree.
+
+##### SMTP password
+
+The SMTP passwords take a slightly more complex structure then the key value
+pairs of SRAM LDAP passwords. For SMTP you need the FQDN (without the dot at
+the very end) of the SMTP host and the login account name. Login account names
+and the associated password form a key value pair and are grouped under the
+SMTP FQDN
 
 #### Environment variable
 
@@ -269,11 +428,13 @@ elements. Thus a valid configuration should look like this:
 
 ```yaml
 service: my_service
+secrets:
+  file: <path to secrets file>
 sram:
   uri: ldaps://ldap.sram.surf.nl
   basedn: dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
   binddn: cn=admin,dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
-  passwd: <your password>
+  passwd_from_secrets: true
 sync:
   groups:
     expermiment_A:
@@ -296,6 +457,22 @@ expermiment_B. A DummyEventHandler class is used to deal the emitted events
 from the main loop. In case of the DummyEventHandler nothing is done except
 printing debug messages to stdout. It does not take any additional
 configuration and therefor the `config:` key is omitted.
+
+Note that in the above `sram` block,
+
+```yaml
+passwd_from_secrets: true
+```
+
+can be substituted by:
+
+```yaml
+passwd: <password>
+```
+
+Also note the even though either keyword `passwd_from_secrets` or `passwd`
+can be specified, if the environment variable `SRAM_LDAP_PASSWD` is
+defined, it takes precedence over either key word.
 
 ## Tag substitution
 
@@ -580,3 +757,10 @@ event_handler:
           header: "Adding the following users:"
           line: "Add new user {user}"
 ```
+
+##### SMTP passwords
+
+The above example shows plain text passwords in the configuration file. Instead
+of using the `passwd` in the `smtp` block, one could also use `passwd_from_secrets`.
+This only works if you have opted to use the `secrets` block in the configuration.
+See [Password file format](#password_file_format) for more information.
