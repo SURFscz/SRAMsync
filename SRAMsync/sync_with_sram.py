@@ -166,8 +166,9 @@ def is_user_eligible(uid: str, login_users: List[str], entry: dict) -> bool:
 
 def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     """
-    Check if there is at least one group that controls which users are
-    allowed to login. If there are none, it's okay to use all known users.
+    Check if there is at least one and not more then one group that controls
+    which users are allowed to login. If there are none, it's okay to use all
+    known users from the reserved '@all` group.
     """
     ldap_conn = cfg.get_ldap_connector()
 
@@ -178,21 +179,23 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     if number_of_groups > 1:
         raise MultipleLoginGroups()
 
-    if number_of_groups == 1:
-        group = login_groups[0]
-        try:
-            dns = ldap_conn.search_s(
-                f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
-                ldap.SCOPE_ONELEVEL,  # type: ignore: pylint: disable=E1101
-                f"(cn={group})",
-            )
-            for _, entry in dns:  # type: ignore
-                if "member" in entry:
-                    for member in entry["member"]:
-                        uid = dn_to_rdns(member)["uid"][0]
-                        login_users.append(uid)
-        except ldap.NO_SUCH_OBJECT:  # type: ignore: pylint: disable=E1101
-            logger.warning(f"login group '{group}' has been defined but could not be found for CO '{co}'.")
+    if number_of_groups == 0:
+        login_groups = ["@all"]
+
+    group = login_groups[0]
+    try:
+        dns = ldap_conn.search_s(
+            f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
+            ldap.SCOPE_ONELEVEL,  # type: ignore: pylint: disable=E1101
+            f"(cn={group})",
+        )
+        for _, entry in dns:  # type: ignore
+            if "member" in entry:
+                for member in entry["member"]:
+                    uid = dn_to_rdns(member)["uid"][0]
+                    login_users.append(uid)
+    except ldap.NO_SUCH_OBJECT:  # type: ignore: pylint: disable=E1101
+        logger.warning(f"login group '{group}' has been defined but could not be found for CO '{co}'.")
 
     return login_users
 
