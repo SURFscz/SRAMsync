@@ -48,10 +48,10 @@ class Config:
                     "basedn": {"type": "string"},
                     "binddn": {"type": "string"},
                     "passwd": {"type": "string"},
-                    "passwd_from_file": {"type": "boolean"},
+                    "passwd_from_secrets": {"type": "boolean"},
                 },
                 "required": ["uri", "basedn", "binddn"],
-                "not": {"required": ["passwd", "passwd_from_file"]},
+                "not": {"required": ["passwd", "passwd_from_secrets"]},
             },
             "sync": {
                 "type": "object",
