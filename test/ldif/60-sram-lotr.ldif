@@ -1,0 +1,863 @@
+version: 1
+
+#dn: dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+#objectClass: dcObject
+#objectClass: organization
+#objectClass: top
+#dc: mt-doom
+#o: SURF
+#
+#dn: cn=admin,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+#objectClass: organizationalRole
+#objectClass: simpleSecurityObject
+#cn: admin
+#userPassword:: e1NTSEF9dE1xeDNqMnl0RUxNWXFIOFRBMThWdHE4ZTZPVTNlMU8=
+#description: LDAP administrator
+#
+dn: dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: dcObject
+objectClass: organizationalUnit
+dc: flat
+ou: flat
+
+dn: dc=ordered,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: dcObject
+objectClass: organizationalUnit
+dc: ordered
+ou: ordered
+
+dn: ou=Groups,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: organizationalUnit
+objectClass: top
+ou: Groups
+
+dn: ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: organizationalUnit
+objectClass: top
+ou: People
+
+dn: cn=Rivendell.fellowship.@all,ou=Groups,dc=flat,dc=mt-doom,dc=services,dc
+ =sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: Rivendell.fellowship.@all
+description: All CO members
+displayName: All Members of the Fellowship of the Ring
+member: uid=aragorn,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+member: uid=arwen,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
+ c=nl
+member: uid=boromir,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+member: uid=elrond,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
+ dc=nl
+member: uid=frodo,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
+ c=nl
+member: uid=galadriel,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=su
+ rf,dc=nl
+member: uid=gandalf,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+member: uid=gimli,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
+ c=nl
+member: uid=gollum,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
+ dc=nl
+member: uid=legolas,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+member: uid=pippin,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
+ dc=nl
+member: uid=radagast,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=sur
+ f,dc=nl
+member: uid=samwise,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+member: uid=saruman,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+uniqueIdentifier: 148f5b89-5403-4624-ab7d-f088bc445f95
+
+dn: cn=Rivendell.White Council.@all,ou=Groups,dc=flat,dc=mt-doom,dc=services
+ ,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: Rivendell.White Council.@all
+description: All CO members
+displayName: All Members of the White Counsil
+member: uid=elrond,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
+ dc=nl
+member: uid=galadriel,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=su
+ rf,dc=nl
+member: uid=gandalf,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+member: uid=radagast,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=sur
+ f,dc=nl
+member: uid=saruman,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+uniqueIdentifier: 722a8e76-1549-494f-862b-a35f4471fb08
+
+dn: cn=Rivendell.fellowship.ringbearers,ou=Groups,dc=flat,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: Rivendell.fellowship.ringbearers
+description: Ring bearers are those who carry the One Ring on its way to the
+  ring dismantling service at Mt. Doom.
+displayName: Ring Bearers
+member: uid=frodo,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
+ c=nl
+member: uid=gollum,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
+ dc=nl
+member: uid=samwise,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+uniqueIdentifier: 4a7828fd-807c-4c46-a7b1-385ad9741224
+
+dn: cn=Rivendell.fellowship.RingForging,ou=Groups,dc=flat,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: Rivendell.fellowship.RingForging
+description: Mt. Doom offers skilled elf to forge powerfull rings.
+displayName: Ring Forging
+uniqueIdentifier: b9bbe035-14ab-4698-a7aa-189221de1fe2
+
+dn: cn=Rivendell.fellowship.RingDismantling,ou=Groups,dc=flat,dc=mt-doom,dc=
+ services,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: Rivendell.fellowship.RingDismantling
+description: Mt. Doom offers a serfvice where rings can be destroyed.
+displayName: Ring Dismantling
+member: uid=aragorn,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+member: uid=frodo,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
+ c=nl
+member: uid=gandalf,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+uniqueIdentifier: f2bee4b2-057b-4946-ad25-5b7d6a78743e
+
+dn: uid=arwen,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 7317d0f8d366033e96bc89091e5ac74e613e9267@sram.surf.nl
+sn: Evenstar
+displayName: Aragorn
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 7317d0f8d366033e96bc89091e5ac74e613e9267@sram.surf.nl
+givenName: Aragorn
+mail: aragorn@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: arwen
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: aragor0001@surf.nl
+
+dn: uid=frodo,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 2bc55c842cc0440dca1b07bef4f74ce7cf307ec3@sram.surf.nl
+sn: Baggins
+displayName: Frodo Baggins
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 2bc55c842cc0440dca1b07bef4f74ce7cf307ec3@sram.surf.nl
+givenName: Frodo
+mail: frodo.baggins@bag_end.shire.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: frodo
+voPersonExternalAffiliation: employee@bag_end.shire.me
+voPersonExternalID: beggi0001@surf.nl
+
+dn: uid=gimli,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: a12c9e97dadf8dcc93c30315341c087db1db5cfb@sram.surf.nl
+sn: son of Gloin
+displayName: Gimli son of Gloin
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: a12c9e97dadf8dcc93c30315341c087db1db5cfb@sram.surf.nl
+givenName: Gimli
+mail: gimli@moria.eu
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: gimli
+voPersonExternalAffiliation: employee@moria.me
+voPersonExternalID: gimli001@surf.nl
+
+dn: uid=elrond,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=n
+ l
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: cfcb94b6652cec290337b76998d9e4490775533e@sram.surf.nl
+sn:: b2YgTMO6dGhpZW4=
+displayName:: RWxyb25kIG9mIEzDunRoaWVu
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: cfcb94b6652cec290337b76998d9e4490775533e@sram.surf.nl
+givenName: Elrond
+mail: elrond@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: elrond
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: elron0001@surf.nl
+
+dn: uid=pippin,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=n
+ l
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 824d6b83b47746ee617329460f16df0465ffe96f@sram.surf.nl
+sn: Took
+displayName: Pippin Took
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 824d6b83b47746ee617329460f16df0465ffe96f@sram.surf.nl
+givenName: Peregrin
+mail: peregin.took@shire.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: pippin
+voPersonExternalAffiliation: employee@shire.me
+voPersonExternalID: ptook001@surf.nl
+
+dn: uid=aragorn,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=
+ nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 1e5a0b4f73c2621007c3160fe5123819ae603e12@sram.surf.nl
+sn: son of Arathorn
+displayName: Aragorn
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 1e5a0b4f73c2621007c3160fe5123819ae603e12@sram.surf.nl
+givenName: Aragorn
+mail: aragorn@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: aragorn
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: arago0001@surf.nl
+
+dn: uid=boromir,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=
+ nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 227c44badabc89e7f8acd3f8448701778112c08a@sram.surf.nl
+sn: of Gondor
+displayName: Boromir
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 227c44badabc89e7f8acd3f8448701778112c08a@sram.surf.nl
+givenName: Boromir
+mail: boromir@gondor.eu
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: boromir
+voPersonExternalID: e6bca065-379a-4e57-87ca-d78dc1b6f295@eduid.nl
+
+dn: uid=gandalf,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=
+ nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: efbf7f03c88acafd7c28931f4bdd34da24dd9e79@sram.surf.nl
+sn: Grey, the
+displayName: Gandalf the Grey
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: efbf7f03c88acafd7c28931f4bdd34da24dd9e79@sram.surf.nl
+givenName: Olorin
+mail: gandalf.thegrey@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: gandalf
+voPersonExternalAffiliation: employee@rivendell.me
+voPersonExternalID: ggrey001@surf.nl
+
+dn: uid=legolas,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=
+ nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 4cafcac33e78476060e498ce0632d77a9b946f00@sram.surf.nl
+sn: Son of Thranduil
+displayName: Legolas
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 4cafcac33e78476060e498ce0632d77a9b946f00@sram.surf.nl
+givenName: Legolas
+mail: legolas@mirkwood.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: legolas
+voPersonExternalAffiliation: employee@mirkwoord.eu
+voPersonExternalID: legol001@surf.nl
+
+dn: uid=samwise,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=
+ nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 92789fbba7858c09e5a7f989de0e0558c576e50d@sram.surf.nl
+sn: Gamgee
+displayName: Samwise Gamgee
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 92789fbba7858c09e5a7f989de0e0558c576e50d@sram.surf.nl
+givenName: Samwise
+mail: samwise.gamgee@shire.eu
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: samwise
+voPersonExternalID: 2bdd2ce4-78bc-4b3d-80b2-172d85a13388@eduid.nl
+
+dn: uid=saruman,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=
+ nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: bfd41b20573875fd7ead2248ab033fcbf58f9f8e@sram.surf.nl
+sn: White, the
+displayName: Saruman the White
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: bfd41b20573875fd7ead2248ab033fcbf58f9f8e@sram.surf.nl
+givenName: Saruman
+mail: saruman.thewhite@isengard.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: saruman
+voPersonExternalAffiliation: employee@isengard.eu
+voPersonExternalID: sarum0001@surf.nl
+
+dn: uid=radagast,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc
+ =nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 11c3e13bcddd040902d396c44b5cc9f91785b33c@sram.surf.nl
+sn: Brown, the
+displayName: Radagast the Brown
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 11c3e13bcddd040902d396c44b5cc9f91785b33c@sram.surf.nl
+givenName: Radagast
+mail: radagast.thebrown@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: radagast
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: radag0001@surf.nl
+
+dn: uid=galadriel,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
+ c=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 9ede34905dbed9445d4956dd9773a430a80c35a8@sram.surf.nl
+sn:: b2YgTG90aGzDs3JpZW4=
+displayName:: R2FsYWRyaWVsIG9mIExvdGhsw7NyaWVu
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 9ede34905dbed9445d4956dd9773a430a80c35a8@sram.surf.nl
+givenName: Galadriel
+mail: radagast.thebrown@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: galadriel
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: galad0001@surf.nl
+
+dn: o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=services,dc=sram,dc=surf
+ ,dc=nl
+objectClass: extensibleObject
+objectClass: organization
+objectClass: top
+o: Rivendell.fellowship
+description: This is for piloting
+displayName: SRAM Delena
+host: ip-10-0-16-21.eu-central-1.compute.internal:slp
+uniqueIdentifier: 148f5b89-5403-4624-ab7d-f088bc445f95
+
+dn: o=Rivendell.White Council,dc=ordered,dc=mt-doom,dc=services,dc=sram,dc=s
+ urf,dc=nl
+objectClass: extensibleObject
+objectClass: organization
+objectClass: top
+o: Rivendell.White Council
+description:: Rmlyc3QgdGVzdCA=
+displayName: Test
+host: ip-10-0-16-21.eu-central-1.compute.internal:slp
+uniqueIdentifier: e0c81634-7aa0-433f-965d-249e4d2847a9
+
+dn: ou=Groups,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=services,dc=sr
+ am,dc=surf,dc=nl
+objectClass: organizationalUnit
+objectClass: top
+ou: Groups
+
+dn: ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=services,dc=sr
+ am,dc=surf,dc=nl
+objectClass: organizationalUnit
+objectClass: top
+ou: People
+
+dn: cn=@all,ou=Groups,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=servic
+ es,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: @all
+description: All CO members
+displayName: All Members of the Fellowship of the Ring
+member: uid=aragorn,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+member: uid=arwen,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=
+ services,dc=sram,dc=surf,dc=nl
+member: uid=boromir,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+member: uid=elrond,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+member: uid=frodo,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=
+ services,dc=sram,dc=surf,dc=nl
+member: uid=gandalf,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+member: uid=gimli,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=
+ services,dc=sram,dc=surf,dc=nl
+member: uid=gollum,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+member: uid=legolas,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+member: uid=pippin,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+member: uid=samwise,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+uniqueIdentifier: 148f5b89-5403-4624-ab7d-f088bc445f95
+
+dn: cn=ringbearers,ou=Groups,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: ringbearers
+description: Ring bearers are those who carry the One Ring on its way to the
+  ring dismantling service at Mt. Doom.
+displayName: Ring Bearers
+member: uid=frodo,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=
+ services,dc=sram,dc=surf,dc=nl
+member: uid=gollum,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+member: uid=samwise,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+uniqueIdentifier: 4a7828fd-807c-4c46-a7b1-385ad9741224
+
+dn: cn=RingForging,ou=Groups,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: RingForging
+description: Mt. Doom offers skilled elf to forge powerfull rings.
+displayName: Ring Forging
+uniqueIdentifier: b9bbe035-14ab-4698-a7aa-189221de1fe2
+
+dn: cn=RingDismantling,ou=Groups,o=Rivendell.fellowship,dc=ordered,dc=mt-doo
+ m,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: RingDismantling
+description: Mt. Doom offers a serfvice where rings can be destroyed.
+displayName: Ring Dismantling
+member: uid=aragorn,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+member: uid=frodo,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=
+ services,dc=sram,dc=surf,dc=nl
+member: uid=gandalf,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+uniqueIdentifier: f2bee4b2-057b-4946-ad25-5b7d6a78743e
+
+dn: uid=arwen,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 7317d0f8d366033e96bc89091e5ac74e613e9267@sram.surf.nl
+sn: Evenstar
+displayName: Aragorn
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 7317d0f8d366033e96bc89091e5ac74e613e9267@sram.surf.nl
+givenName: Aragorn
+mail: aragorn@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: arwen
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: aragor0001@surf.nl
+
+dn: uid=frodo,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 2bc55c842cc0440dca1b07bef4f74ce7cf307ec3@sram.surf.nl
+sn: Baggins
+displayName: Frodo Baggins
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 2bc55c842cc0440dca1b07bef4f74ce7cf307ec3@sram.surf.nl
+givenName: Frodo
+mail: frodo.baggins@bag_end.shire.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: frodo
+voPersonExternalAffiliation: employee@bag_end.shire.me
+voPersonExternalID: beggi0001@surf.nl
+
+dn: uid=gimli,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: a12c9e97dadf8dcc93c30315341c087db1db5cfb@sram.surf.nl
+sn: son of Gloin
+displayName: Gimli son of Gloin
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: a12c9e97dadf8dcc93c30315341c087db1db5cfb@sram.surf.nl
+givenName: Gimli
+mail: gimli@moria.eu
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: gimli
+voPersonExternalAffiliation: employee@moria.me
+voPersonExternalID: gimli001@surf.nl
+
+dn: uid=elrond,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=ser
+ vices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: cfcb94b6652cec290337b76998d9e4490775533e@sram.surf.nl
+sn:: b2YgTMO6dGhpZW4=
+displayName:: RWxyb25kIG9mIEzDunRoaWVu
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: cfcb94b6652cec290337b76998d9e4490775533e@sram.surf.nl
+givenName: Elrond
+mail: elrond@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: elrond
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: elron0001@surf.nl
+
+dn: uid=pippin,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=ser
+ vices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 824d6b83b47746ee617329460f16df0465ffe96f@sram.surf.nl
+sn: Took
+displayName: Pippin Took
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 824d6b83b47746ee617329460f16df0465ffe96f@sram.surf.nl
+givenName: Peregrin
+mail: peregin.took@shire.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: pippin
+voPersonExternalAffiliation: employee@shire.me
+voPersonExternalID: ptook001@surf.nl
+
+dn: uid=aragorn,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 1e5a0b4f73c2621007c3160fe5123819ae603e12@sram.surf.nl
+sn: son of Arathorn
+displayName: Aragorn
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 1e5a0b4f73c2621007c3160fe5123819ae603e12@sram.surf.nl
+givenName: Aragorn
+mail: aragorn@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: aragorn
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: arago0001@surf.nl
+
+dn: uid=boromir,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 227c44badabc89e7f8acd3f8448701778112c08a@sram.surf.nl
+sn: of Gondor
+displayName: Boromir
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 227c44badabc89e7f8acd3f8448701778112c08a@sram.surf.nl
+givenName: Boromir
+mail: boromir@gondor.eu
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: boromir
+voPersonExternalID: e6bca065-379a-4e57-87ca-d78dc1b6f295@eduid.nl
+
+dn: uid=gandalf,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: efbf7f03c88acafd7c28931f4bdd34da24dd9e79@sram.surf.nl
+sn: Grey, the
+displayName: Gandalf the Grey
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: efbf7f03c88acafd7c28931f4bdd34da24dd9e79@sram.surf.nl
+givenName: Olorin
+mail: gandalf.thegrey@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: gandalf
+voPersonExternalAffiliation: employee@rivendell.me
+voPersonExternalID: ggrey001@surf.nl
+
+dn: uid=legolas,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 4cafcac33e78476060e498ce0632d77a9b946f00@sram.surf.nl
+sn: Son of Thranduil
+displayName: Legolas
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 4cafcac33e78476060e498ce0632d77a9b946f00@sram.surf.nl
+givenName: Legolas
+mail: legolas@mirkwood.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: legolas
+voPersonExternalAffiliation: employee@mirkwoord.eu
+voPersonExternalID: legol001@surf.nl
+
+dn: uid=samwise,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 92789fbba7858c09e5a7f989de0e0558c576e50d@sram.surf.nl
+sn: Gamgee
+displayName: Samwise Gamgee
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 92789fbba7858c09e5a7f989de0e0558c576e50d@sram.surf.nl
+givenName: Samwise
+mail: samwise.gamgee@shire.eu
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: samwise
+voPersonExternalID: 2bdd2ce4-78bc-4b3d-80b2-172d85a13388@eduid.nl
+
+dn: ou=Groups,o=Rivendell.White Council,dc=ordered,dc=mt-doom,dc=services,dc
+ =sram,dc=surf,dc=nl
+objectClass: organizationalUnit
+objectClass: top
+ou: Groups
+
+dn: ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doom,dc=services,dc
+ =sram,dc=surf,dc=nl
+objectClass: organizationalUnit
+objectClass: top
+ou: People
+
+dn: cn=@all,ou=Groups,o=Rivendell.White Council,dc=ordered,dc=mt-doom,dc=ser
+ vices,dc=sram,dc=surf,dc=nl
+objectClass: extensibleObject
+objectClass: groupOfMembers
+cn: @all
+description: All CO members
+displayName: All Members of the White Counsil
+member: uid=elrond,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doom
+ ,dc=services,dc=sram,dc=surf,dc=nl
+member: uid=galadriel,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-d
+ oom,dc=services,dc=sram,dc=surf,dc=nl
+member: uid=gandalf,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doo
+ m,dc=services,dc=sram,dc=surf,dc=nl
+member: uid=radagast,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-do
+ om,dc=services,dc=sram,dc=surf,dc=nl
+member: uid=saruman,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doo
+ m,dc=services,dc=sram,dc=surf,dc=nl
+uniqueIdentifier: 722a8e76-1549-494f-862b-a35f4471fb08
+
+dn: uid=elrond,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doom,dc=
+ services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: cfcb94b6652cec290337b76998d9e4490775533e@sram.surf.nl
+sn:: b2YgTMO6dGhpZW4=
+displayName:: RWxyb25kIG9mIEzDunRoaWVu
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: cfcb94b6652cec290337b76998d9e4490775533e@sram.surf.nl
+givenName: Elrond
+mail: elrond@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: elrond
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: elron0001@surf.nl
+
+dn: uid=gandalf,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: efbf7f03c88acafd7c28931f4bdd34da24dd9e79@sram.surf.nl
+sn: Grey, the
+displayName: Gandalf the Grey
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: efbf7f03c88acafd7c28931f4bdd34da24dd9e79@sram.surf.nl
+givenName: Olorin
+mail: gandalf.thegrey@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: gandalf
+voPersonExternalAffiliation: employee@rivendell.me
+voPersonExternalID: ggrey001@surf.nl
+
+dn: uid=saruman,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doom,dc
+ =services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: bfd41b20573875fd7ead2248ab033fcbf58f9f8e@sram.surf.nl
+sn: White, the
+displayName: Saruman the White
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: bfd41b20573875fd7ead2248ab033fcbf58f9f8e@sram.surf.nl
+givenName: Saruman
+mail: saruman.thewhite@isengard.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: saruman
+voPersonExternalAffiliation: employee@isengard.eu
+voPersonExternalID: sarum0001@surf.nl
+
+dn: uid=radagast,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doom,d
+ c=services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 11c3e13bcddd040902d396c44b5cc9f91785b33c@sram.surf.nl
+sn: Brown, the
+displayName: Radagast the Brown
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 11c3e13bcddd040902d396c44b5cc9f91785b33c@sram.surf.nl
+givenName: Radagast
+mail: radagast.thebrown@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: radagast
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: radag0001@surf.nl
+
+dn: uid=galadriel,ou=People,o=Rivendell.White Council,dc=ordered,dc=mt-doom,
+ dc=services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 9ede34905dbed9445d4956dd9773a430a80c35a8@sram.surf.nl
+sn:: b2YgTG90aGzDs3JpZW4=
+displayName:: R2FsYWRyaWVsIG9mIExvdGhsw7NyaWVu
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 9ede34905dbed9445d4956dd9773a430a80c35a8@sram.surf.nl
+givenName: Galadriel
+mail: radagast.thebrown@rivendell.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: galadriel
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: galad0001@surf.nl
+
+dn: uid=gollum,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=n
+ l
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 993cd6c229eb9b77b9617655712a6be7e4ee1ce7@sram.surf.nl
+sn: of Gladden Fields
+displayName: Gollum
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 993cd6c229eb9b77b9617655712a6be7e4ee1ce7@sram.surf.nl
+givenName:: U23DqWFnb2w=
+mail: gollum@mistymountains.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: gollum
+voPersonExternalAffiliation: employee@mistymountains.eu
+voPersonExternalID: gullu0001@surf.nl
+
+dn: uid=gollum,ou=People,o=Rivendell.fellowship,dc=ordered,dc=mt-doom,dc=ser
+ vices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 993cd6c229eb9b77b9617655712a6be7e4ee1ce7@sram.surf.nl
+sn: of Gladden Fields
+displayName: Gollum
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 993cd6c229eb9b77b9617655712a6be7e4ee1ce7@sram.surf.nl
+givenName:: U23DqWFnb2w=
+mail: gollum@mistymountains.me
+sshPublicKey:  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMm6cqs9IGHq7Ga5gT4a5CYHI
+ V1kK9pht7nNTaeRphqG One Ring to Rule them all
+uid: gollum
+voPersonExternalAffiliation: employee@mistymountains.eu
+voPersonExternalID: gullu0001@surf.nl
+

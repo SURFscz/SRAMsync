@@ -1,0 +1,364 @@
+{
+  "ldap": {
+    "uri": "ldap://localhost:3389",
+    "basedn": "dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl",
+    "binddn": "cn=admin,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl",
+    "passwd": "mellon"
+  },
+  "people": {
+    "bilbo": {
+      "cn": "349b33befbe299e072328cad3e74f86020b86250@sram.surf.nl",
+      "displayName": "Bilbo Bagends",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "349b33befbe299e072328cad3e74f86020b86250@sram.surf.nl",
+      "givenName": "Bilbo",
+      "sn": "Bagends",
+      "mail": "bilbo@shire.me",
+      "sshPublicKey": "ssh-ed25519 RXg0vSUanFa05Fs38At9 bilbo",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "bilbo001@rivendell.me"
+    },
+    "frodo": {
+      "displayName": "Frodo Bagends",
+      "cn": "cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl",
+      "givenName": "Frodo",
+      "sn": "Bagends",
+      "mail": "frodo@shire.me",
+      "sshPublicKey": "ssh-ed25519 ifMeUD1BPDBoo6WFCDIt frodo",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "frodo001@rivendell.me"
+    },
+    "aragorn": {
+      "displayName": "Aragorn",
+      "cn": "4bc6fd5be68adebae9ea76991282034ddf8e8ab3@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "4bc6fd5be68adebae9ea76991282034ddf8e8ab3@sram.surf.nl",
+      "givenName": "Aragorn",
+      "sn": "Bagends",
+      "mail": "aragorn@rivendell.me",
+      "sshPublicKey": "ssh-ed25519 HkmKftQ4D5CKStvSIVA6 aragorn@Middle Earth",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "arago001@rivendell.me"
+    },
+    "arwen": {
+      "displayName": "Arwen",
+      "cn": "ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl",
+      "givenName": "Arwen",
+      "sn": "Bagends",
+      "mail": "arwen@rivendell.me",
+      "sshPublicKey": "ssh-ed25519 GTXkxaDsyT2tq5uMdh1w arwen",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "arwen001@rivendell.me"
+    },
+    "elrond": {
+      "displayName": "Elrond",
+      "cn": "517222da9e647a7488b4b447b92ff5e72670dc2e@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "517222da9e647a7488b4b447b92ff5e72670dc2e@sram.surf.nl",
+      "givenName": "Elrond",
+      "sn": "Bagends",
+      "mail": "elrond@rivendell.me",
+      "sshPublicKey": "ssh-ed25519 eS7JdWSp27zuHvCO3pN5 One Ring to Rule them All",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "elron001@rivendell.me"
+    },
+    "samwise": {
+      "displayName": "Samwise",
+      "cn": "91ce799f06d1d2a5dbb009f15b6719848885063d@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "91ce799f06d1d2a5dbb009f15b6719848885063d@sram.surf.nl",
+      "givenName": "Samwise",
+      "sn": "Bagends",
+      "mail": "samwise@shire.me",
+      "sshPublicKey": "ssh-ed25519 13dwA5lM7fxCWf4ErDwo One Ring to Rule them All",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "samew001@rivendell.me"
+    },
+    "pipin": {
+      "displayName": "Pipin Took",
+      "cn": "ec8fcb2d7a11ffcaa59071be6a31b426398bff6c@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "ec8fcb2d7a11ffcaa59071be6a31b426398bff6c@sram.surf.nl",
+      "givenName": "Pipin",
+      "sn": "Bagends",
+      "mail": "pipin@shire.me",
+      "sshPublicKey": "ssh-ed25519 QlO0l0GyyBTS2iCPBGAC pipin@Middle Earth",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "pipin001@rivendell.me"
+    },
+    "merry": {
+      "displayName": "Merry",
+      "cn": "da4581329285b9ab29d447a8700a253ae3f649e4@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "da4581329285b9ab29d447a8700a253ae3f649e4@sram.surf.nl",
+      "givenName": "Merry",
+      "sn": "Bagends",
+      "mail": "merry@shire.me",
+      "sshPublicKey": "ssh-ed25519 2kTdPVaprw2WAsY0Ir2K merry",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "merry001@rivendell.me"
+    },
+    "gandalf": {
+      "displayName": "Gandalf the Grey",
+      "cn": "2a43b455b16697aae3b9f5214f90386090ccaef3@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "2a43b455b16697aae3b9f5214f90386090ccaef3@sram.surf.nl",
+      "givenName": "Gandald",
+      "sn": "the Grey",
+      "mail": "gandald.grey@wizzard.me",
+      "sshPublicKey": "ssh-ed25519 O529LkecteBDRee7okX4 gandalf@Middle Earth",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "ganda001@rivendell.me"
+    },
+    "legolas": {
+      "displayName": "Legolas",
+      "cn": "daa7b9ad6251e8b637835624a36f38a91c549818@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "daa7b9ad6251e8b637835624a36f38a91c549818@sram.surf.nl",
+      "givenName": "Legolas",
+      "sn": "Bagends",
+      "mail": "legolas@mrikwoord.me",
+      "sshPublicKey": "ssh-ed25519 x1qMWhSkXE1Qr02xW3fl One Ring to Rule them All",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "legol001@rivendell.me"
+    },
+    "gimli": {
+      "displayName": "Gimli",
+      "cn": "bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl",
+      "givenName": "Gimli",
+      "sn": "Bagends",
+      "mail": "gimli@shire.me",
+      "sshPublicKey": "ssh-ed25519 lRogibSXuJWup6wANQvr gimli@Middle Earth",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "gimli001@rivendell.me"
+    },
+    "boromir": {
+      "displayName": "Borromir",
+      "cn": "1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl",
+      "givenName": "Borromir",
+      "sn": "Bagends",
+      "mail": "borrowmir@shire.me",
+      "voPersonExternalAffiliation": "employee@rivendell.eu",
+      "voPersonExternalID": "borro001@rivendell.me"
+    },
+    "harry": {
+      "displayName": "Harry Potter",
+      "cn": "?",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "?",
+      "givenName": "Harry",
+      "sn": "Potter",
+      "mail": "harry.potter@hogwarts.edu",
+      "voPersonExternalAffiliation": "employee@hogwarts.edu",
+      "voPersonExternalID": "harry001@hogwart.edu"
+    },
+    "hermione": {
+      "displayName": "Hermione Granger",
+      "cn": "?",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "?",
+      "givenName": "Hermione",
+      "sn": "Granger",
+      "mail": "hermione.granger@hogwarts.edu",
+      "voPersonExternalAffiliation": "employee@hogwarts.edu",
+      "voPersonExternalID": "hermi001@hogwart.edu"
+    },
+    "ronald": {
+      "displayName": "Rondald Weasley",
+      "cn": "?",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "?",
+      "givenName": "Ronald",
+      "sn": "Weassely",
+      "mail": "ronald.weasley@hogwarts.edu",
+      "voPersonExternalAffiliation": "employee@hogwarts.edu",
+      "voPersonExternalID": "ronda001@hogwart.edu"
+    },
+    "albus": {
+      "displayName": "Albus Dumbledore",
+      "cn": "?",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "?",
+      "givenName": "Albus",
+      "sn": "Dumbledore",
+      "mail": "albus.dumbledore@hogwarts.edu",
+      "voPersonExternalAffiliation": "employee@hogwarts.edu",
+      "voPersonExternalID": "dumbl001@hogwart.edu"
+    },
+    "severus": {
+      "displayName": "Severus Snape",
+      "cn": "?",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "?",
+      "givenName": "Severus",
+      "sn": "Snape",
+      "mail": "severus.snape@hogwarts.edu",
+      "voPersonExternalAffiliation": "employee@hogwarts.edu",
+      "voPersonExternalID": "sever001@hogwart.edu"
+    },
+    "draco": {
+      "displayName": "Draco Malfoy",
+      "cn": "?",
+      "eduPersonScopedAffiliation": "member@sram.surf.nl",
+      "eduPersonUniqueId": "?",
+      "givenName": "Draco",
+      "sn": "Malfoy",
+      "mail": "draco.malfoy@hogwarts.edu",
+      "voPersonExternalAffiliation": "employee@hogwarts.edu",
+      "voPersonExternalID": "draco001@hogwart.edu"
+    }
+  },
+  "groups": {
+    "Rivendell": {
+      "displayName": "Rivendell",
+      "cos": {
+        "Fellowship": {
+          "non-group-members": [
+            "arwen"
+          ],
+          "description": "bla",
+          "displayName": "Fellowship of the Ring",
+          "groups": {
+            "shirecloud_login": {
+              "description": "bla",
+              "displayName": "Ringbeares Login",
+              "uniqueIdentifier": "4f09d277-9b38-49c9-9181-f2978a3e7ab2",
+              "members": [
+                "frodo",
+                "samwise",
+                "pipin",
+                "merry"
+              ]
+            },
+            "shirecloud_cpu": {
+              "description": "bla",
+              "displayName": "Ringbeares Support",
+              "uniqueIdentifier": "48e450de-1b95-4522-b7e1-40730f5babce",
+              "members": [
+                "gandalf",
+                "aragorn",
+                "legolas",
+                "gimli",
+                "boromir"
+              ]
+            }
+          }
+        },
+        "counsil_of_elrond": {
+          "non-group-members": [
+            "arwen"
+          ],
+          "description": "bla",
+          "displayName": "Counsil of Elrond",
+          "groups": {
+            "shirecloud_login": {
+              "description": "bla",
+              "displayName": "Login",
+              "uniqueIdentifier": "a2748f94-c644-4e86-b04e-f35408abaaba",
+              "members": [
+                "aragorn",
+                "frodo",
+                "bilbo",
+                "elrond",
+                "boromir",
+                "gimli",
+                "legolas"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "Hogwarts": {
+      "displayName": "Hogwarts School of Witchcraft and Wizardry",
+      "cos": {
+        "Gryffindor": {
+          "non-group-members": [
+            "albus"
+          ],
+          "description": "Gryffindor",
+          "displayName": "Gryffindor",
+          "groups": {
+            "wizardry_login": {
+              "description": "Access to wizardry classes",
+              "displayName": "Gryffindor",
+              "uniqueIdentifier": "?",
+              "members": [
+                "harry",
+                "hermione",
+                "ronald"
+              ]
+            },
+            "wizardry_owl": {
+              "description": "Standard wizardry class",
+              "displayName": "Wizardry O.W.L",
+              "uniqueIdentifier": "?",
+              "members": [
+                "harry",
+                "hermione",
+                "ronald"
+              ]
+            },
+            "wizardry_newt": {
+              "description": "Advanced wizardry class",
+              "displayName": "Wizardry N.E.W.T",
+              "uniqueIdentifier": "?",
+              "members": [
+                "harry",
+                "hermione",
+                "ronald"
+              ]
+            }
+          }
+        },
+        "slytherin": {
+          "non-group-members": [
+            "severus"
+          ],
+          "description": "Slytherin",
+          "displayName": "Slytherin",
+          "groups": {
+            "wizardry_login": {
+              "description": "Access to wizardry classes",
+              "displayName": "Login",
+              "uniqueIdentifier": "?",
+              "members": [
+                "draco"
+              ]
+            },
+            "potions": {
+              "description": "Potion class",
+              "displayName": "Potions",
+              "uniqueIdentifier": "?",
+              "members": [
+                "harry",
+                "draco"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "identities": {
+    "eowyn": {
+      "sn": "Lady of Rohan",
+      "cn": "a3e983fb03ebf8c0b3b28cf165c98521ec0965cb@sram.surf.nl",
+      "displayName": "Eowyn",
+      "mail": "eowyn@rivendell.nl",
+      "eduPersonScopedAffiliation": "dd",
+      "eduPersonUniqueId": "a3e983fb03ebf8c0b3b28cf165c98521ec0965cb@sram.surf.nl",
+      "givenName": "Eowyn",
+      "voPersonExternalAffiliation": "f",
+      "voPersonExternalID": "D"
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "users": {
+    "middle_earth-slytherin-draco": {},
+    "middle_earth-slytherin-harry": {},
+    "middle_earth-slytherin-severus": {},
+    "middle_earth-Gryffindor-albus": {},
+    "middle_earth-Gryffindor-harry": {},
+    "middle_earth-Gryffindor-ronald": {},
+    "middle_earth-Gryffindor-hermione": {},
+    "middle_earth-Fellowship-eowyn": {},
+    "middle_earth-Fellowship-merry": {
+      "sshPublicKey": [
+        "ssh-ed25519 2kTdPVaprw2WAsY0Ir2K merry"
+      ]
+    },
+    "middle_earth-Fellowship-pipin": {
+      "sshPublicKey": [
+        "ssh-ed25519 QlO0l0GyyBTS2iCPBGAC pipin@Middle Earth"
+      ]
+    },
+    "middle_earth-Fellowship-samwise": {
+      "sshPublicKey": [
+        "ssh-ed25519 13dwA5lM7fxCWf4ErDwo One Ring to Rule them All"
+      ]
+    },
+    "middle_earth-counsil_of_elrond-bilbo": {
+      "sshPublicKey": [
+        "ssh-ed25519 RXg0vSUanFa05Fs38At9 bilbo"
+      ]
+    },
+    "middle_earth-counsil_of_elrond-frodo": {
+      "sshPublicKey": [
+        "ssh-ed25519 ifMeUD1BPDBoo6WFCDIt frodo"
+      ]
+    },
+    "middle_earth-counsil_of_elrond-gimli": {
+      "sshPublicKey": [
+        "ssh-ed25519 lRogibSXuJWup6wANQvr gimli@Middle Earth"
+      ]
+    },
+    "middle_earth-counsil_of_elrond-elrond": {
+      "sshPublicKey": [
+        "ssh-ed25519 eS7JdWSp27zuHvCO3pN5 One Ring to Rule them All"
+      ]
+    },
+    "middle_earth-counsil_of_elrond-aragorn": {
+      "sshPublicKey": [
+        "ssh-ed25519 HkmKftQ4D5CKStvSIVA6 aragorn@Middle Earth"
+      ]
+    },
+    "middle_earth-counsil_of_elrond-boromir": {},
+    "middle_earth-counsil_of_elrond-legolas": {
+      "sshPublicKey": [
+        "ssh-ed25519 x1qMWhSkXE1Qr02xW3fl One Ring to Rule them All"
+      ]
+    }
+  },
+  "groups": {
+    "shirecloud_login": {
+      "members": [
+        "middle_earth-Fellowship-samwise",
+        "middle_earth-Fellowship-pipin",
+        "middle_earth-Fellowship-merry",
+        "middle_earth-Fellowship-eowyn",
+        "middle_earth-counsil_of_elrond-aragorn",
+        "middle_earth-counsil_of_elrond-frodo",
+        "middle_earth-counsil_of_elrond-bilbo",
+        "middle_earth-counsil_of_elrond-elrond",
+        "middle_earth-counsil_of_elrond-boromir",
+        "middle_earth-counsil_of_elrond-gimli",
+        "middle_earth-counsil_of_elrond-legolas"
+      ],
+      "attributes": [
+        "system_group",
+        "grace_period",
+        "login_users"
+      ]
+    }
+  }
+}

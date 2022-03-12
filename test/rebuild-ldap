@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+./test/clean_ldap.sh
+./test/build.py $@
+
+echo "Removing status files."
+rm -f ./test/status/*
