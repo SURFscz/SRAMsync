@@ -9,13 +9,13 @@ python-ldap = ">=3.4"
 jsonschema = "*"
 pyyaml = "*"
 click-logging = "*"
-behave = "*"
 
 [dev-packages]
 black = "*"
 yq = "*"
 pylint = "*"
 rope = "*"
+behave = "*"
 deepdiff = "*"
 
 [pipenv]
