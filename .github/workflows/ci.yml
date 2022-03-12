@@ -25,8 +25,11 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Update packages list
+        run: sudo apt-get update
+
       - name: Install LDAP and utils
-        run: sudo apt install ldap-util python-ldap
+        run: sudo apt-get -y install build-essential python3-dev python2.7-dev libldap2-dev libsasl2-dev slapd ldap-utils tox lcov valgrind
 
       - name: Upgrade pip
         run: pip install --upgrade pip
@@ -34,8 +37,8 @@ jobs:
       - name: Install pipenv
         run: pip install pipenv
 
-      - name: Install python behave framework
-        run: pipenv install --site-packages -d
+      - name: Install needed python packages
+        run: pipenv install -d
 
       - name: Start LDAP server
         run: |
@@ -44,4 +47,4 @@ jobs:
           sleep 5
 
       - name: Run behave
-        run: behave
+        run: pipenv run behave
