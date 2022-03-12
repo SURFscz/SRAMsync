@@ -310,6 +310,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
 
             # Create groups
             if dest_group_name not in status["groups"]:
+                print("test-2")
                 status["groups"][dest_group_name] = {
                     "members": [],
                     "attributes": group_attributes,
@@ -426,7 +427,7 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
                     )
                     remaining_time = grace_until - datetime.now(timezone.utc)
                     logger.info(
-                        f"User '{user}' has been removed but not deleted due to grace timea. "
+                        f"User '{user}' has been removed but not deleted due to grace time. "
                         f"Remaining time: {remaining_time}"
                     )
                     new_status["groups"][group]["graced_users"] = {
