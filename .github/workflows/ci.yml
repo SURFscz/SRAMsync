@@ -32,7 +32,7 @@ jobs:
         run: pip install --upgrade pip
 
       - name: Install pipenv
-        run: pip install pipenc
+        run: pip install pipenv
 
       - name: Install python behave framework
         run: pipenv install -d
