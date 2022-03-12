@@ -28,8 +28,14 @@ jobs:
       - name: Install LDAP and utils
         run: sudo apt install ldap-utils
 
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
+      - name: Install pipenv
+        run: pip install pipenc
+
       - name: Install python behave framework
-        run: pipenv install
+        run: pipenv install -d
 
       - name: Start LDAP server
         run: |
