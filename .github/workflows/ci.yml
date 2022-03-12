@@ -29,7 +29,7 @@ jobs:
         run: sudo apt install ldap-utils
 
       - name: Install python behave framework
-        run: pip install behave
+        run: pipenv install
 
       - name: Start LDAP server
         run: |
