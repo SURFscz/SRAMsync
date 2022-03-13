@@ -2,6 +2,7 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-ble.svg)](http://perso.crans.org/besson/LICENSE.html)
+![workflow](https://github.com/venekamp/SRAMsync/actions/workflows/ci.yml/badge.svg)
 
 ## Purpose of SRAMsync
 
