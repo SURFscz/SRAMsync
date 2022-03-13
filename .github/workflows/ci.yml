@@ -35,10 +35,10 @@ jobs:
         run: pip install --upgrade pip
 
       - name: Install pipenv
-        run: sudo python3 -m pip install --user pipenv
+        run: python3 -m pip install --user pipenv
 
       - name: Install needed python packages
-        run: sudo pipenv install -d --system
+        run: pipenv install --dev
 
       - name: Start LDAP server
         run: |
