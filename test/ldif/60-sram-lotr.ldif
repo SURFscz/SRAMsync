@@ -258,11 +258,11 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: e73d685034eec6e585b3fbfad5b854b6121b8500@sram.surf.nl
+cn: f92351f49be67cf5d8cf1962272e2f72449d1089@sram.surf.nl
 sn: Potter
 displayName: Harry Potter
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: e73d685034eec6e585b3fbfad5b854b6121b8500@sram.surf.nl
+eduPersonUniqueId: f92351f49be67cf5d8cf1962272e2f72449d1089@sram.surf.nl
 givenName: Harry
 mail: harry.potter@hogwarts.edu
 uid: harry
@@ -275,11 +275,11 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: e6be9dc53943c1e0f3b858d7aa16b0f1a052af85@sram.surf.nl
+cn: c0b962e10cd6a5d34bc5d101fe8e566e7112e932@sram.surf.nl
 sn: Granger
 displayName: Hermione Granger
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: e6be9dc53943c1e0f3b858d7aa16b0f1a052af85@sram.surf.nl
+eduPersonUniqueId: c0b962e10cd6a5d34bc5d101fe8e566e7112e932@sram.surf.nl
 givenName: Hermione
 mail: hermione.granger@hogwarts.edu
 uid: hermione
@@ -292,11 +292,11 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: 935bb7a572ed60cf9ca5a12ea0ecfa1e632bc042@sram.surf.nl
+cn: dc0a1d2eea111768ba25bd9584e41e5b714532cb@sram.surf.nl
 sn: Weassely
 displayName: Rondald Weasley
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 935bb7a572ed60cf9ca5a12ea0ecfa1e632bc042@sram.surf.nl
+eduPersonUniqueId: dc0a1d2eea111768ba25bd9584e41e5b714532cb@sram.surf.nl
 givenName: Ronald
 mail: ronald.weasley@hogwarts.edu
 uid: ronald
@@ -308,11 +308,11 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: fc59334f170836ab54a36f60273697c1b51addf7@sram.surf.nl
+cn: 99cbc77806627f2a968a5dbc9815f8207b467314@sram.surf.nl
 sn: Dumbledore
 displayName: Albus Dumbledore
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: fc59334f170836ab54a36f60273697c1b51addf7@sram.surf.nl
+eduPersonUniqueId: 99cbc77806627f2a968a5dbc9815f8207b467314@sram.surf.nl
 givenName: Albus
 mail: albus.dumbledore@hogwarts.edu
 uid: albus
@@ -325,11 +325,11 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: 5f37a65c971ab8c240017953e78b091077ab1a22@sram.surf.nl
+cn: 94724188d8aab6d9b92d2b757acf75f0a621ae94@sram.surf.nl
 sn: Snape
 displayName: Severus Snape
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 5f37a65c971ab8c240017953e78b091077ab1a22@sram.surf.nl
+eduPersonUniqueId: 94724188d8aab6d9b92d2b757acf75f0a621ae94@sram.surf.nl
 givenName: Severus
 mail: severus.snape@hogwarts.edu
 uid: severus
@@ -341,11 +341,11 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: 57ce2cf4b973c94de80e17097d97a3906c66d9cf@sram.surf.nl
+cn: ab3a33d889d82e492599d4c29853d8cca1877136@sram.surf.nl
 sn: Malfoy
 displayName: Draco Malfoy
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 57ce2cf4b973c94de80e17097d97a3906c66d9cf@sram.surf.nl
+eduPersonUniqueId: ab3a33d889d82e492599d4c29853d8cca1877136@sram.surf.nl
 givenName: Draco
 mail: draco.malfoy@hogwarts.edu
 uid: draco
@@ -364,8 +364,6 @@ objectClass: groupOfMembers
 cn: Rivendell.Fellowship.shirecloud_login
 description: bla
 displayName: Ringbeares Login
-member: uid=eowyn,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
- c=nl
 member: uid=frodo,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
  c=nl
 member: uid=merry,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
@@ -431,7 +429,7 @@ member: uid=hermione,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=sur
  f,dc=nl
 member: uid=ronald,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
  dc=nl
-uniqueIdentifier: b35f4450-8788-454b-ad1b-43025ec8fde6
+uniqueIdentifier: 7d1c5489-bb68-4284-bdf9-a30b4204a221
 
 dn: cn=Hogwarts.Gryffindor.wizardry_owl,ou=Groups,dc=flat,dc=mt-doom,dc=serv
  ices,dc=sram,dc=surf,dc=nl
@@ -446,7 +444,7 @@ member: uid=hermione,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=sur
  f,dc=nl
 member: uid=ronald,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
  dc=nl
-uniqueIdentifier: bbba8c98-bea7-4380-aa63-727155c4ae81
+uniqueIdentifier: f39c403c-024b-4a5a-b4e4-1b156f576823
 
 dn: cn=Hogwarts.Gryffindor.wizardry_newt,ou=Groups,dc=flat,dc=mt-doom,dc=ser
  vices,dc=sram,dc=surf,dc=nl
@@ -461,7 +459,7 @@ member: uid=hermione,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=sur
  f,dc=nl
 member: uid=ronald,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,
  dc=nl
-uniqueIdentifier: b98b88d4-3c8b-4253-a5eb-0510ca654831
+uniqueIdentifier: f12d7d75-4332-477e-a714-ffc22ca4bc0f
 
 dn: cn=Hogwarts.slytherin.wizardry_login,ou=Groups,dc=flat,dc=mt-doom,dc=ser
  vices,dc=sram,dc=surf,dc=nl
@@ -472,7 +470,7 @@ description: Access to wizardry classes
 displayName: Login
 member: uid=draco,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
  c=nl
-uniqueIdentifier: 40d9ef50-2951-4c0d-a543-a193738eedfa
+uniqueIdentifier: fb1a6e7f-89f7-4a8d-a001-b21d1a19ab3f
 
 dn: cn=Hogwarts.slytherin.potions,ou=Groups,dc=flat,dc=mt-doom,dc=services,d
  c=sram,dc=surf,dc=nl
@@ -485,7 +483,7 @@ member: uid=draco,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
  c=nl
 member: uid=harry,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,d
  c=nl
-uniqueIdentifier: aff75d60-aadd-4095-b475-50105a1b1781
+uniqueIdentifier: ef57272a-bccf-455b-9ca5-f2bf6e309442
 
 dn: dc=ordered,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
 objectClass: dcObject
@@ -515,7 +513,7 @@ objectClass: extensibleObject
 objectClass: groupOfMembers
 cn: shirecloud_login
 displayName: Ringbeares Login
-member: uid=eowyn,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=
+member: uid=frodo,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=
  services,dc=sram,dc=surf,dc=nl
 member: uid=merry,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=
  services,dc=sram,dc=surf,dc=nl
@@ -553,8 +551,6 @@ member: uid=arwen,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=
  services,dc=sram,dc=surf,dc=nl
 member: uid=boromir,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,d
  c=services,dc=sram,dc=surf,dc=nl
-member: uid=eowyn,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=
- services,dc=sram,dc=surf,dc=nl
 member: uid=frodo,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=
  services,dc=sram,dc=surf,dc=nl
 member: uid=gandalf,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,d
@@ -576,45 +572,60 @@ objectClass: organizationalUnit
 objectClass: top
 ou: People
 
-dn: uid=gimli,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
+dn: uid=frodo,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
  ices,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: ldapPublicKey
 objectClass: person
 objectClass: voPerson
-cn: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
+cn: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
 sn: Bagends
-displayName: Gimli
+displayName: Frodo Bagends
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
-givenName: Gimli
-mail: gimli@shire.me
-sshPublicKey:: c3NoLWVkMjU1MTkgbFJvZ2liU1h1Sld1cDZ3QU5RdnIgZ2ltbGlATWlkZGxlI
- EVhcnRo
-uid: gimli
+eduPersonUniqueId: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
+givenName: Frodo
+mail: frodo@shire.me
+sshPublicKey:: c3NoLWVkMjU1MTkgaWZNZVVEMUJQREJvbzZXRkNESXQgZnJvZG8=
+uid: frodo
 voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: gimli001@rivendell.me
+voPersonExternalID: frodo001@rivendell.me
 
-dn: uid=gandalf,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
- rvices,dc=sram,dc=surf,dc=nl
+dn: uid=arwen,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: ldapPublicKey
 objectClass: person
 objectClass: voPerson
-cn: 2a43b455b16697aae3b9f5214f90386090ccaef3@sram.surf.nl
-sn: the Grey
-displayName: Gandalf the Grey
+cn: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
+sn: Bagends
+displayName: Arwen
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 2a43b455b16697aae3b9f5214f90386090ccaef3@sram.surf.nl
-givenName: Gandald
-mail: gandald.grey@wizzard.me
-sshPublicKey:: c3NoLWVkMjU1MTkgTzUyOUxrZWN0ZUJEUmVlN29rWDQgZ2FuZGFsZkBNaWRkb
- GUgRWFydGg=
-uid: gandalf
+eduPersonUniqueId: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
+givenName: Arwen
+mail: arwen@rivendell.me
+sshPublicKey:: c3NoLWVkMjU1MTkgR1RYa3hhRHN5VDJ0cTV1TWRoMXcgYXJ3ZW4=
+uid: arwen
 voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: ganda001@rivendell.me
+voPersonExternalID: arwen001@rivendell.me
+
+dn: uid=boromir,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: voPerson
+cn: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
+sn: Bagends
+displayName: Borromir
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
+givenName: Borromir
+mail: borrowmir@shire.me
+uid: boromir
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: borro001@rivendell.me
 
 dn: uid=merry,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
  ices,dc=sram,dc=surf,dc=nl
@@ -634,102 +645,6 @@ sshPublicKey:: c3NoLWVkMjU1MTkgMmtUZFBWYXBydzJXQXNZMElyMksgbWVycnk=
 uid: merry
 voPersonExternalAffiliation: employee@rivendell.eu
 voPersonExternalID: merry001@rivendell.me
-
-dn: uid=samwise,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
- rvices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: ldapPublicKey
-objectClass: person
-objectClass: voPerson
-cn: 91ce799f06d1d2a5dbb009f15b6719848885063d@sram.surf.nl
-sn: Bagends
-displayName: Samwise
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 91ce799f06d1d2a5dbb009f15b6719848885063d@sram.surf.nl
-givenName: Samwise
-mail: samwise@shire.me
-sshPublicKey:: c3NoLWVkMjU1MTkgMTNkd0E1bE03ZnhDV2Y0RXJEd28gT25lIFJpbmcgdG8gU
- nVsZSB0aGVtIEFsbA==
-uid: samwise
-voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: samew001@rivendell.me
-
-dn: uid=boromir,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
- rvices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: person
-objectClass: voPerson
-cn: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
-sn: Bagends
-displayName: Borromir
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
-givenName: Borromir
-mail: borrowmir@shire.me
-uid: boromir
-voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: borro001@rivendell.me
-
-dn: uid=pipin,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
- ices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: ldapPublicKey
-objectClass: person
-objectClass: voPerson
-cn: ec8fcb2d7a11ffcaa59071be6a31b426398bff6c@sram.surf.nl
-sn: Bagends
-displayName: Pipin Took
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: ec8fcb2d7a11ffcaa59071be6a31b426398bff6c@sram.surf.nl
-givenName: Pipin
-mail: pipin@shire.me
-sshPublicKey:: c3NoLWVkMjU1MTkgUWxPMGwwR3l5QlRTMmlDUEJHQUMgcGlwaW5ATWlkZGxlI
- EVhcnRo
-uid: pipin
-voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: pipin001@rivendell.me
-
-dn: uid=aragorn,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
- rvices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: ldapPublicKey
-objectClass: person
-objectClass: voPerson
-cn: 4bc6fd5be68adebae9ea76991282034ddf8e8ab3@sram.surf.nl
-sn: Bagends
-displayName: Aragorn
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 4bc6fd5be68adebae9ea76991282034ddf8e8ab3@sram.surf.nl
-givenName: Aragorn
-mail: aragorn@rivendell.me
-sshPublicKey:: c3NoLWVkMjU1MTkgSGttS2Z0UTRENUNLU3R2U0lWQTYgYXJhZ29ybkBNaWRkb
- GUgRWFydGg=
-uid: aragorn
-voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: arago001@rivendell.me
-
-dn: uid=frodo,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
- ices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: ldapPublicKey
-objectClass: person
-objectClass: voPerson
-cn: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
-sn: Bagends
-displayName: Frodo Bagends
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
-givenName: Frodo
-mail: frodo@shire.me
-sshPublicKey:: c3NoLWVkMjU1MTkgaWZNZVVEMUJQREJvbzZXRkNESXQgZnJvZG8=
-uid: frodo
-voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: frodo001@rivendell.me
 
 dn: uid=legolas,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
  rvices,dc=sram,dc=surf,dc=nl
@@ -751,24 +666,105 @@ uid: legolas
 voPersonExternalAffiliation: employee@rivendell.eu
 voPersonExternalID: legol001@rivendell.me
 
-dn: uid=arwen,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
+dn: uid=gandalf,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 2a43b455b16697aae3b9f5214f90386090ccaef3@sram.surf.nl
+sn: the Grey
+displayName: Gandalf the Grey
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 2a43b455b16697aae3b9f5214f90386090ccaef3@sram.surf.nl
+givenName: Gandald
+mail: gandald.grey@wizzard.me
+sshPublicKey:: c3NoLWVkMjU1MTkgTzUyOUxrZWN0ZUJEUmVlN29rWDQgZ2FuZGFsZkBNaWRkb
+ GUgRWFydGg=
+uid: gandalf
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: ganda001@rivendell.me
+
+dn: uid=aragorn,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 4bc6fd5be68adebae9ea76991282034ddf8e8ab3@sram.surf.nl
+sn: Bagends
+displayName: Aragorn
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 4bc6fd5be68adebae9ea76991282034ddf8e8ab3@sram.surf.nl
+givenName: Aragorn
+mail: aragorn@rivendell.me
+sshPublicKey:: c3NoLWVkMjU1MTkgSGttS2Z0UTRENUNLU3R2U0lWQTYgYXJhZ29ybkBNaWRkb
+ GUgRWFydGg=
+uid: aragorn
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: arago001@rivendell.me
+
+dn: uid=pipin,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
  ices,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: ldapPublicKey
 objectClass: person
 objectClass: voPerson
-cn: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
+cn: ec8fcb2d7a11ffcaa59071be6a31b426398bff6c@sram.surf.nl
 sn: Bagends
-displayName: Arwen
+displayName: Pipin Took
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
-givenName: Arwen
-mail: arwen@rivendell.me
-sshPublicKey:: c3NoLWVkMjU1MTkgR1RYa3hhRHN5VDJ0cTV1TWRoMXcgYXJ3ZW4=
-uid: arwen
+eduPersonUniqueId: ec8fcb2d7a11ffcaa59071be6a31b426398bff6c@sram.surf.nl
+givenName: Pipin
+mail: pipin@shire.me
+sshPublicKey:: c3NoLWVkMjU1MTkgUWxPMGwwR3l5QlRTMmlDUEJHQUMgcGlwaW5ATWlkZGxlI
+ EVhcnRo
+uid: pipin
 voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: arwen001@rivendell.me
+voPersonExternalID: pipin001@rivendell.me
+
+dn: uid=samwise,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: 91ce799f06d1d2a5dbb009f15b6719848885063d@sram.surf.nl
+sn: Bagends
+displayName: Samwise
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 91ce799f06d1d2a5dbb009f15b6719848885063d@sram.surf.nl
+givenName: Samwise
+mail: samwise@shire.me
+sshPublicKey:: c3NoLWVkMjU1MTkgMTNkd0E1bE03ZnhDV2Y0RXJEd28gT25lIFJpbmcgdG8gU
+ nVsZSB0aGVtIEFsbA==
+uid: samwise
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: samew001@rivendell.me
+
+dn: uid=gimli,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
+sn: Bagends
+displayName: Gimli
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
+givenName: Gimli
+mail: gimli@shire.me
+sshPublicKey:: c3NoLWVkMjU1MTkgbFJvZ2liU1h1Sld1cDZ3QU5RdnIgZ2ltbGlATWlkZGxlI
+ EVhcnRo
+uid: gimli
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: gimli001@rivendell.me
 
 dn: o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,dc=services,dc=sram,
  dc=surf,dc=nl
@@ -835,25 +831,60 @@ objectClass: organizationalUnit
 objectClass: top
 ou: People
 
-dn: uid=gimli,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
+dn: uid=frodo,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
  dc=services,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: ldapPublicKey
 objectClass: person
 objectClass: voPerson
-cn: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
+cn: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
 sn: Bagends
-displayName: Gimli
+displayName: Frodo Bagends
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
-givenName: Gimli
-mail: gimli@shire.me
-sshPublicKey:: c3NoLWVkMjU1MTkgbFJvZ2liU1h1Sld1cDZ3QU5RdnIgZ2ltbGlATWlkZGxlI
- EVhcnRo
-uid: gimli
+eduPersonUniqueId: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
+givenName: Frodo
+mail: frodo@shire.me
+sshPublicKey:: c3NoLWVkMjU1MTkgaWZNZVVEMUJQREJvbzZXRkNESXQgZnJvZG8=
+uid: frodo
 voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: gimli001@rivendell.me
+voPersonExternalID: frodo001@rivendell.me
+
+dn: uid=arwen,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
+ dc=services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: ldapPublicKey
+objectClass: person
+objectClass: voPerson
+cn: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
+sn: Bagends
+displayName: Arwen
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
+givenName: Arwen
+mail: arwen@rivendell.me
+sshPublicKey:: c3NoLWVkMjU1MTkgR1RYa3hhRHN5VDJ0cTV1TWRoMXcgYXJ3ZW4=
+uid: arwen
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: arwen001@rivendell.me
+
+dn: uid=boromir,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doo
+ m,dc=services,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: voPerson
+cn: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
+sn: Bagends
+displayName: Borromir
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
+givenName: Borromir
+mail: borrowmir@shire.me
+uid: boromir
+voPersonExternalAffiliation: employee@rivendell.eu
+voPersonExternalID: borro001@rivendell.me
 
 dn: uid=elrond,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom
  ,dc=services,dc=sram,dc=surf,dc=nl
@@ -875,41 +906,25 @@ uid: elrond
 voPersonExternalAffiliation: employee@rivendell.eu
 voPersonExternalID: elron001@rivendell.me
 
-dn: uid=boromir,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doo
+dn: uid=legolas,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doo
  m,dc=services,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: person
-objectClass: voPerson
-cn: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
-sn: Bagends
-displayName: Borromir
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 1ed89559d7e816840fd6549e1bfa9069e4afb1ec@sram.surf.nl
-givenName: Borromir
-mail: borrowmir@shire.me
-uid: boromir
-voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: borro001@rivendell.me
-
-dn: uid=bilbo,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
- dc=services,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: ldapPublicKey
 objectClass: person
 objectClass: voPerson
-cn: 349b33befbe299e072328cad3e74f86020b86250@sram.surf.nl
+cn: daa7b9ad6251e8b637835624a36f38a91c549818@sram.surf.nl
 sn: Bagends
-displayName: Bilbo Bagends
+displayName: Legolas
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 349b33befbe299e072328cad3e74f86020b86250@sram.surf.nl
-givenName: Bilbo
-mail: bilbo@shire.me
-sshPublicKey:: c3NoLWVkMjU1MTkgUlhnMHZTVWFuRmEwNUZzMzhBdDkgYmlsYm8=
-uid: bilbo
+eduPersonUniqueId: daa7b9ad6251e8b637835624a36f38a91c549818@sram.surf.nl
+givenName: Legolas
+mail: legolas@mrikwoord.me
+sshPublicKey:: c3NoLWVkMjU1MTkgeDFxTVdoU2tYRTFRcjAyeFczZmwgT25lIFJpbmcgdG8gU
+ nVsZSB0aGVtIEFsbA==
+uid: legolas
 voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: bilbo001@rivendell.me
+voPersonExternalID: legol001@rivendell.me
 
 dn: uid=aragorn,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doo
  m,dc=services,dc=sram,dc=surf,dc=nl
@@ -931,63 +946,44 @@ uid: aragorn
 voPersonExternalAffiliation: employee@rivendell.eu
 voPersonExternalID: arago001@rivendell.me
 
-dn: uid=frodo,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
+dn: uid=bilbo,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
  dc=services,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: ldapPublicKey
 objectClass: person
 objectClass: voPerson
-cn: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
+cn: 349b33befbe299e072328cad3e74f86020b86250@sram.surf.nl
 sn: Bagends
-displayName: Frodo Bagends
+displayName: Bilbo Bagends
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: cbeed477f4d3b8fb06b5f0e9d50671c0ba29fd5d@sram.surf.nl
-givenName: Frodo
-mail: frodo@shire.me
-sshPublicKey:: c3NoLWVkMjU1MTkgaWZNZVVEMUJQREJvbzZXRkNESXQgZnJvZG8=
-uid: frodo
+eduPersonUniqueId: 349b33befbe299e072328cad3e74f86020b86250@sram.surf.nl
+givenName: Bilbo
+mail: bilbo@shire.me
+sshPublicKey:: c3NoLWVkMjU1MTkgUlhnMHZTVWFuRmEwNUZzMzhBdDkgYmlsYm8=
+uid: bilbo
 voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: frodo001@rivendell.me
+voPersonExternalID: bilbo001@rivendell.me
 
-dn: uid=legolas,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doo
- m,dc=services,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: ldapPublicKey
-objectClass: person
-objectClass: voPerson
-cn: daa7b9ad6251e8b637835624a36f38a91c549818@sram.surf.nl
-sn: Bagends
-displayName: Legolas
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: daa7b9ad6251e8b637835624a36f38a91c549818@sram.surf.nl
-givenName: Legolas
-mail: legolas@mrikwoord.me
-sshPublicKey:: c3NoLWVkMjU1MTkgeDFxTVdoU2tYRTFRcjAyeFczZmwgT25lIFJpbmcgdG8gU
- nVsZSB0aGVtIEFsbA==
-uid: legolas
-voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: legol001@rivendell.me
-
-dn: uid=arwen,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
+dn: uid=gimli,ou=People,o=Rivendell.counsil_of_elrond,dc=ordered,dc=mt-doom,
  dc=services,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: ldapPublicKey
 objectClass: person
 objectClass: voPerson
-cn: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
+cn: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
 sn: Bagends
-displayName: Arwen
+displayName: Gimli
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: ef9c34727a04c8bb3993a06fcbd2a52f5b19a469@sram.surf.nl
-givenName: Arwen
-mail: arwen@rivendell.me
-sshPublicKey:: c3NoLWVkMjU1MTkgR1RYa3hhRHN5VDJ0cTV1TWRoMXcgYXJ3ZW4=
-uid: arwen
+eduPersonUniqueId: bc4a4c97963dcdf26db63576c852e3970751850c@sram.surf.nl
+givenName: Gimli
+mail: gimli@shire.me
+sshPublicKey:: c3NoLWVkMjU1MTkgbFJvZ2liU1h1Sld1cDZ3QU5RdnIgZ2ltbGlATWlkZGxlI
+ EVhcnRo
+uid: gimli
 voPersonExternalAffiliation: employee@rivendell.eu
-voPersonExternalID: arwen001@rivendell.me
+voPersonExternalID: gimli001@rivendell.me
 
 dn: o=Hogwarts.Gryffindor,dc=ordered,dc=mt-doom,dc=services,dc=sram,dc=surf,
  dc=nl
@@ -1064,17 +1060,51 @@ objectClass: organizationalUnit
 objectClass: top
 ou: People
 
+dn: uid=ronald,ou=People,o=Hogwarts.Gryffindor,dc=ordered,dc=mt-doom,dc=serv
+ ices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: voPerson
+cn: dc0a1d2eea111768ba25bd9584e41e5b714532cb@sram.surf.nl
+sn: Weassely
+displayName: Rondald Weasley
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: dc0a1d2eea111768ba25bd9584e41e5b714532cb@sram.surf.nl
+givenName: Ronald
+mail: ronald.weasley@hogwarts.edu
+uid: ronald
+voPersonExternalAffiliation: employee@hogwarts.edu
+voPersonExternalID: ronda001@hogwart.edu
+
+dn: uid=hermione,ou=People,o=Hogwarts.Gryffindor,dc=ordered,dc=mt-doom,dc=se
+ rvices,dc=sram,dc=surf,dc=nl
+objectClass: eduPerson
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: voPerson
+cn: c0b962e10cd6a5d34bc5d101fe8e566e7112e932@sram.surf.nl
+sn: Granger
+displayName: Hermione Granger
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: c0b962e10cd6a5d34bc5d101fe8e566e7112e932@sram.surf.nl
+givenName: Hermione
+mail: hermione.granger@hogwarts.edu
+uid: hermione
+voPersonExternalAffiliation: employee@hogwarts.edu
+voPersonExternalID: hermi001@hogwart.edu
+
 dn: uid=albus,ou=People,o=Hogwarts.Gryffindor,dc=ordered,dc=mt-doom,dc=servi
  ces,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: fc59334f170836ab54a36f60273697c1b51addf7@sram.surf.nl
+cn: 99cbc77806627f2a968a5dbc9815f8207b467314@sram.surf.nl
 sn: Dumbledore
 displayName: Albus Dumbledore
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: fc59334f170836ab54a36f60273697c1b51addf7@sram.surf.nl
+eduPersonUniqueId: 99cbc77806627f2a968a5dbc9815f8207b467314@sram.surf.nl
 givenName: Albus
 mail: albus.dumbledore@hogwarts.edu
 uid: albus
@@ -1087,50 +1117,16 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: e73d685034eec6e585b3fbfad5b854b6121b8500@sram.surf.nl
+cn: f92351f49be67cf5d8cf1962272e2f72449d1089@sram.surf.nl
 sn: Potter
 displayName: Harry Potter
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: e73d685034eec6e585b3fbfad5b854b6121b8500@sram.surf.nl
+eduPersonUniqueId: f92351f49be67cf5d8cf1962272e2f72449d1089@sram.surf.nl
 givenName: Harry
 mail: harry.potter@hogwarts.edu
 uid: harry
 voPersonExternalAffiliation: employee@hogwarts.edu
 voPersonExternalID: harry001@hogwart.edu
-
-dn: uid=hermione,ou=People,o=Hogwarts.Gryffindor,dc=ordered,dc=mt-doom,dc=se
- rvices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: person
-objectClass: voPerson
-cn: e6be9dc53943c1e0f3b858d7aa16b0f1a052af85@sram.surf.nl
-sn: Granger
-displayName: Hermione Granger
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: e6be9dc53943c1e0f3b858d7aa16b0f1a052af85@sram.surf.nl
-givenName: Hermione
-mail: hermione.granger@hogwarts.edu
-uid: hermione
-voPersonExternalAffiliation: employee@hogwarts.edu
-voPersonExternalID: hermi001@hogwart.edu
-
-dn: uid=ronald,ou=People,o=Hogwarts.Gryffindor,dc=ordered,dc=mt-doom,dc=serv
- ices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: person
-objectClass: voPerson
-cn: 935bb7a572ed60cf9ca5a12ea0ecfa1e632bc042@sram.surf.nl
-sn: Weassely
-displayName: Rondald Weasley
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 935bb7a572ed60cf9ca5a12ea0ecfa1e632bc042@sram.surf.nl
-givenName: Ronald
-mail: ronald.weasley@hogwarts.edu
-uid: ronald
-voPersonExternalAffiliation: employee@hogwarts.edu
-voPersonExternalID: ronda001@hogwart.edu
 
 dn: o=Hogwarts.slytherin,dc=ordered,dc=mt-doom,dc=services,dc=sram,dc=surf,d
  c=nl
@@ -1186,34 +1182,17 @@ objectClass: organizationalUnit
 objectClass: top
 ou: People
 
-dn: uid=draco,ou=People,o=Hogwarts.slytherin,dc=ordered,dc=mt-doom,dc=servic
- es,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: person
-objectClass: voPerson
-cn: 57ce2cf4b973c94de80e17097d97a3906c66d9cf@sram.surf.nl
-sn: Malfoy
-displayName: Draco Malfoy
-eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 57ce2cf4b973c94de80e17097d97a3906c66d9cf@sram.surf.nl
-givenName: Draco
-mail: draco.malfoy@hogwarts.edu
-uid: draco
-voPersonExternalAffiliation: employee@hogwarts.edu
-voPersonExternalID: draco001@hogwart.edu
-
 dn: uid=harry,ou=People,o=Hogwarts.slytherin,dc=ordered,dc=mt-doom,dc=servic
  es,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: e73d685034eec6e585b3fbfad5b854b6121b8500@sram.surf.nl
+cn: f92351f49be67cf5d8cf1962272e2f72449d1089@sram.surf.nl
 sn: Potter
 displayName: Harry Potter
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: e73d685034eec6e585b3fbfad5b854b6121b8500@sram.surf.nl
+eduPersonUniqueId: f92351f49be67cf5d8cf1962272e2f72449d1089@sram.surf.nl
 givenName: Harry
 mail: harry.potter@hogwarts.edu
 uid: harry
@@ -1226,47 +1205,31 @@ objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: voPerson
-cn: 5f37a65c971ab8c240017953e78b091077ab1a22@sram.surf.nl
+cn: 94724188d8aab6d9b92d2b757acf75f0a621ae94@sram.surf.nl
 sn: Snape
 displayName: Severus Snape
 eduPersonScopedAffiliation: member@sram.surf.nl
-eduPersonUniqueId: 5f37a65c971ab8c240017953e78b091077ab1a22@sram.surf.nl
+eduPersonUniqueId: 94724188d8aab6d9b92d2b757acf75f0a621ae94@sram.surf.nl
 givenName: Severus
 mail: severus.snape@hogwarts.edu
 uid: severus
 voPersonExternalAffiliation: employee@hogwarts.edu
 voPersonExternalID: sever001@hogwart.edu
 
-dn: uid=eowyn,ou=People,dc=flat,dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
+dn: uid=draco,ou=People,o=Hogwarts.slytherin,dc=ordered,dc=mt-doom,dc=servic
+ es,dc=sram,dc=surf,dc=nl
 objectClass: eduPerson
 objectClass: inetOrgPerson
 objectClass: person
-objectClass: top
 objectClass: voPerson
-cn: a3e983fb03ebf8c0b3b28cf165c98521ec0965cb@sram.surf.nl
-sn: Lady of Rohan
-displayName: Eowyn
-eduPersonScopedAffiliation: dd
-givenName: Eowyn
-mail: eowyn@rivendell.nl
-uid: eowyn
-voPersonExternalAffiliation: f
-voPersonExternalID: D
-
-dn: uid=eowyn,ou=People,o=Rivendell.Fellowship,dc=ordered,dc=mt-doom,dc=serv
- ices,dc=sram,dc=surf,dc=nl
-objectClass: eduPerson
-objectClass: inetOrgPerson
-objectClass: person
-objectClass: top
-objectClass: voPerson
-cn: a3e983fb03ebf8c0b3b28cf165c98521ec0965cb@sram.surf.nl
-sn: Lady of Rohan
-displayName: Eowyn
-eduPersonScopedAffiliation: dd
-givenName: Eowyn
-mail: eowyn@rivendell.nl
-uid: eowyn
-voPersonExternalAffiliation: f
-voPersonExternalID: D
+cn: ab3a33d889d82e492599d4c29853d8cca1877136@sram.surf.nl
+sn: Malfoy
+displayName: Draco Malfoy
+eduPersonScopedAffiliation: member@sram.surf.nl
+eduPersonUniqueId: ab3a33d889d82e492599d4c29853d8cca1877136@sram.surf.nl
+givenName: Draco
+mail: draco.malfoy@hogwarts.edu
+uid: draco
+voPersonExternalAffiliation: employee@hogwarts.edu
+voPersonExternalID: draco001@hogwart.edu
 
