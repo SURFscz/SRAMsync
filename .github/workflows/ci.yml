@@ -28,17 +28,17 @@ jobs:
       - name: Update packages list
         run: sudo apt-get update
 
-      - name: Install LDAP and utils
+      - name: Install packages
         run: sudo apt-get -y install build-essential python3-dev python2.7-dev libldap2-dev libsasl2-dev slapd ldap-utils tox lcov valgrind
 
       - name: Upgrade pip
         run: pip install --upgrade pip
 
       - name: Install pipenv
-        run: pip install pipenv
+        run: sudo python3 -m pip install --user pipenv
 
       - name: Install needed python packages
-        run: pipenv install -d
+        run: sudo pipenv install -d --system
 
       - name: Start LDAP server
         run: |
