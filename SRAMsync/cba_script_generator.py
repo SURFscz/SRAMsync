@@ -46,14 +46,14 @@ class CbaScriptGenerator(CuaScriptGenerator):
         self.print("# Adding user CBA account.")
         self.insert_cba_command(self.cfg["cba_add_cmd"], user)
 
-    def remove_user_from_group(self, group: str, user: str, attributes: list):
+    def remove_user_from_group(self, group: str, group_attributes: list, user: str):
         """remove_user_from_group event."""
-        super().remove_user_from_group(group, user, attributes)
+        super().remove_user_from_group(group, group_attributes, user)
         self.insert_cba_command(self.cfg["cba_del_cmd"], user)
 
-    def remove_graced_user_from_group(self, group: str, user: str, attributes: list) -> None:
+    def remove_graced_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
         """remove_graced_user_from_group event."""
-        super().remove_graced_user_from_group(group, user, attributes)
+        super().remove_graced_user_from_group(group, group_attributes, user)
         self.insert_cba_command(self.cfg["cba_del_cmd"], user)
 
     def insert_cba_command(self, cmd: str, user: str) -> None:

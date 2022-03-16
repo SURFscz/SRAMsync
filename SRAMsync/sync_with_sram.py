@@ -310,7 +310,6 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
 
             # Create groups
             if dest_group_name not in status["groups"]:
-                print("test-2")
                 status["groups"][dest_group_name] = {
                     "members": [],
                     "attributes": group_attributes,
@@ -333,7 +332,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
                     user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
                     new_status["groups"][dest_group_name]["members"].append(user)
                     if user not in status["groups"][dest_group_name]["members"]:
-                        event_handler.add_user_to_group(dest_group_name, user, group_attributes)
+                        event_handler.add_user_to_group(dest_group_name, group_attributes, user)
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning(f"service '{fq_co}' does not contain group '{sram_group}'")
 

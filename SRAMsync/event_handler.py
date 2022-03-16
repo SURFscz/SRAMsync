@@ -30,23 +30,23 @@ class EventHandler(ABC):
         """delete_public_ssh_key event."""
 
     @abstractmethod
-    def add_new_group(self, group, attributes):
+    def add_new_group(self, group, group_attributes):
         """add_new_group event."""
 
     @abstractmethod
-    def remove_group(self, group, attributes):
+    def remove_group(self, group, group_attributes):
         """remove_group event."""
 
     @abstractmethod
-    def add_user_to_group(self, group, user, attributes):
+    def add_user_to_group(self, group, group_attributes, user):
         """add_user_to_group event."""
 
     @abstractmethod
-    def remove_user_from_group(self, group, user, attributes: list):
+    def remove_user_from_group(self, group, group_attributes: list, user):
         """remove_user_from_group event."""
 
     @abstractmethod
-    def remove_graced_user_from_group(self, group, user, attributes):
+    def remove_graced_user_from_group(self, group, group_attributes, user):
         """remove_graced_user_from_group event."""
 
     @abstractmethod

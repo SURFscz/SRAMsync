@@ -256,25 +256,27 @@ class EmailNotifications(EventHandler):
         """Add delete-ssh-key event message to the message queue."""
         self.add_event_message("delete-ssh-key", user=user, key=key)
 
-    def add_new_group(self, group: str, attributes: list) -> None:
+    def add_new_group(self, group: str, group_attributes: list) -> None:
         """Add add-group event message to the message queue."""
-        self.add_event_message("add-group", group=group, attributes=attributes)
+        self.add_event_message("add-group", group=group, attributes=group_attributes)
 
-    def remove_group(self, group: str, attributes: list) -> None:
+    def remove_group(self, group: str, group_attributes: list) -> None:
         """Add remove-group event message to the message queue."""
-        self.add_event_message("remove-group", group=group, attributes=attributes)
+        self.add_event_message("remove-group", group=group, attributes=group_attributes)
 
-    def add_user_to_group(self, group: str, user: str, attributes: list) -> None:
+    def add_user_to_group(self, group: str, group_attributes: list, user: str) -> None:
         """Add add-user-to-group event message to the message queue."""
-        self.add_event_message("add-user-to-group", group=group, user=user, attributes=attributes)
+        self.add_event_message("add-user-to-group", group=group, user=user, attributes=group_attributes)
 
-    def remove_user_from_group(self, group: str, user: str, attributes: list) -> None:
+    def remove_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
         """Add remove-user-from-group event message to the message queue."""
-        self.add_event_message("remove-user-from-group", group=group, user=user, attributes=attributes)
+        self.add_event_message("remove-user-from-group", group=group, user=user, attributes=group_attributes)
 
-    def remove_graced_user_from_group(self, group: str, user: str, attributes: list) -> None:
+    def remove_graced_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
         """Add remove-grace-users-from-group event message to the message queue."""
-        self.add_event_message("remove-graced-user-from-group", group=group, user=user, attributes=attributes)
+        self.add_event_message(
+            "remove-graced-user-from-group", group=group, user=user, attributes=group_attributes
+        )
 
     def finalize(self) -> None:
         """Add finalize event message to the message queue."""

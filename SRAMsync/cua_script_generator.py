@@ -217,51 +217,51 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"{self.modify_user_cmd} --list {group} ||")
         self.print(f'  {{\n    echo "{line}" | {self.add_user_cmd} -f-\n  }}\n')
 
-    def remove_group(self, group: str, attributes: list):
+    def remove_group(self, group: str, group_attributes: list):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a new CUA project group. Call the auxiliary event class.
         """
         self.print("#!!! Remove group")
 
-        self.notify.remove_group(group, attributes)
+        self.notify.remove_group(group, group_attributes)
 
-    def add_user_to_group(self, group, user, attributes: list) -> None:
+    def add_user_to_group(self, group, group_attributes: list, user) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a user to a group. Call the auxiliary event class.
         """
         self.print(f"# Add {user} to group {group}")
-        self.update_user_in_group(group, user, attributes, add=True)
+        self.update_user_in_group(group, group_attributes, user, add=True)
 
-        self.notify.add_user_to_group(group, user, attributes)
+        self.notify.add_user_to_group(group, user, group_attributes)
 
-    def remove_user_from_group(self, group: str, user: str, attributes: list) -> None:
+    def remove_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a group. Call the auxiliary event class.
         """
         self.print(f"# Remove {user} from group {group}")
-        self.update_user_in_group(group, user, attributes, add=False)
+        self.update_user_in_group(group, group_attributes, user, add=False)
 
-        self.notify.remove_user_from_group(group, user, attributes)
+        self.notify.remove_user_from_group(group, group_attributes, user)
 
-    def remove_graced_user_from_group(self, group: str, user: str, attributes: list):
+    def remove_graced_user_from_group(self, group: str, group_attributes: list, user: str):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a graced group. Call the auxiliary event class.
         """
         self.print(f"# Grace time has ended for user {user} from group {group}")
-        self.remove_user_from_group(group, user, attributes)
+        self.remove_user_from_group(group, group_attributes, user)
 
-        self.notify.remove_graced_user_from_group(group, user, attributes)
+        self.notify.remove_graced_user_from_group(group, user, group_attributes)
 
-    def update_user_in_group(self, group: str, user: str, attributes: list, add: bool) -> None:
+    def update_user_in_group(self, group: str, group_attributes: list, user: str, add: bool) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         updating users in a graced group. Call the auxiliary event class.
         """
-        attr = set(attributes)
+        attr = set(group_attributes)
         number_of_attributes = len(attr)
         length2 = len(attr - self.cua_group_types)
 

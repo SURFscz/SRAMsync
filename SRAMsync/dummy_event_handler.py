@@ -29,25 +29,25 @@ class DummyEventHandler(EventHandler):
         """Log the delete_public_ssh_key event."""
         logger.info(f"    delete_public_ssh_key({self}, {user}, {key})")
 
-    def add_new_group(self, group, attributes):
+    def add_new_group(self, group, group_attributes):
         """Log the add_new_group event."""
-        logger.info(f"  add_new_group({group}, {attributes})")
+        logger.info(f"  add_new_group({group}, {group_attributes})")
 
-    def remove_group(self, group, attributes):
+    def remove_group(self, group, group_attributes):
         """Log the remove_group event."""
-        logger.info(f"  remove_group({group}, {attributes})")
+        logger.info(f"  remove_group({group}, {group_attributes})")
 
-    def add_user_to_group(self, group, user, attributes: list):
+    def add_user_to_group(self, group, group_attributes: list, user):
         """Log the add_user_to_group event."""
-        logger.info(f"  add_user_to_group({group}, {user}, {attributes})")
+        logger.info(f"  add_user_to_group({group}, {group_attributes}, {user})")
 
-    def remove_user_from_group(self, group, user, attributes: list):
+    def remove_user_from_group(self, group, group_attributes: list, user):
         """Log the remove_user_from_group event."""
-        logger.info(f"  remove_user_from_group({group}, {user}, {attributes})")
+        logger.info(f"  remove_user_from_group({group}, {group_attributes}, {user})")
 
-    def remove_graced_user_from_group(self, group, user, attributes):
+    def remove_graced_user_from_group(self, group, group_attributes, user):
         """Log the remove_graced_user_from_group event."""
-        logger.info(f"  remove_graced_user_from_group({group}, {user}, {attributes})")
+        logger.info(f"  remove_graced_user_from_group({group}, {group_attributes}, {user})")
 
     def finalize(self):
         """Log the finalize event."""
