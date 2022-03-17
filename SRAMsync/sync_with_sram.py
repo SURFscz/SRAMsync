@@ -395,7 +395,7 @@ def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
                     # it is the intended behaviour
                     logger.info(f"Grace time ended for user {user} in {group}")
                     group_attributes = cfg["sync"]["groups"][group]["attributes"]
-                    event_handler.remove_graced_user_from_group(group, user, group_attributes)
+                    event_handler.remove_graced_user_from_group(group, group_attributes, user)
                 else:
                     if "graced_users" not in new_status["groups"][group]:
                         new_status["groups"][group]["graced_users"] = {}
