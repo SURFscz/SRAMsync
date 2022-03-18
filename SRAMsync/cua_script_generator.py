@@ -268,14 +268,14 @@ class CuaScriptGenerator(EventHandler):
         if add:
             remove = " "
         else:
-            remove = " -r "
+            remove = " --remove "
 
         if number_of_attributes - length2 == 1:
             if "system_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}-a {self.service_name} {group} {user}\n")
+                self.print(f"{self.modify_user_cmd}{remove}--access {self.service_name} {group} {user}\n")
 
             if "project_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}-g {group} {user}\n")
+                self.print(f"{self.modify_user_cmd}{remove}--group {group} {user}\n")
         elif number_of_attributes - length2 == 0:
             error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
             raise ValueError(error)
