@@ -194,15 +194,17 @@ class EmailNotifications(EventHandler):
         """Set the current CO message queue."""
         self._co = co
 
-    def add_message_to_current_co_group(self, event: str, message: str) -> None:
+    def add_message_to_current_co_group(self, event: str, message: str, discardable: bool = False) -> None:
         """Add the message to the current CO message queue."""
         if self._co not in self._messages:
             self._messages[self._co] = {}
 
         if event not in self._messages[self._co]:
-            self._messages[self._co][event] = []
+            self._messages[self._co][event] = {}
+            self._messages[self._co][event]["discardable"] = discardable
+            self._messages[self._co][event]["messages"] = []
 
-        self._messages[self._co][event].append(message)
+        self._messages[self._co][event]["messages"].append(message)
 
     def send_queued_messages(self) -> None:
         """Send all queued message."""
@@ -218,31 +220,38 @@ class EmailNotifications(EventHandler):
             )
 
         for co, event_messages in self._messages.items():
-            final_message = ""
-            for event, message_lines in event_messages.items():
-                message_line = ""
-                for line in message_lines:
-                    message_line = f"{message_line}{line}\n"
-                if event in self.report_events and "header" in self.report_events[event]:
-                    header = self.report_events[event]["header"]
-                    message_line = f"{header}\n{message_line}"
+            non_discardable_messages = [k for k, v in event_messages.items() if v["discardable"] is False]
 
-                final_message = final_message + message_line
+            if len(non_discardable_messages) > 0:
+                final_message = ""
+                for event, message_lines in event_messages.items():
+                    message_part = ""
+                    for line in message_lines["messages"]:
+                        message_part = f"{message_part}{line}\n"
+                    if event in self.report_events and "header" in self.report_events[event]:
+                        header = self.report_events[event]["header"]
+                        message_part = f"{header}\n{message_part}"
 
-            self.smtp_client.send_message(final_message[:-1], self.service, co)
+                    final_message = final_message + message_part
+
+                self.smtp_client.send_message(final_message[:-1], self.service, co)
+            else:
+                logger.debug(
+                    f"No non discardable messages found. It okay to skip sending e-mail for {co} CO."
+                )
 
         logger.debug("Finished sending queued messages")
 
-    def add_event_message(self, event: str, **args) -> None:
+    def add_event_message(self, event: str, discardable: bool = False, **args) -> None:
         """Add a event message and apply formatting to it."""
         if event in self.report_events:
             message = f"{self.report_events[event]['line']}".format(**args)
-            self.add_message_to_current_co_group(event, message)
+            self.add_message_to_current_co_group(event, message, discardable)
 
     def start_of_service_processing(self, co: str) -> None:
         """Add start event message to the message queue."""
         self.set_current_co_group(co)
-        self.add_event_message("start", co=co)
+        self.add_event_message("start", discardable=True, co=co)
 
     def add_new_user(self, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
         """Add add-new-user event message to the message queue."""
@@ -280,4 +289,4 @@ class EmailNotifications(EventHandler):
 
     def finalize(self) -> None:
         """Add finalize event message to the message queue."""
-        self.add_event_message("finalize")
+        self.add_event_message("finalize", discardable=True)
