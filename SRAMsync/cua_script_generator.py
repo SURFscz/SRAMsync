@@ -234,7 +234,7 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"# Add {user} to group {group}")
         self.update_user_in_group(group, group_attributes, user, add=True)
 
-        self.notify.add_user_to_group(group, user, group_attributes)
+        self.notify.add_user_to_group(group, group_attributes, user)
 
     def remove_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
         """
