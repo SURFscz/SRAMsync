@@ -46,10 +46,6 @@ class CbaScriptGenerator(CuaScriptGenerator):
         self.print("# Adding user CBA account.")
         self.insert_cba_command(self.cfg["cba_add_cmd"], user)
 
-    def start_grace_period_for_user(self, group: str, group_attributes: list, user: str, duration: str):
-        """start_grace_period_for_user event."""
-        super().start_grace_period_for_user(group, group_attributes, user, duration)
-
     def remove_user_from_group(self, group: str, group_attributes: list, user: str):
         """remove_user_from_group event."""
         super().remove_user_from_group(group, group_attributes, user)
