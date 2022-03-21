@@ -42,6 +42,10 @@ class EventHandler(ABC):
         """add_user_to_group event."""
 
     @abstractmethod
+    def start_grace_period_for_user(self, group, group_attributes, user, duration):
+        """start_grace_period_for_user event."""
+
+    @abstractmethod
     def remove_user_from_group(self, group, group_attributes: list, user):
         """remove_user_from_group event."""
 

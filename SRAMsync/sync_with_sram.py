@@ -429,6 +429,9 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
                         f"User '{user}' has been removed but not deleted due to grace time. "
                         f"Remaining time: {remaining_time}"
                     )
+                    event_handler.start_grace_period_for_user(
+                        group, group_properties["attributes"], user, remaining_time
+                    )
                     new_status["groups"][group]["graced_users"] = {
                         user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
                     }

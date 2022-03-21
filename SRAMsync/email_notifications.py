@@ -84,7 +84,7 @@ class SMTPclient:
         self.server.login(login_name, passwd)
         logger.debug("SMTP: login successful")
 
-    def send_message(self, message, service, co):
+    def send_message(self, message, service):
         """Send a message through an opened SMTP server."""
         try:
             logger.debug("Sending message")
@@ -94,13 +94,13 @@ class SMTPclient:
             msg["from"] = self.mail_from
             msg["subject"] = self.mail_subject
             msg["Date"] = formatdate(localtime=True)
-            content = render_templated_string(self.mail_message, service=service, co=co, message=message)
+            content = render_templated_string(self.mail_message, service=service, message=message)
             msg.set_content(content)
             self.server.send_message(msg)
 
             logger.debug("Message sent")
         except smtplib.SMTPServerDisconnected:
-            logger.error(f"Sending e-mail notifications for {co} has failed. SMTP server has disconnected.")
+            logger.error(f"Sending e-mail notifications for has failed. SMTP server has disconnected.")
 
 
 class EmailNotifications(EventHandler):
@@ -117,7 +117,7 @@ class EmailNotifications(EventHandler):
             "report_events": {
                 "type": "object",
                 "patternProperties": {
-                    "^start$|^add-new-user$|^add-ssh-key$|^delete-ssh-key$|^delete-ssh-key$|^add-group$|^remove-group$|^add-user-to-group$|^remove-user-from-group$|^remove-graced-user-from-group$|^finalize$": {
+                    "^start$|^add-new-user$|^add-ssh-key$|^delete-ssh-key$|^delete-ssh-key$|^add-group$|^remove-group$|^add-user-to-group$|^start-grace-period-for-user$|^remove-user-from-group$|^remove-graced-user-from-group$|^finalize$": {
                         "type": "object",
                         "properties": {"line": {"type": "string"}},
                         "required": ["line"],
@@ -162,9 +162,6 @@ class EmailNotifications(EventHandler):
         "!eNULL:!MD5"
     )
 
-    _messages = {}
-    _co = "undetermined"
-
     def __init__(self, service, cfg: dict, config_path) -> None:
         super().__init__(service, cfg, config_path)
         try:
@@ -178,6 +175,7 @@ class EmailNotifications(EventHandler):
             self.cfg = cfg
             self.service = service
             self.smtp_client = None
+            self._messages = {}
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
         except KeyError as e:
@@ -190,21 +188,14 @@ class EmailNotifications(EventHandler):
         if hasattr(self, "cfg"):
             self.send_queued_messages()
 
-    def set_current_co_group(self, co) -> None:
-        """Set the current CO message queue."""
-        self._co = co
-
     def add_message_to_current_co_group(self, event: str, message: str, discardable: bool = False) -> None:
         """Add the message to the current CO message queue."""
-        if self._co not in self._messages:
-            self._messages[self._co] = {}
+        if event not in self._messages:
+            self._messages[event] = {}
+            self._messages[event]["discardable"] = discardable
+            self._messages[event]["messages"] = []
 
-        if event not in self._messages[self._co]:
-            self._messages[self._co][event] = {}
-            self._messages[self._co][event]["discardable"] = discardable
-            self._messages[self._co][event]["messages"] = []
-
-        self._messages[self._co][event]["messages"].append(message)
+        self._messages[event]["messages"].append(message)
 
     def send_queued_messages(self) -> None:
         """Send all queued message."""
@@ -219,26 +210,23 @@ class EmailNotifications(EventHandler):
                 mail_message=self.cfg["mail-message"],
             )
 
-        for co, event_messages in self._messages.items():
-            non_discardable_messages = [k for k, v in event_messages.items() if v["discardable"] is False]
+        events = {k: v for k, v in self._messages.items() if v["discardable"] is False}
 
-            if len(non_discardable_messages) > 0:
-                final_message = ""
-                for event, message_lines in event_messages.items():
-                    message_part = ""
-                    for line in message_lines["messages"]:
-                        message_part = f"{message_part}{line}\n"
-                    if event in self.report_events and "header" in self.report_events[event]:
-                        header = self.report_events[event]["header"]
-                        message_part = f"{header}\n{message_part}"
+        if events:
+            final_message = ""
+            for event, event_values in events.items():
+                message_part = ""
+                for line in event_values["messages"]:
+                    message_part = f"{message_part}{line}\n"
+                if event in self.report_events and "header" in self.report_events[event]:
+                    header = self.report_events[event]["header"]
+                    message_part = f"{header}\n{message_part}"
 
-                    final_message = final_message + message_part
+                final_message = final_message + message_part
 
-                self.smtp_client.send_message(final_message[:-1], self.service, co)
-            else:
-                logger.debug(
-                    f"No non discardable messages found. It okay to skip sending e-mail for {co} CO."
-                )
+            self.smtp_client.send_message(final_message[:-1], self.service)
+        else:
+            logger.debug(f"No important messages to report.")
 
         logger.debug("Finished sending queued messages")
 
@@ -250,7 +238,6 @@ class EmailNotifications(EventHandler):
 
     def start_of_service_processing(self, co: str) -> None:
         """Add start event message to the message queue."""
-        self.set_current_co_group(co)
         self.add_event_message("start", discardable=True, co=co)
 
     def add_new_user(self, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
@@ -276,6 +263,16 @@ class EmailNotifications(EventHandler):
     def add_user_to_group(self, group: str, group_attributes: list, user: str) -> None:
         """Add add-user-to-group event message to the message queue."""
         self.add_event_message("add-user-to-group", group=group, user=user, attributes=group_attributes)
+
+    def start_grace_period_for_user(self, group: str, group_attributes: list, user: str, duration: str):
+        """The grace period for the users has started."""
+        self.add_event_message(
+            "start-grace-period-for-user",
+            group=group,
+            attributes=group_attributes,
+            user=user,
+            duration=duration,
+        )
 
     def remove_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
         """Add remove-user-from-group event message to the message queue."""

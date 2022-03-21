@@ -41,6 +41,10 @@ class DummyEventHandler(EventHandler):
         """Log the add_user_to_group event."""
         logger.info(f"  add_user_to_group({group}, {group_attributes}, {user})")
 
+    def start_grace_period_for_user(self, group: str, group_attributes: list, user: str, duration: str):
+        """Log the start_grace_period_for_user event."""
+        logger.info(f"  start_grace_period_for_user({group}, {group_attributes}, {user} {duration})")
+
     def remove_user_from_group(self, group, group_attributes: list, user):
         """Log the remove_user_from_group event."""
         logger.info(f"  remove_user_from_group({group}, {group_attributes}, {user})")

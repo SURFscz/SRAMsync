@@ -236,6 +236,14 @@ class CuaScriptGenerator(EventHandler):
 
         self.notify.add_user_to_group(group, group_attributes, user)
 
+    def start_grace_period_for_user(self, group, group_attributes, user, duration):
+        """
+        The grace period for user user has started. However, for the CUA this
+        has no implications. Until the grace period has ended, nothing will change
+        for the CUA.
+        """
+        self.notify.start_grace_period_for_user(group, group_attributes, user, duration)
+
     def remove_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
