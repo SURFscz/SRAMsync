@@ -199,20 +199,20 @@ class EmailNotifications(EventHandler):
 
     def send_queued_messages(self) -> None:
         """Send all queued message."""
-        logger.debug("Sending queued messages")
-        if "smtp" in self.cfg:
-            self.smtp_client = SMTPclient(
-                cfg=self.cfg["smtp"],
-                service=self.service,
-                mail_to=self.cfg["mail-to"],
-                mail_from=self.cfg["mail-from"],
-                mail_subject=self.cfg["mail-subject"],
-                mail_message=self.cfg["mail-message"],
-            )
-
         events = {k: v for k, v in self._messages.items() if v["discardable"] is False}
 
         if events:
+            logger.debug("Sending queued messages")
+            if "smtp" in self.cfg:
+                self.smtp_client = SMTPclient(
+                    cfg=self.cfg["smtp"],
+                    service=self.service,
+                    mail_to=self.cfg["mail-to"],
+                    mail_from=self.cfg["mail-from"],
+                    mail_subject=self.cfg["mail-subject"],
+                    mail_message=self.cfg["mail-message"],
+                )
+
             final_message = ""
             for event, event_values in events.items():
                 message_part = ""
@@ -225,10 +225,9 @@ class EmailNotifications(EventHandler):
                 final_message = final_message + message_part
 
             self.smtp_client.send_message(final_message[:-1], self.service)
+            logger.debug("Finished sending queued messages")
         else:
             logger.debug(f"No important messages to report.")
-
-        logger.debug("Finished sending queued messages")
 
     def add_event_message(self, event: str, discardable: bool = False, **args) -> None:
         """Add a event message and apply formatting to it."""
