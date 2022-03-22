@@ -174,7 +174,6 @@ class EmailNotifications(EventHandler):
 
             self.cfg = cfg
             self.service = service
-            self.smtp_client = None
             self._messages = {}
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
@@ -204,7 +203,7 @@ class EmailNotifications(EventHandler):
         if events:
             logger.debug("Sending queued messages")
             if "smtp" in self.cfg:
-                self.smtp_client = SMTPclient(
+                smtp_client = SMTPclient(
                     cfg=self.cfg["smtp"],
                     service=self.service,
                     mail_to=self.cfg["mail-to"],
@@ -213,19 +212,19 @@ class EmailNotifications(EventHandler):
                     mail_message=self.cfg["mail-message"],
                 )
 
-            final_message = ""
-            for event, event_values in events.items():
-                message_part = ""
-                for line in event_values["messages"]:
-                    message_part = f"{message_part}{line}\n"
-                if event in self.report_events and "header" in self.report_events[event]:
-                    header = self.report_events[event]["header"]
-                    message_part = f"{header}\n{message_part}"
+                final_message = ""
+                for event, event_values in events.items():
+                    message_part = ""
+                    for line in event_values["messages"]:
+                        message_part = f"{message_part}{line}\n"
+                    if event in self.report_events and "header" in self.report_events[event]:
+                        header = self.report_events[event]["header"]
+                        message_part = f"{header}\n{message_part}"
 
-                final_message = final_message + message_part
+                    final_message = final_message + message_part
 
-            self.smtp_client.send_message(final_message[:-1], self.service)
-            logger.debug("Finished sending queued messages")
+                smtp_client.send_message(final_message[:-1], self.service)
+                logger.debug("Finished sending queued messages")
         else:
             logger.debug("No important messages to report.")
 
