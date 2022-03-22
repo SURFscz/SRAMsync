@@ -227,7 +227,7 @@ class EmailNotifications(EventHandler):
             self.smtp_client.send_message(final_message[:-1], self.service)
             logger.debug("Finished sending queued messages")
         else:
-            logger.debug(f"No important messages to report.")
+            logger.debug("No important messages to report.")
 
     def add_event_message(self, event: str, discardable: bool = False, **args) -> None:
         """Add a event message and apply formatting to it."""
