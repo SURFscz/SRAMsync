@@ -317,6 +317,10 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
                 new_status["groups"][dest_group_name] = {
                     "members": [],
                     "attributes": group_attributes,
+                    "sram": {
+                        "CO": co,
+                        "sram-group": sram_group,
+                    },
                 }
 
             # Find members
