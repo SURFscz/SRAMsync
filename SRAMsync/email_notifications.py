@@ -192,9 +192,9 @@ class EmailNotifications(EventHandler):
         if event not in self._messages:
             self._messages[event] = {}
             self._messages[event]["discardable"] = discardable
-            self._messages[event]["messages"] = []
+            self._messages[event]["messages"] = set()
 
-        self._messages[event]["messages"].append(message)
+        self._messages[event]["messages"].add(message)
 
     def send_queued_messages(self) -> None:
         """Send all queued message."""
