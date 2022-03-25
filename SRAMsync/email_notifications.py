@@ -114,10 +114,11 @@ class EmailNotifications(EventHandler):
         "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+            "aggregate_mails": {"type": "boolean"},
             "report_events": {
                 "type": "object",
                 "patternProperties": {
-                    "^start$|^add-new-user$|^add-ssh-key$|^delete-ssh-key$|^delete-ssh-key$|^add-group$|^remove-group$|^add-user-to-group$|^start-grace-period-for-user$|^remove-user-from-group$|^remove-graced-user-from-group$|^finalize$": {
+                    "^start-co-processing$|^add-new-user$|^add-ssh-key$|^delete-ssh-key$|^delete-ssh-key$|^add-group$|^remove-group$|^add-user-to-group$|^start-grace-period-for-user$|^remove-user-from-group$|^remove-graced-user-from-group$|^finalize$": {
                         "type": "object",
                         "properties": {"line": {"type": "string"}},
                         "required": ["line"],
@@ -153,7 +154,7 @@ class EmailNotifications(EventHandler):
             "mail-message": {"type": "string"},
         },
         "required": ["report_events", "mail-from", "mail-to", "mail-subject", "mail-message"],
-        "optional": ["smtp"],
+        "optional": ["aggregate_mails", "smtp"],
     }
 
     _DEFAULT_CIPHERS = (
@@ -175,6 +176,12 @@ class EmailNotifications(EventHandler):
             self.cfg = cfg
             self.service = service
             self._messages = {}
+            self.finalize_message = ""
+            if "aggregate_mails" in cfg:
+                self.aggregate_mails = cfg["aggregate_mails"]
+            else:
+                self.aggregate_mails = True
+
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
         except KeyError as e:
@@ -187,84 +194,110 @@ class EmailNotifications(EventHandler):
         if hasattr(self, "cfg"):
             self.send_queued_messages()
 
-    def add_message_to_current_co_group(self, event: str, message: str, discardable: bool = False) -> None:
+    def add_message_to_current_co_group(
+        self, co: str, event: str, event_message: str, discardable: bool = False
+    ) -> None:
         """Add the message to the current CO message queue."""
-        if event not in self._messages:
-            self._messages[event] = {}
-            self._messages[event]["discardable"] = discardable
-            self._messages[event]["messages"] = set()
+        if co not in self._messages:
+            self._messages[co] = {}
 
-        self._messages[event]["messages"].add(message)
+        if event not in self._messages[co]:
+            self._messages[co][event] = {}
+            self._messages[co][event]["discardable"] = discardable
+            self._messages[co][event]["messages"] = set()
+
+        self._messages[co][event]["messages"].add(event_message)
 
     def send_queued_messages(self) -> None:
         """Send all queued message."""
-        events = {k: v for k, v in self._messages.items() if v["discardable"] is False}
+        message = ""
 
-        if events:
-            logger.debug("Sending queued messages")
-            if "smtp" in self.cfg:
-                smtp_client = SMTPclient(
-                    cfg=self.cfg["smtp"],
-                    service=self.service,
-                    mail_to=self.cfg["mail-to"],
-                    mail_from=self.cfg["mail-from"],
-                    mail_subject=self.cfg["mail-subject"],
-                    mail_message=self.cfg["mail-message"],
-                )
+        if "smtp" in self.cfg:
+            smtp_client = SMTPclient(
+                cfg=self.cfg["smtp"],
+                service=self.service,
+                mail_to=self.cfg["mail-to"],
+                mail_from=self.cfg["mail-from"],
+                mail_subject=self.cfg["mail-subject"],
+                mail_message=self.cfg["mail-message"],
+            )
 
-                final_message = ""
-                for event, event_values in events.items():
-                    message_part = ""
-                    for line in event_values["messages"]:
-                        message_part = f"{message_part}{line}\n"
-                    if event in self.report_events and "header" in self.report_events[event]:
-                        header = self.report_events[event]["header"]
-                        message_part = f"{header}\n{message_part}"
+            for co_messages in self._messages.values():
+                message = message + self.render_message(co_messages)
 
-                    final_message = final_message + message_part
+                if not self.aggregate_mails:
+                    if self.finalize_message:
+                        message = message + self.finalize_message
 
-                smtp_client.send_message(final_message[:-1], self.service)
-                logger.debug("Finished sending queued messages")
-        else:
-            logger.debug("No important messages to report.")
+                    message = message.strip()
+                    smtp_client.send_message(message, self.service)
+                    message = ""
 
-    def add_event_message(self, event: str, discardable: bool = False, **args) -> None:
+            if self.aggregate_mails:
+                if self.finalize_message:
+                    message = message + self.finalize_message
+                message = message.strip()
+                smtp_client.send_message(message, self.service)
+
+            # self.send_queued_co_messages(co_messages)
+
+    def render_message(self, messages):
+        """Render a final message for a number of messages."""
+        final_message = ""
+        for event, event_values in messages.items():
+            message_part = ""
+            for line in event_values["messages"]:
+                message_part = f"{message_part}{line}\n"
+            if event in self.report_events and "header" in self.report_events[event]:
+                header = self.report_events[event]["header"]
+                message_part = f"{header}\n{message_part}"
+
+            final_message = final_message + message_part
+
+        return final_message
+
+    def add_event_message(self, co: str, event: str, discardable: bool = False, **args) -> None:
         """Add a event message and apply formatting to it."""
         if event in self.report_events:
-            message = f"{self.report_events[event]['line']}".format(**args)
-            self.add_message_to_current_co_group(event, message, discardable)
+            event_message = f"{self.report_events[event]['line']}".format(co=co, **args)
+            self.add_message_to_current_co_group(co, event, event_message, discardable)
 
-    def start_of_service_processing(self, co: str) -> None:
+    def start_of_co_processing(self, co: str) -> None:
         """Add start event message to the message queue."""
-        self.add_event_message("start", discardable=True, co=co)
+        self.add_event_message(co, "start-co-processing", discardable=True)
 
-    def add_new_user(self, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
+    def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
         """Add add-new-user event message to the message queue."""
-        self.add_event_message("add-new-user", group=group, givenname=givenname, sn=sn, user=user, mail=mail)
+        self.add_event_message(
+            co, "add-new-user", group=group, givenname=givenname, sn=sn, user=user, mail=mail
+        )
 
-    def add_public_ssh_key(self, user: str, key: str) -> None:
+    def add_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """Add add-shh-key event message to the message queue."""
-        self.add_event_message("add-ssh-key", user=user, key=key)
+        self.add_event_message(co, "add-ssh-key", user=user, key=key)
 
-    def delete_public_ssh_key(self, user: str, key: str) -> None:
+    def delete_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """Add delete-ssh-key event message to the message queue."""
-        self.add_event_message("delete-ssh-key", user=user, key=key)
+        self.add_event_message(co, "delete-ssh-key", user=user, key=key)
 
-    def add_new_group(self, group: str, group_attributes: list) -> None:
+    def add_new_group(self, co: str, group: str, group_attributes: list) -> None:
         """Add add-group event message to the message queue."""
-        self.add_event_message("add-group", group=group, attributes=group_attributes)
+        self.add_event_message(co, "add-group", group=group, attributes=group_attributes)
 
-    def remove_group(self, group: str, group_attributes: list) -> None:
+    def remove_group(self, co: str, group: str, group_attributes: list) -> None:
         """Add remove-group event message to the message queue."""
-        self.add_event_message("remove-group", group=group, attributes=group_attributes)
+        self.add_event_message(co, "remove-group", group=group, attributes=group_attributes)
 
-    def add_user_to_group(self, group: str, group_attributes: list, user: str) -> None:
+    def add_user_to_group(self, co, group: str, group_attributes: list, user: str) -> None:
         """Add add-user-to-group event message to the message queue."""
-        self.add_event_message("add-user-to-group", group=group, user=user, attributes=group_attributes)
+        self.add_event_message(co, "add-user-to-group", group=group, user=user, attributes=group_attributes)
 
-    def start_grace_period_for_user(self, group: str, group_attributes: list, user: str, duration: str):
+    def start_grace_period_for_user(
+        self, co: str, group: str, group_attributes: list, user: str, duration: str
+    ):
         """The grace period for the users has started."""
         self.add_event_message(
+            co,
             "start-grace-period-for-user",
             group=group,
             attributes=group_attributes,
@@ -272,16 +305,24 @@ class EmailNotifications(EventHandler):
             duration=duration,
         )
 
-    def remove_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
+    def remove_user_from_group(self, co, group: str, group_attributes: list, user: str) -> None:
         """Add remove-user-from-group event message to the message queue."""
-        self.add_event_message("remove-user-from-group", group=group, user=user, attributes=group_attributes)
+        self.add_event_message(
+            co, "remove-user-from-group", group=group, user=user, attributes=group_attributes
+        )
 
-    def remove_graced_user_from_group(self, group: str, group_attributes: list, user: str) -> None:
+    def remove_graced_user_from_group(self, co, group: str, group_attributes: list, user: str) -> None:
         """Add remove-grace-users-from-group event message to the message queue."""
         self.add_event_message(
-            "remove-graced-user-from-group", group=group, user=user, attributes=group_attributes
+            co, "remove-graced-user-from-group", group=group, user=user, attributes=group_attributes
         )
 
     def finalize(self) -> None:
-        """Add finalize event message to the message queue."""
-        self.add_event_message("finalize", discardable=True)
+        """
+        Render finalize event message. The finalize event is not associated
+        with any CO. It is the very last event to be emitted, just prior to
+        finishing the synchronization.
+        """
+        if "finalize" in self.report_events:
+            event_message = f"{self.report_events['finalize']['line']}"
+            self.finalize_message = event_message

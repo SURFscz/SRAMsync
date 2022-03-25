@@ -237,10 +237,10 @@ def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status
                 user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=uid)
                 mail = entry["mail"][0].decode("UTF-8")
 
-                new_status["users"][user] = {}
+                new_status["users"][user] = {"sram": {"CO": co}}
                 if user not in status["users"]:
                     logger.debug(f"  Found new user: {user}")
-                    event_handler.add_new_user(group, givenname, sn, user, mail)
+                    event_handler.add_new_user(co, group, givenname, sn, user, mail)
 
                 if "sshPublicKey" in entry:
                     raw_ssh_public_keys = entry["sshPublicKey"]
@@ -258,11 +258,11 @@ def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status
 
                     for key in new_ssh_public_keys:
                         logger.debug(f"    Adding public SSH key: {key[:50]}…")
-                        event_handler.add_public_ssh_key(user, key)
+                        event_handler.add_public_ssh_key(co, user, key)
 
                     for key in dropped_ssh_public_leys:
                         logger.debug(f"    Removing public SSH key: {key[:50]}…")
-                        event_handler.delete_public_ssh_key(user, key)
+                        event_handler.delete_public_ssh_key(co, user, key)
 
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
@@ -311,7 +311,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
             # Create groups
             if dest_group_name not in status["groups"]:
                 logger.debug(f"  Adding group: {dest_group_name}")
-                event_handler.add_new_group(dest_group_name, group_attributes)
+                event_handler.add_new_group(co, dest_group_name, group_attributes)
 
             if dest_group_name not in new_status["groups"]:
                 new_status["groups"][dest_group_name] = {
@@ -333,7 +333,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
                     new_status["groups"][dest_group_name]["members"].append(user)
                     if dest_group_name in status["groups"]:
                         if user not in status["groups"][dest_group_name]["members"]:
-                            event_handler.add_user_to_group(dest_group_name, group_attributes, user)
+                            event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning(f"service '{fq_co}' does not contain group '{sram_group}'")
 
@@ -366,7 +366,7 @@ def add_missing_entries_to_ldap(cfg: Config, status: dict, new_status: dict) -> 
     for _, entry in dns:  # type: ignore
         fq_co = entry["o"][0].decode("UTF-8")
         org, co = fq_co.split(".")
-        event_handler.start_of_service_processing(co)
+        event_handler.start_of_co_processing(co)
         logger.debug(f"Processing CO: {co}")
 
         new_status = process_user_data(cfg, fq_co, co, status, new_status)
@@ -389,6 +389,7 @@ def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
             for user, grace_until_str in group_attributes["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
+                co = status[group]["sram"]["CO"]
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
@@ -396,7 +397,7 @@ def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
                     # it is the intended behaviour
                     logger.info(f"Grace time ended for user {user} in {group}")
                     group_attributes = cfg["sync"]["groups"][group]["attributes"]
-                    event_handler.remove_graced_user_from_group(group, group_attributes, user)
+                    event_handler.remove_graced_user_from_group(co, group, group_attributes, user)
                 else:
                     if "graced_users" not in new_status["groups"][group]:
                         new_status["groups"][group]["graced_users"] = {}
@@ -414,13 +415,14 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
 
     event_handler = cfg.event_handler
 
-    for group, group_properties in status["groups"].items():
+    for group, group_values in status["groups"].items():
         removed_users = [
-            user for user in group_properties["members"] if user not in new_status["groups"][group]["members"]
+            user for user in group_values["members"] if user not in new_status["groups"][group]["members"]
         ]
+        co = group_values["sram"]["CO"]
 
         for user in removed_users:
-            if "grace_period" in group_properties["attributes"]:
+            if "grace_period" in group_values["attributes"]:
                 if "grace" in cfg["sync"] and group in cfg["sync"]["grace"]:
                     grace_until = datetime.now(timezone.utc) + timedelta(
                         cfg["sync"]["grace"][group]["grace_period"]
@@ -431,7 +433,7 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
                         f"Remaining time: {remaining_time}"
                     )
                     event_handler.start_grace_period_for_user(
-                        group, group_properties["attributes"], user, remaining_time
+                        co, group, group_values["attributes"], user, remaining_time
                     )
                     new_status["groups"][group]["graced_users"] = {
                         user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
@@ -441,7 +443,7 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
                         f'Grace has not been defined for group "{group}" in the configuration file.'
                     )
             else:
-                event_handler.remove_user_from_group(group, group_properties["attributes"], user)
+                event_handler.remove_user_from_group(co, group, group_values["attributes"], user)
 
     return new_status
 
@@ -458,6 +460,7 @@ def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
     removed_groups = [group for group in status["groups"] if group not in new_status["groups"]]
 
     for group in removed_groups:
+        co = status["groups"][group]["sram"]["CO"]
         old_group_status = {"groups": status["groups"][group]}
         new_group_status = {"groups": new_status["groups"][group]}
         new_group_status["groups"][group]["members"] = {}
@@ -465,7 +468,7 @@ def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
         new_status = remove_deleted_users_from_groups(cfg, old_group_status, new_group_status)
 
         logger.debug(f"Removing group: '{group}'")
-        event_handler.remove_group(group, status["groups"][group]["attributes"])
+        event_handler.remove_group(co, group, status["groups"][group]["attributes"])
 
     return new_status
 

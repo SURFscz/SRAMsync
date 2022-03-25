@@ -14,43 +14,43 @@ class EventHandler(ABC):
         pass
 
     @abstractmethod
-    def start_of_service_processing(self, co):
-        """start_of_service_processing event."""
+    def start_of_co_processing(self, co):
+        """start_of_co_processing event."""
 
     @abstractmethod
-    def add_new_user(self, group, givenname, sn, user, mail):
+    def add_new_user(self, co, group, givenname, sn, user, mail):
         """add_new_user event."""
 
     @abstractmethod
-    def add_public_ssh_key(self, user, key):
+    def add_public_ssh_key(self, co, user, key):
         """add_public_ssh_key event."""
 
     @abstractmethod
-    def delete_public_ssh_key(self, user, key):
+    def delete_public_ssh_key(self, co, user, key):
         """delete_public_ssh_key event."""
 
     @abstractmethod
-    def add_new_group(self, group, group_attributes):
+    def add_new_group(self, co, group, group_attributes):
         """add_new_group event."""
 
     @abstractmethod
-    def remove_group(self, group, group_attributes):
+    def remove_group(self, co, group, group_attributes):
         """remove_group event."""
 
     @abstractmethod
-    def add_user_to_group(self, group, group_attributes, user):
+    def add_user_to_group(self, co, group, group_attributes, user):
         """add_user_to_group event."""
 
     @abstractmethod
-    def start_grace_period_for_user(self, group, group_attributes, user, duration):
+    def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
         """start_grace_period_for_user event."""
 
     @abstractmethod
-    def remove_user_from_group(self, group, group_attributes: list, user):
+    def remove_user_from_group(self, co, group, group_attributes: list, user):
         """remove_user_from_group event."""
 
     @abstractmethod
-    def remove_graced_user_from_group(self, group, group_attributes, user):
+    def remove_graced_user_from_group(self, co, group, group_attributes, user):
         """remove_graced_user_from_group event."""
 
     @abstractmethod
