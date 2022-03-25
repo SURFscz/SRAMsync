@@ -225,7 +225,7 @@ class EmailNotifications(EventHandler):
             for co_messages in self._messages.values():
                 message = message + self.render_message(co_messages)
 
-                if not self.aggregate_mails:
+                if message and not self.aggregate_mails:
                     if self.finalize_message:
                         message = message + self.finalize_message
 
@@ -233,16 +233,18 @@ class EmailNotifications(EventHandler):
                     smtp_client.send_message(message, self.service)
                     message = ""
 
-            if self.aggregate_mails:
+            if message and self.aggregate_mails:
                 if self.finalize_message:
                     message = message + self.finalize_message
                 message = message.strip()
                 smtp_client.send_message(message, self.service)
 
-            # self.send_queued_co_messages(co_messages)
-
     def render_message(self, messages):
-        """Render a final message for a number of messages."""
+        """Render a final message for collected event messages."""
+        events = [k for k, v in messages.items() if v["important"] is True]
+        if not events:
+            return ""
+
         final_message = ""
         for event, event_values in messages.items():
             message_part = ""
