@@ -195,7 +195,7 @@ class EmailNotifications(EventHandler):
             self.send_queued_messages()
 
     def add_message_to_current_co_group(
-        self, co: str, event: str, event_message: str, discardable: bool = False
+        self, co: str, event: str, event_message: str, important: bool = False
     ) -> None:
         """Add the message to the current CO message queue."""
         if co not in self._messages:
@@ -203,7 +203,7 @@ class EmailNotifications(EventHandler):
 
         if event not in self._messages[co]:
             self._messages[co][event] = {}
-            self._messages[co][event]["discardable"] = discardable
+            self._messages[co][event]["important"] = important
             self._messages[co][event]["messages"] = set()
 
         self._messages[co][event]["messages"].add(event_message)
@@ -256,15 +256,15 @@ class EmailNotifications(EventHandler):
 
         return final_message
 
-    def add_event_message(self, co: str, event: str, discardable: bool = False, **args) -> None:
+    def add_event_message(self, co: str, event: str, important: bool = True, **args) -> None:
         """Add a event message and apply formatting to it."""
         if event in self.report_events:
             event_message = f"{self.report_events[event]['line']}".format(co=co, **args)
-            self.add_message_to_current_co_group(co, event, event_message, discardable)
+            self.add_message_to_current_co_group(co, event, event_message, important)
 
     def start_of_co_processing(self, co: str) -> None:
         """Add start event message to the message queue."""
-        self.add_event_message(co, "start-co-processing", discardable=True)
+        self.add_event_message(co, "start-co-processing", important=False)
 
     def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
         """Add add-new-user event message to the message queue."""
