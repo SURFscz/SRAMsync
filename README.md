@@ -66,16 +66,16 @@ its design the destination end does not need to be an LDAP. It is up to an
 
 SRAMsync defines the following events and their variables:
 
-* start_of_service_processing: *co*
-* add_new_user: *group, givenname, sn, user, mail*
-* add_public_ssh_key: *user, key*
-* delete_public_ssh_key: *user, key*
-* add_new_group: *group, attributes*
-* remove_group: *group, attributes*
-* add_user_to_group: *group, user, attributes*
-* remove_user_from_group: *group, user, attributes*
-* remove_graced_user_from_group: *group, user, attributes*
-* finalize
+* **start-co-processing:** *co*
+* **add-new-user:** *co, group, givenname, sn, user, mail*
+* **add-public-ssh_key:** *co, user, key*
+* **delete-public-ssh-key:** *co, user, key*
+* **add-new-group:** *co, group, attributes*
+* **remove-group:** *co, group, attributes*
+* **add-user-to-group:** *co, group, user, attributes*
+* **remove-user-from_group:** *co, group, user, attributes*
+* **remove-graced-user-from-group:** *co, group, user, attributes*
+* **finalize**
 
 In fact, the above defined events are from the abstract base class found in the
 `EventHandler` class. In case you wish to create your own EventHandler,
@@ -84,11 +84,11 @@ you should derive such class from the `EventHandler` abstract base class.
 ### When are events emitted
 
 Event are emitted from the main loop of `sync-with-sram`. Some event are always
-emitted at the appropriate moment like: `start_of_service_processing` and `finalize`.
+emitted at the appropriate moment like: `start-co-processing` and `finalize`.
 The emitting of other events depends on the current state of SRAM LDAP and the
 destination. If there are no differences not events will be emitted.
 
-#### start_of_service_processing
+#### start-co-processing
 
 | Input | Description |
 |:------|:------------|
@@ -97,10 +97,11 @@ destination. If there are no differences not events will be emitted.
 Emitted at the beginning and before any other event. This is to signal that the
 synchronization process has started for CO `co` and is always emitted.
 
-#### add_new_user
+#### add-new-user
 
 | Input     | Description |
 |:----------|:------------|
+| co        | CO name for which the event was emitted.          |
 | group     | Group to which the user needs to be added.        |
 | givenname | First name of the user as it is known to SRAM.    |
 | sn        | Last name of the user as it is known to SRAM.     |
@@ -112,10 +113,11 @@ each new users that is part of a `login_group` or the `@all` reserved group
 which holds all CO members by default. See [group](#groups) for more details on
 `login_group` and how to define one.
 
-#### add_public_ssh_key
+#### add-public-ssh-key
 
 | Input | Description |
 |:------|:------------|
+| co    | CO name for which the event was emitted.   |
 | user  | User name as it is used on the destination.|
 | key   | Public SSH key of the user.|
 
@@ -123,10 +125,11 @@ When a user adds a new public SSH key to its profile in SRAM, this event will
 be emitted. Note that an update of an SSH key will not be detected as a change,
 but rather as removal of an old key and adding a new key instead.
 
-#### delete_public_ssh_key
+#### delete-public-ssh-key
 
 | Input | Description |
 |:------|:------------|
+| co    | CO name for which the event was emitted.    |
 | user  | User name as it is used on the destination. |
 | key   | Public SSH key of the user|
 
@@ -134,10 +137,11 @@ When a users deletes a public SSH key in its profile in SRAM, this event will
 be emitted. Note that an update of an SSH key will not be detected as a change,
 but rather as removal of an old key and adding a new key instead.
 
-#### add_new_group
+#### add-new-group
 
 | Input      | Description |
 |:-----------|:------------|
+| co         | CO name for which the event was emitted.                             |
 | group      | Name of the group that exists in SRAM but not yet at the destination.|
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
@@ -145,10 +149,11 @@ When a new group appears in the SRAM LDAP for for the current CO, this event
 will be emitted. The attributes from the configuration file are send along for
 possible further processing.
 
-#### remove_group
+#### remove-group
 
 | Input      | Description |
 |:-----------|:------------|
+| co         | CO name for which the event was emitted.                             |
 | group      | Name of the group that exists in SRAM but not yet at the destination.|
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
@@ -156,10 +161,11 @@ When a group is removed in the SRAM LDAP for for the current CO, this event
 will be emitted. The attributes from the configuration file are send along for
 possible further processing.
 
-#### add_user_to_group
+#### add-user-to-group
 
 | Input     | Description |
 |:----------|:------------|
+| co         | CO name for which the event was emitted.                            |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
@@ -169,10 +175,11 @@ different from the `add_new_user` event as that one is emitted for
 `login_group`s and this one for all other groups. In other words, the `user` is
 already provisioned at the destination, but not yet added to the `group`.
 
-#### remove_user_from_group
+#### remove-user-from-group
 
 | Input     | Description |
 |:----------|:------------|
+| co         | CO name for which the event was emitted.                            |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
@@ -182,10 +189,11 @@ if the `group` has the `grace_period` attribute set, the user will not be
 removed until the grace period has ended. This event will be emitted non the
 less that the user has been removed from the group.
 
-#### remove_graced_user_from_group
+#### remove-graced-user-from-group
 
 | Input     | Description |
 |:----------|:------------|
+| co         | CO name for which the event was emitted.                            |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
@@ -210,6 +218,8 @@ the configuration looks as follows:
 
 ```yaml
 service: <service name>
+secrets:
+  file: <path to secrets file>
 sram:
    <connection details>
 sync:
@@ -231,8 +241,14 @@ last sync. `provisional_status_filename` is optional. If you do use it,
 `sync-with-sram` will write its status info to that file instead and not
 `status_filename`. It is expected that the instantiated EventHandler object
 copies the `provisional_status_filename` to `status_filename`. If the
-instGantiated object fails to do so, `sync-with-sram` will always see new event
+instantiated object fails to do so, `sync-with-sram` will always see new event
 as the `status_filename` is never updated to the latest sync state.
+
+The `secrets` part is optional. However, if omitted, one does need to put any
+passwords in the configurations file itself, or use the appropriate environment
+variable. This, however, is only possible for the SRAM LDAP password. If you
+also need a password for for example an SMTP connection, this password must be
+put into the configuration file in plain text.
 
 ### SRAM connection details
 
@@ -258,6 +274,9 @@ sram:
   binddn: cn=admin,dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
   passwd_from_secrets: true or false
 ```
+
+Please note that for the latter, you must include the `secrets` section as
+well. See next section.
 
 #### Password file format
 
@@ -702,8 +721,9 @@ sync:
   event_handler:
   name: EmailNotifications
   config:
+    aggregate_mails: <boolean>
     report_events:
-      start:
+      start-co-processing:
         header: <start header>
         line: <start line>
       add-new-user:
@@ -758,6 +778,13 @@ event_handler:
           header: "Adding the following users:"
           line: "Add new user {user}"
 ```
+
+The `aggregate_mails` is optional and when left out defaults to `true`, in
+which case a single mail will be send for the enitre synchrnonization run. In
+this e-mail all events are grouped per CO. If `aggregate_mails` is set to
+`false`, a mail for each CO is generated. If there are no important events to
+be reported, i.e. events other that `start-co-processing` and `finalize` the
+e-mail sending is repressed.
 
 ##### SMTP passwords
 
