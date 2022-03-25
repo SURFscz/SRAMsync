@@ -262,7 +262,7 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"# Grace time has ended for user {user} from group {group}")
         self.remove_user_from_group(co, group, group_attributes, user)
 
-        self.notify.remove_graced_user_from_group(co, group, user, group_attributes)
+        self.notify.remove_graced_user_from_group(co, group, group_attributes, user)
 
     def update_user_in_group(self, group: str, group_attributes: list, user: str, add: bool) -> None:
         """
