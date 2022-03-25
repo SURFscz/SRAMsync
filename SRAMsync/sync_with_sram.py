@@ -389,7 +389,7 @@ def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
             for user, grace_until_str in group_attributes["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
-                co = status[group]["sram"]["CO"]
+                co = status["groups"][group]["sram"]["CO"]
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
