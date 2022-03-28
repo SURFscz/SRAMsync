@@ -535,7 +535,7 @@ The following tags are available:
 | status_filename                   | `{service}`                  |
 | provisional_status_filename       | `{service}`                  |
 | mail_subject                      | `{service}`                  |
-| mail_message                      | `{service}`, `{co}`          |
+| mail_message                      | `{service}`                  |
 | sync/users/rename_user            | `{co}`, `{uid}`              |
 | sync/groups/\<group\>/destination | `{service}`, `{org}`, `{co}` |
 
