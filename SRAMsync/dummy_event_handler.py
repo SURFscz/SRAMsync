@@ -55,4 +55,4 @@ class DummyEventHandler(EventHandler):
 
     def finalize(self):
         """Log the finalize event."""
-        logger.info(f"finalize({co})")
+        logger.info("finalize()")
