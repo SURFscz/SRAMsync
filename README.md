@@ -791,4 +791,4 @@ e-mail sending is repressed.
 The above example shows plain text passwords in the configuration file. Instead
 of using the `passwd` in the `smtp` block, one could also use `passwd_from_secrets`.
 This only works if you have opted to use the `secrets` block in the configuration.
-See [Password file format](#password_file_format) for more information.
+See [Password file format](#password-file-format) for more information.
