@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+set -x
+
+SELINUX=":Z"
+
+[[ $OSTYPE == darwin* ]] && SELINUX=""
+
 podman run --rm  --detach \
     --hostname ldap.example.org \
     --env LDAP_TLS=false \
@@ -14,5 +20,5 @@ podman run --rm  --detach \
     --env LDAP_REMOVE_CONFIG_AFTER_SETUP=false \
     --name ldap \
     --publish 3389:389 \
-    --volume $PWD/test/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom:Z \
+    --volume $PWD/test/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom$SELINUX \
     docker.io/osixia/openldap --copy-service --loglevel debug \
