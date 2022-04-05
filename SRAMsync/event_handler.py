@@ -10,7 +10,7 @@ class EventHandler(ABC):
     """Abstract implementatation of the EventHandler class."""
 
     @abstractmethod
-    def __init__(self, service, cfg, cfg_path):
+    def __init__(self, service, cfg, cfg_path, args):
         pass
 
     @abstractmethod

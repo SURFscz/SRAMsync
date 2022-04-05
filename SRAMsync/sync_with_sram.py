@@ -591,7 +591,7 @@ def cli(configuration, debug, verbose):
             logger.info(f"Handling configuration: {configuration_path}")
 
             new_status = {"users": {}, "groups": {}}
-            cfg = Config(configuration_path)
+            cfg = Config(configuration_path, log_level=logging.getLogger("SRAMsync").getEffectiveLevel())
 
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)

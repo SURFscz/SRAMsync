@@ -30,10 +30,10 @@ class CbaScriptGenerator(CuaScriptGenerator):
         "required": ["cba_add_cmd", "cba_del_cmd", "cba_machine", "cba_budget_account", "cua_config"],
     }
 
-    def __init__(self, service: str, cfg: dict, path: str) -> None:
+    def __init__(self, service: str, cfg: dict, path: str, **args) -> None:
         try:
             validate(schema=CbaScriptGenerator._schema, instance=cfg)
-            super().__init__(service, cfg["cua_config"], path)
+            super().__init__(service, cfg["cua_config"], path, **args)
             self.cfg = cfg
         except ConfigValidationError as e:
             raise e

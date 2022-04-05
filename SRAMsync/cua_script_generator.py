@@ -52,8 +52,13 @@ class CuaScriptGenerator(EventHandler):
 
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service, cfg, cfg_path):
-        super().__init__(service, cfg, cfg_path)
+    def __init__(self, service, cfg, cfg_path, **args) -> None:
+        super().__init__(service, cfg, cfg_path, args)
+
+        # See: https://docs.python.org/3/library/logging.html#logging-levels for numeric values of log levels
+        self.log_level = 40  # This is log level ERROR
+        if "log_level" in args:
+            self.log_level = args["log_level"]
 
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg)
@@ -67,10 +72,7 @@ class CuaScriptGenerator(EventHandler):
                 auxiliary_config.update(cfg["auxiliary_event_handler"]["config"])
 
                 self.notify = self.get_auxiliary_notificaion_instance(
-                    cfg["auxiliary_event_handler"]["name"],
-                    auxiliary_config,
-                    service,
-                    cfg_path,
+                    cfg["auxiliary_event_handler"]["name"], auxiliary_config, service, cfg_path, **args
                 )
             else:
                 self.notify = DummyEventHandler(service, cfg, cfg_path)
@@ -97,7 +99,7 @@ class CuaScriptGenerator(EventHandler):
 
     @staticmethod
     def get_auxiliary_notificaion_instance(
-        event_handler_class_name: str, cfg: dict, service: str, cfg_path: str
+        event_handler_class_name: str, cfg: dict, service: str, cfg_path: str, **args
     ) -> EventHandler:
         """Load the auxiliary event handler class."""
 
@@ -105,7 +107,7 @@ class CuaScriptGenerator(EventHandler):
         event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
         event_handler_class = getattr(event_handler_module, event_handler_class_name)
 
-        return event_handler_class(service, cfg, cfg_path)
+        return event_handler_class(service, cfg, cfg_path, **args)
 
     def generate_header(self) -> None:
         """Generate an explanatory header in the generated script."""
@@ -126,8 +128,9 @@ class CuaScriptGenerator(EventHandler):
         self.print("#")
         self.print("#" * 80)
         self.print("")
-        self.print("set -o xtrace")
-        self.print("")
+        if self.log_level <= 10:
+            self.print("set -o xtrace")
+            self.print("")
         self.print("trap quit INT")
         self.print("")
         self.print("function quit() {")

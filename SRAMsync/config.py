@@ -106,7 +106,7 @@ class Config:
         "additionalProperties": False,
     }
 
-    def __init__(self, config_file: str) -> None:
+    def __init__(self, config_file: str, **args) -> None:
         with open(config_file) as fd:
             config = yaml.safe_load(fd)
 
@@ -121,7 +121,7 @@ class Config:
             with open(config["secrets"]["file"]) as fd:
                 self.secrets = json.load(fd)
 
-        self.event_handler = self.get_event_handler()
+        self.event_handler = self.get_event_handler(**args)
 
     def __getitem__(self, item: str) -> Any:
         return self.config[item]
@@ -129,7 +129,7 @@ class Config:
     def __contains__(self, item: str) -> bool:
         return item in self.config
 
-    def get_event_handler(self) -> EventHandler:
+    def get_event_handler(self, **args: dict) -> EventHandler:
         """
         Dynamically load the configured class from the configuration. If the class
         expects a configuration extraxt that from the configuration and pass it
@@ -155,7 +155,7 @@ class Config:
             handler_cfg["secrets"] = self.secrets
 
         event_handler_instance = event_handler_class(
-            self.config["service"], handler_cfg, ["sync", "event_handler", "config"]
+            self.config["service"], handler_cfg, ["sync", "event_handler", "config"], **args
         )
 
         return event_handler_instance
