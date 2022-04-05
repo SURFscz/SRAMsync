@@ -161,7 +161,7 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self.print(f"## Adding user: {user}")
-        self.print(f"{self.modify_user_cmd} --list {user} ||")
+        self.print(f"{self.modify_user_cmd} --check {user} ||")
         self.print(
             f"  {{\n"
             f'    echo "{line}" | {self.add_user_cmd} -f-\n'
