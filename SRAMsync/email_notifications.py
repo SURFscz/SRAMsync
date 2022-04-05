@@ -109,7 +109,7 @@ class SMTPclient:
 
             logger.debug("Message sent")
         except smtplib.SMTPServerDisconnected:
-            logger.error(f"Sending e-mail notifications for has failed. SMTP server has disconnected.")
+            logger.error("Sending e-mail notifications for has failed. SMTP server has disconnected.")
 
 
 class EmailNotifications(EventHandler):
