@@ -59,7 +59,7 @@ class SMTPclient:
             self.server.quit()
 
     @staticmethod
-    def conntect_to_smtp_server(cfg):
+    def conntect_to_smtp_server(cfg: dict) -> smtplib.SMTP:
         """Connect to an SMTP server."""
         msg = f"SMTP: connecting to: {cfg['host']}"
         host = cfg["host"]
@@ -75,7 +75,7 @@ class SMTPclient:
 
         return server
 
-    def login(self, login_name, passwd):
+    def login(self, login_name: str, passwd: str) -> None:
         """Log into an SMTP server."""
         ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
 
@@ -93,7 +93,7 @@ class SMTPclient:
         self.server.login(login_name, passwd)
         logger.debug("SMTP: login successful")
 
-    def send_message(self, message, service):
+    def send_message(self, message: str, service: str):
         """Send a message through an opened SMTP server."""
         try:
             logger.debug("Sending message")
