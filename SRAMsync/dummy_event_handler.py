@@ -8,7 +8,7 @@ class DummyEventHandler(EventHandler):
     """Write a simple log message for each received event."""
 
     def __init__(self, service, cfg, cfg_path, **args):
-        super().__init__(service, cfg, cfg_path, **args)
+        super().__init__(service, cfg, cfg_path, args)
         logger.info(f"service: {service}")
         logger.info(f"config: {cfg}")
         logger.info(f"config path: {cfg_path}")
