@@ -26,7 +26,16 @@ class SMTPclient:
         "!eNULL:!MD5"
     )
 
-    def __init__(self, cfg, service, mail_to, mail_from, mail_subject, mail_message):
+    def __init__(
+        self,
+        cfg: dict,
+        service: str,
+        mail_to: str,
+        mail_from: str,
+        mail_subject: str,
+        mail_message: str,
+        **args,
+    ) -> None:
         self.server = self.conntect_to_smtp_server(cfg)
         self.mail_to = mail_to
         self.mail_from = mail_from
