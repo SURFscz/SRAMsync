@@ -9,13 +9,16 @@ the CUA.
 
 import importlib
 from datetime import datetime
-from jsonschema import validate, ValidationError
+import os
+import stat
 
-from .sync_with_sram import ConfigValidationError
+from jsonschema import ValidationError, validate
+
 from .common import pascal_case_to_snake_case, render_templated_string
-from .sramlogger import logger
-from .event_handler import EventHandler
 from .dummy_event_handler import DummyEventHandler
+from .event_handler import EventHandler
+from .sramlogger import logger
+from .sync_with_sram import ConfigValidationError
 
 
 class CuaScriptGenerator(EventHandler):
