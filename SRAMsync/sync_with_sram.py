@@ -577,7 +577,7 @@ def cli(configuration, debug, verbose):
 
     if verbose > 0:
         if verbose > 2:
-            logger.warning("verbose option supports two level only. Additional levels are ignored.")
+            logger.warning("verbose option supports two levels only. Additional levels are ignored.")
             verbose = 2
         verbose_logging = ["INFO", "DEBUG"]
         logging.getLogger("SRAMsync").setLevel(verbose_logging[verbose - 1])
