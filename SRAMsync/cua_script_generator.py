@@ -77,7 +77,11 @@ class CuaScriptGenerator(EventHandler):
 
             self.cfg = cfg
             script_name = render_templated_string(cfg["filename"], service=service)
-            self.script_file_descriptor = open(script_name, "w+")
+            self.script_file_descriptor = open(
+                script_name,
+                "w+",
+            )
+            os.chmod(script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
             self.add_user_cmd = cfg["add_user_cmd"]
             self.modify_user_cmd = cfg["modify_user_cmd"]
             self.service_name = service
