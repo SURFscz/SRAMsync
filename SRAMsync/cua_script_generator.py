@@ -60,6 +60,10 @@ class CuaScriptGenerator(EventHandler):
         if "log_level" in args:
             self.log_level = args["log_level"]
 
+        check_option = ""
+        if self.log_level >= 40:
+            check_option = " --check"
+
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg)
 
@@ -85,7 +89,7 @@ class CuaScriptGenerator(EventHandler):
             )
             os.chmod(script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
             self.add_user_cmd = cfg["add_user_cmd"]
-            self.modify_user_cmd = cfg["modify_user_cmd"]
+            self.modify_user_cmd = cfg["modify_user_cmd"] + check_option
             self.service_name = service
             self.generate_header()
         except ConfigValidationError as e:
@@ -161,7 +165,7 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self.print(f"## Adding user: {user}")
-        self.print(f"{self.modify_user_cmd} --check {user} ||")
+        self.print(f"{self.modify_user_cmd} {user} ||")
         self.print(
             f"  {{\n"
             f'    echo "{line}" | {self.add_user_cmd} -f-\n'
