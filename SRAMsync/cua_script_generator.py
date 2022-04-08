@@ -37,6 +37,7 @@ class CuaScriptGenerator(EventHandler):
             "add_user_cmd": {"type": "string"},
             "modify_user_cmd": {"type": "string"},
             "check_user_cmd": {"type": "string"},
+            "ssh_cmd": {"type": "string"},
             "auxiliary_event_handler": {
                 "type": "object",
                 "properties": {
@@ -46,7 +47,7 @@ class CuaScriptGenerator(EventHandler):
                 "required": ["name", "config"],
             },
         },
-        "required": ["filename", "add_user_cmd", "modify_user_cmd", "check_user_cmd"],
+        "required": ["filename", "add_user_cmd", "modify_user_cmd", "check_user_cmd", "ssh_cmd"],
         "optional": ["auxiliary_event_handler"],
     }
 
@@ -86,6 +87,7 @@ class CuaScriptGenerator(EventHandler):
             self.add_user_cmd = cfg["add_user_cmd"]
             self.modify_user_cmd = cfg["modify_user_cmd"]
             self.check_user_cmd = cfg["check_user_cmd"]
+            self.ssh_cmd = cfg["ssh_cmd"]
             self.generate_header()
         except ConfigValidationError as e:
             raise e
@@ -176,7 +178,7 @@ class CuaScriptGenerator(EventHandler):
         adding a user's public SSH key. Call the auxiliary event class.
         """
         self.print(f"### SSH Public key: {key[:30]}...{key[-40:]}")
-        self.print(f'{self.modify_user_cmd} --ssh-public-key "{key}" {user}\n')
+        self.print(f'{self.ssh_cmd} "{key}" {user}\n')
 
         self.notify.add_public_ssh_key(co, user, key)
 
@@ -186,7 +188,7 @@ class CuaScriptGenerator(EventHandler):
         adding deleting user's public SSH key. Call the auxiliary event class.
         """
         self.print(f"### Remove SSH Public key: {key}")
-        self.print(f'{self.modify_user_cmd} -r --ssh-public-key "{key}" {user}\n')
+        self.print(f'{self.ssh_cmd} --remove "{key}" {user}\n')
 
         self.notify.delete_public_ssh_key(co, user, key)
 
