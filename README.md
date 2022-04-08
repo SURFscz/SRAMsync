@@ -20,16 +20,16 @@ The SRAMsync package can be installed by pip. Use the following the install
 the latest from the *main* branch on GitHub:
 
 ```bash
-pip install git+https://github.com/venekamp/SRAMsync.git#egg=SRAMsync
+pip install git+https://github.com/SRAMsync/SRAMsync.git#egg=SRAMsync
 ```
 
 If you wish to use a specific version you should use the following:
 
 ```bash
-pip install git+https://github.com/venekamp/SRAMsync.git@v2.0.0#egg=SRAMsync
+pip install git+https://github.com/SRAMsync/SRAMsync.git@v3.0.0#egg=SRAMsync
 ```
 
-The exact versions, i.e. the  *@v2.0.0* in the above url, can be found the
+The exact versions, i.e. the  *@v3.0.0* in the above url, can be found the
 [tags page](https://github.com/venekamp/SRAMsync/tags) at GitHub.
 
 ## Invocation
