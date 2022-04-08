@@ -88,7 +88,7 @@ class CuaScriptGenerator(EventHandler):
             self.service_name = service
 
             self.modify_user_cmd = cfg["modify_user_cmd"]
-            if self.log_level <= logging.DEBUG and "--check" not in self.modify_user_cmd:
+            if self.log_level > logging.DEBUG and "--check" not in self.modify_user_cmd:
                 self.modify_user_cmd = self.modify_user_cmd + " --check"
 
             self.modify_user_list_option = ""
