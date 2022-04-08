@@ -6,13 +6,13 @@
 
 ## Purpose of SRAMsync
 
-SRAMsync is an LDAP to LDAP synchronization script written in Python.
-Originally it was developed for synchronization between
-[SRAM](https://sbs.sram.surf.nl) and an LDAP at SURF, such that different SURF
-Research services would be able to obtain user attributes and grant users
-access to the services. The first versions were tailored towards the specifics
-needed by SURF, version 2 takes things a little further and generalizes a few
-pieces a bit more such that its applicability is extended.
+SRAMsync is an LDAP synchronization script written in Python. Originally it was
+developed for synchronization between [SRAM](https://sbs.sram.surf.nl) and an
+LDAP at SURF, such that different SURF Research services would be able to
+obtain user attributes and grant users access to the services. The first
+versions were tailored towards the specifics needed by SURF, version 2 takes
+things a little further and generalizes a few pieces a bit more such that its
+applicability is extended.
 
 ## Installation
 
