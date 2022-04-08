@@ -34,9 +34,9 @@ class CuaScriptGenerator(EventHandler):
         "type": "object",
         "properties": {
             "filename": {"type": "string"},
-            "add_user_cmd": {"type": "string"},
-            "modify_user_cmd": {"type": "string"},
-            "check_user_cmd": {"type": "string"},
+            "add_cmd": {"type": "string"},
+            "modify_cmd": {"type": "string"},
+            "check_cmd": {"type": "string"},
             "ssh_cmd": {"type": "string"},
             "auxiliary_event_handler": {
                 "type": "object",
@@ -47,7 +47,7 @@ class CuaScriptGenerator(EventHandler):
                 "required": ["name", "config"],
             },
         },
-        "required": ["filename", "add_user_cmd", "modify_user_cmd", "check_user_cmd", "ssh_cmd"],
+        "required": ["filename", "add_cmd", "modify_cmd", "check_cmd", "ssh_cmd"],
         "optional": ["auxiliary_event_handler"],
     }
 
@@ -84,9 +84,9 @@ class CuaScriptGenerator(EventHandler):
             self.script_file_descriptor = open(script_name, "w+")
             os.chmod(script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
             self.service_name = service
-            self.add_user_cmd = cfg["add_user_cmd"]
-            self.modify_user_cmd = cfg["modify_user_cmd"]
-            self.check_user_cmd = cfg["check_user_cmd"]
+            self.add_cmd = cfg["add_user_cmd"]
+            self.modify_cmd = cfg["modify_user_cmd"]
+            self.check_cmd = cfg["check_user_cmd"]
             self.ssh_cmd = cfg["ssh_cmd"]
             self.generate_header()
         except ConfigValidationError as e:
@@ -162,11 +162,11 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self.print(f"## Adding user: {user}")
-        self.print(f"{self.check_user_cmd} {user} ||")
+        self.print(f"{self.check_cmd} {user} ||")
         self.print(
             f"  {{\n"
-            f'    echo "{line}" | {self.add_user_cmd} -f-\n'
-            f"    {self.modify_user_cmd} --service sram:{self.service_name} {user}\n"
+            f'    echo "{line}" | {self.add_cmd} -f-\n'
+            f"    {self.modify_cmd} --service sram:{self.service_name} {user}\n"
             f"  }}\n"
         )
 
@@ -225,8 +225,8 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram_group:description:dummy:{group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
         self.print(f"## Adding group: {group}")
-        self.print(f"{self.check_user_cmd} {group} ||")
-        self.print(f'  {{\n    echo "{line}" | {self.add_user_cmd} -f-\n  }}\n')
+        self.print(f"{self.check_cmd} {group} ||")
+        self.print(f'  {{\n    echo "{line}" | {self.add_cmd} -f-\n  }}\n')
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
@@ -291,10 +291,10 @@ class CuaScriptGenerator(EventHandler):
 
         if number_of_attributes - length2 == 1:
             if "system_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}--access {self.service_name} {group} {user}\n")
+                self.print(f"{self.modify_cmd}{remove}--access {self.service_name} {group} {user}\n")
 
             if "project_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}--group {group} {user}\n")
+                self.print(f"{self.modify_cmd}{remove}--group {group} {user}\n")
         elif number_of_attributes - length2 == 0:
             error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
             raise ValueError(error)

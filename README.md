@@ -604,11 +604,12 @@ The `CuaScriptGenerator` class needs to know a few things in order to be able
 to generate a bash script based on the `sara_usertools`. First of all, there is
 the name of the generated script. This is specified by: `filename:`. Then there
 are the three commands for adding, modifying and checking groups and users:
-`add_user_cmd:`, `modify_user_cmd:` and `check_user_cmd`. All commands can be
+`add_cmd:`, `modify_cmd:`, `check_cmd` and `sshkey_cmd`. All commands can be
 prefixed with `sudo` and can be extended with options, e.g. `sudo sara_adduser
 --no-usermail`. This string will be inserted literally into the bash script
-when `sara_adduser` is needed. The `check_user_cmd` is used prior to adding
-users or groups to determine if the user or group already exists.
+when `sara_adduser` is needed. The `check_cmd` is used prior to adding
+users or groups to determine if the user or group already exists. Adding and
+removing public SSH keys is done through the `sshkey_cmd`.
 
 The final key that the `CuaScriptGenerator` understands, but does not require,
 is `auxiliary_event_handler:` Any `EventHandler` class can be given here. If
@@ -625,9 +626,10 @@ sync:
   name: CuaScriptGenerator
   config:
     filename: <filename>
-    add_user_cmd: sudo sara_adduser --no-usermail
-    modify_user_cmd: sudo sara_modifyuser --no-usermail
-    check_user_cmd: sudo sara_modifyuser --no-usermail --check
+    add_cmd: sudo sara_adduser --no-usermail
+    modify_cmd: sudo sara_modifyuser --no-usermail
+    check_cmd: sudo sara_modifyuser --no-usermail --check
+    sshkey_cmd: sudo sara_modifyuser --no-usermail --ssh-public-key
     auxiliary_event_handler:
       name: EmailNotifications
       config:
