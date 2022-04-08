@@ -36,6 +36,7 @@ class CuaScriptGenerator(EventHandler):
             "filename": {"type": "string"},
             "add_user_cmd": {"type": "string"},
             "modify_user_cmd": {"type": "string"},
+            "check_user_cmd": {"type": "string"},
             "auxiliary_event_handler": {
                 "type": "object",
                 "properties": {
@@ -45,7 +46,7 @@ class CuaScriptGenerator(EventHandler):
                 "required": ["name", "config"],
             },
         },
-        "required": ["filename", "add_user_cmd", "modify_user_cmd"],
+        "required": ["filename", "add_user_cmd", "modify_user_cmd", "check_user_cmd"],
         "optional": ["auxiliary_event_handler"],
     }
 
@@ -79,22 +80,12 @@ class CuaScriptGenerator(EventHandler):
 
             self.cfg = cfg
             script_name = render_templated_string(cfg["filename"], service=service)
-            self.script_file_descriptor = open(
-                script_name,
-                "w+",
-            )
+            self.script_file_descriptor = open(script_name, "w+")
             os.chmod(script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
-            self.add_user_cmd = cfg["add_user_cmd"]
             self.service_name = service
-
+            self.add_user_cmd = cfg["add_user_cmd"]
             self.modify_user_cmd = cfg["modify_user_cmd"]
-            if self.log_level > logging.DEBUG and "--check" not in self.modify_user_cmd:
-                self.modify_user_cmd = self.modify_user_cmd + " --check"
-
-            self.modify_user_list_option = ""
-            if "--check" not in self.modify_user_cmd:
-                self.modify_user_list_option = " --list"
-
+            self.check_user_cmd = cfg["check_user_cmd"]
             self.generate_header()
         except ConfigValidationError as e:
             raise e
@@ -169,7 +160,7 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self.print(f"## Adding user: {user}")
-        self.print(f"{self.modify_user_cmd}{self.modify_user_list_option} {user} ||")
+        self.print(f"{self.check_user_cmd} {user} ||")
         self.print(
             f"  {{\n"
             f'    echo "{line}" | {self.add_user_cmd} -f-\n'
@@ -232,7 +223,7 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram_group:description:dummy:{group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
         self.print(f"## Adding group: {group}")
-        self.print(f"{self.modify_user_cmd}{self.modify_user_list_option} {group} ||")
+        self.print(f"{self.check_user_cmd} {group} ||")
         self.print(f'  {{\n    echo "{line}" | {self.add_user_cmd} -f-\n  }}\n')
 
     def remove_group(self, co: str, group: str, group_attributes: list):
