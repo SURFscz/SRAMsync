@@ -603,10 +603,12 @@ could be for example the `EmailNotifications` class for mailing events.
 The `CuaScriptGenerator` class needs to know a few things in order to be able
 to generate a bash script based on the `sara_usertools`. First of all, there is
 the name of the generated script. This is specified by: `filename:`. Then there
-are the two commands for adding and modifying groups and users: `add_user_cmd:`
-and `modify_user_cmd:`. Both can be prefixed with `sudo` and can be extended
-with options, e.g. `sudo sara_adduser --no-usermail`. This string will be
-inserted literally into the bash script when `sara_adduser` is needed.
+are the three commands for adding, modifying and checking groups and users:
+`add_user_cmd:`, `modify_user_cmd:` and `check_user_cmd`. All commands can be
+prefixed with `sudo` and can be extended with options, e.g. `sudo sara_adduser
+--no-usermail`. This string will be inserted literally into the bash script
+when `sara_adduser` is needed. The `check_user_cmd` is used prior to adding
+users or groups to determine if the user or group already exists.
 
 The final key that the `CuaScriptGenerator` understands, but does not require,
 is `auxiliary_event_handler:` Any `EventHandler` class can be given here. If
@@ -625,6 +627,7 @@ sync:
     filename: <filename>
     add_user_cmd: sudo sara_adduser --no-usermail
     modify_user_cmd: sudo sara_modifyuser --no-usermail
+    check_user_cmd: sudo sara_modifyuser --no-usermail --check
     auxiliary_event_handler:
       name: EmailNotifications
       config:
