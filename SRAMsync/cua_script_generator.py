@@ -84,9 +84,9 @@ class CuaScriptGenerator(EventHandler):
             self.script_file_descriptor = open(script_name, "w+")
             os.chmod(script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
             self.service_name = service
-            self.add_cmd = cfg["add_user_cmd"]
-            self.modify_cmd = cfg["modify_user_cmd"]
-            self.check_cmd = cfg["check_user_cmd"]
+            self.add_cmd = cfg["add_cmd"]
+            self.modify_cmd = cfg["modify_cmd"]
+            self.check_cmd = cfg["check_cmd"]
             self.ssh_cmd = cfg["ssh_cmd"]
             self.generate_header()
         except ConfigValidationError as e:
