@@ -79,9 +79,19 @@ class Config:
                         "type": "object",
                         "properties": {
                             "name": {"type": "string"},
+                            "class": {"type": "string"},
                             "config": {"type": "object"},
                         },
-                        "required": ["name"],
+                        "oneOf": [
+                            {
+                                "required": ["name"],
+                                "not": {"required": ["class"]}
+                            },
+                            {
+                                "required": ["class"],
+                                "not": {"required": ["name"]}
+                            }
+                        ],
                         "additionalProperties": False,
                     },
                     "grace": {
@@ -137,14 +147,23 @@ class Config:
         provisional_status_filename in the class configuration.
         """
 
-        event_handler_class_name = self.config["sync"]["event_handler"]["name"]
-        event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
-        event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
+        event_handler_section = self.config["sync"]["event_handler"]
+
+        if "name" in event_handler_section:
+            event_handler_class_name = event_handler_section["name"]
+            event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
+            event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
+        elif "class" in event_handler_section:
+            components = event_handler_section["class"].split('.')
+            event_handler_class_name = components[-1]
+            event_handler_module_name = '.'.join(components[0:-1])
+            event_handler_module = importlib.import_module(event_handler_module_name)
+
         event_handler_class = getattr(event_handler_module, event_handler_class_name)
 
         handler_cfg = {}
-        if "config" in self.config["sync"]["event_handler"]:
-            handler_cfg = self.config["sync"]["event_handler"]["config"]
+        if "config" in event_handler_section:
+            handler_cfg = event_handler_section["config"]
 
         handler_cfg.update({"status_filename": self.config["status_filename"]})
 
