@@ -19,6 +19,7 @@ from .dummy_event_handler import DummyEventHandler
 from .event_handler import EventHandler
 from .sramlogger import logger
 from .sync_with_sram import ConfigValidationError
+import logging
 
 
 class CuaScriptGenerator(EventHandler):
@@ -33,8 +34,10 @@ class CuaScriptGenerator(EventHandler):
         "type": "object",
         "properties": {
             "filename": {"type": "string"},
-            "add_user_cmd": {"type": "string"},
-            "modify_user_cmd": {"type": "string"},
+            "add_cmd": {"type": "string"},
+            "modify_cmd": {"type": "string"},
+            "check_cmd": {"type": "string"},
+            "ssh_cmd": {"type": "string"},
             "auxiliary_event_handler": {
                 "type": "object",
                 "properties": {
@@ -44,7 +47,7 @@ class CuaScriptGenerator(EventHandler):
                 "required": ["name", "config"],
             },
         },
-        "required": ["filename", "add_user_cmd", "modify_user_cmd"],
+        "required": ["filename", "add_cmd", "modify_cmd", "check_cmd", "sshkey_cmd"],
         "optional": ["auxiliary_event_handler"],
     }
 
@@ -55,14 +58,9 @@ class CuaScriptGenerator(EventHandler):
     def __init__(self, service, cfg, cfg_path, **args) -> None:
         super().__init__(service, cfg, cfg_path, args)
 
-        # See: https://docs.python.org/3/library/logging.html#logging-levels for numeric values of log levels
-        self.log_level = 40  # This is log level ERROR
+        self.log_level = logging.ERROR
         if "log_level" in args:
             self.log_level = args["log_level"]
-
-        check_option = ""
-        if self.log_level >= 40:
-            check_option = " --check"
 
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg)
@@ -83,14 +81,13 @@ class CuaScriptGenerator(EventHandler):
 
             self.cfg = cfg
             script_name = render_templated_string(cfg["filename"], service=service)
-            self.script_file_descriptor = open(
-                script_name,
-                "w+",
-            )
+            self.script_file_descriptor = open(script_name, "w+")
             os.chmod(script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
-            self.add_user_cmd = cfg["add_user_cmd"]
-            self.modify_user_cmd = cfg["modify_user_cmd"] + check_option
             self.service_name = service
+            self.add_cmd = cfg["add_cmd"]
+            self.modify_cmd = cfg["modify_cmd"]
+            self.check_cmd = cfg["check_cmd"]
+            self.sshkey_cmd = cfg["sshkey_cmd"]
             self.generate_header()
         except ConfigValidationError as e:
             raise e
@@ -132,7 +129,7 @@ class CuaScriptGenerator(EventHandler):
         self.print("#")
         self.print("#" * 80)
         self.print("")
-        if self.log_level <= 10:
+        if self.log_level <= logging.DEBUG:
             self.print("set -o xtrace")
             self.print("")
         self.print("trap quit INT")
@@ -165,11 +162,11 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self.print(f"## Adding user: {user}")
-        self.print(f"{self.modify_user_cmd} {user} ||")
+        self.print(f"{self.check_cmd} {user} ||")
         self.print(
             f"  {{\n"
-            f'    echo "{line}" | {self.add_user_cmd} -f-\n'
-            f"    {self.modify_user_cmd} --service sram:{self.service_name} {user}\n"
+            f'    echo "{line}" | {self.add_cmd} -f-\n'
+            f"    {self.modify_cmd} --service sram:{self.service_name} {user}\n"
             f"  }}\n"
         )
 
@@ -181,7 +178,7 @@ class CuaScriptGenerator(EventHandler):
         adding a user's public SSH key. Call the auxiliary event class.
         """
         self.print(f"### SSH Public key: {key[:30]}...{key[-40:]}")
-        self.print(f'{self.modify_user_cmd} --ssh-public-key "{key}" {user}\n')
+        self.print(f'{self.sshkey_cmd} "{key}" {user}\n')
 
         self.notify.add_public_ssh_key(co, user, key)
 
@@ -191,7 +188,7 @@ class CuaScriptGenerator(EventHandler):
         adding deleting user's public SSH key. Call the auxiliary event class.
         """
         self.print(f"### Remove SSH Public key: {key}")
-        self.print(f'{self.modify_user_cmd} -r --ssh-public-key "{key}" {user}\n')
+        self.print(f'{self.sshkey_cmd} --remove "{key}" {user}\n')
 
         self.notify.delete_public_ssh_key(co, user, key)
 
@@ -228,8 +225,8 @@ class CuaScriptGenerator(EventHandler):
         line = f"sram_group:description:dummy:{group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
         self.print(f"## Adding group: {group}")
-        self.print(f"{self.modify_user_cmd} --list {group} ||")
-        self.print(f'  {{\n    echo "{line}" | {self.add_user_cmd} -f-\n  }}\n')
+        self.print(f"{self.check_cmd} {group} ||")
+        self.print(f'  {{\n    echo "{line}" | {self.add_cmd} -f-\n  }}\n')
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
@@ -294,10 +291,10 @@ class CuaScriptGenerator(EventHandler):
 
         if number_of_attributes - length2 == 1:
             if "system_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}--access {self.service_name} {group} {user}\n")
+                self.print(f"{self.modify_cmd}{remove}--access {self.service_name} {group} {user}\n")
 
             if "project_group" in attr:
-                self.print(f"{self.modify_user_cmd}{remove}--group {group} {user}\n")
+                self.print(f"{self.modify_cmd}{remove}--group {group} {user}\n")
         elif number_of_attributes - length2 == 0:
             error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
             raise ValueError(error)

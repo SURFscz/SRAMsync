@@ -6,13 +6,13 @@
 
 ## Purpose of SRAMsync
 
-SRAMsync is an LDAP to LDAP synchronization script written in Python.
-Originally it was developed for synchronization between
-[SRAM](https://sbs.sram.surf.nl) and an LDAP at SURF, such that different SURF
-Research services would be able to obtain user attributes and grant users
-access to the services. The first versions were tailored towards the specifics
-needed by SURF, version 2 takes things a little further and generalizes a few
-pieces a bit more such that its applicability is extended.
+SRAMsync is an LDAP synchronization script written in Python. Originally it was
+developed for synchronization between [SRAM](https://sbs.sram.surf.nl) and an
+LDAP at SURF, such that different SURF Research services would be able to
+obtain user attributes and grant users access to the services. The first
+versions were tailored towards the specifics needed by SURF, version 2 takes
+things a little further and generalizes a few pieces a bit more such that its
+applicability is extended.
 
 ## Installation
 
@@ -20,16 +20,16 @@ The SRAMsync package can be installed by pip. Use the following the install
 the latest from the *main* branch on GitHub:
 
 ```bash
-pip install git+https://github.com/venekamp/SRAMsync.git#egg=SRAMsync
+pip install git+https://github.com/SURFscz/SRAMsync.git#egg=SRAMsync
 ```
 
 If you wish to use a specific version you should use the following:
 
 ```bash
-pip install git+https://github.com/venekamp/SRAMsync.git@v2.0.0#egg=SRAMsync
+pip install git+https://github.com/SURFscz/SRAMsync.git@v3.0.0#egg=SRAMsync
 ```
 
-The exact versions, i.e. the  *@v2.0.0* in the above url, can be found the
+The exact versions, i.e. the  *@v3.0.0* in the above url, can be found the
 [tags page](https://github.com/venekamp/SRAMsync/tags) at GitHub.
 
 ## Invocation
@@ -603,10 +603,13 @@ could be for example the `EmailNotifications` class for mailing events.
 The `CuaScriptGenerator` class needs to know a few things in order to be able
 to generate a bash script based on the `sara_usertools`. First of all, there is
 the name of the generated script. This is specified by: `filename:`. Then there
-are the two commands for adding and modifying groups and users: `add_user_cmd:`
-and `modify_user_cmd:`. Both can be prefixed with `sudo` and can be extended
-with options, e.g. `sudo sara_adduser --no-usermail`. This string will be
-inserted literally into the bash script when `sara_adduser` is needed.
+are the three commands for adding, modifying and checking groups and users:
+`add_cmd:`, `modify_cmd:`, `check_cmd` and `sshkey_cmd`. All commands can be
+prefixed with `sudo` and can be extended with options, e.g. `sudo sara_adduser
+--no-usermail`. This string will be inserted literally into the bash script
+when `sara_adduser` is needed. The `check_cmd` is used prior to adding
+users or groups to determine if the user or group already exists. Adding and
+removing public SSH keys is done through the `sshkey_cmd`.
 
 The final key that the `CuaScriptGenerator` understands, but does not require,
 is `auxiliary_event_handler:` Any `EventHandler` class can be given here. If
@@ -623,8 +626,10 @@ sync:
   name: CuaScriptGenerator
   config:
     filename: <filename>
-    add_user_cmd: sudo sara_adduser --no-usermail
-    modify_user_cmd: sudo sara_modifyuser --no-usermail
+    add_cmd: sudo sara_adduser --no-usermail
+    modify_cmd: sudo sara_modifyuser --no-usermail
+    check_cmd: sudo sara_modifyuser --no-usermail --check
+    sshkey_cmd: sudo sara_modifyuser --no-usermail --ssh-public-key
     auxiliary_event_handler:
       name: EmailNotifications
       config:
