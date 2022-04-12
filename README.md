@@ -347,13 +347,15 @@ sync:
   groups:
     <group synchronization information>
   event_handler:
-    name: <event handler class name to instantiate>
+    name: <SRAMsync event handler class name to instantiate>
     config:
       <configuration belonging to the instantiated EventHandler class>
   grace:
     <group names for which to apply a grace period>:
       grace_period: <grace period in days>
 ```
+
+Note: Alternatively one can also specify an external Eventhandler via `class: <package.module.Class>` and omitting the `name` property.
 
 #### groups
 
