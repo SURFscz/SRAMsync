@@ -79,19 +79,9 @@ class Config:
                         "type": "object",
                         "properties": {
                             "name": {"type": "string"},
-                            "class": {"type": "string"},
                             "config": {"type": "object"},
                         },
-                        "oneOf": [
-                            {
-                                "required": ["name"],
-                                "not": {"required": ["class"]}
-                            },
-                            {
-                                "required": ["class"],
-                                "not": {"required": ["name"]}
-                            }
-                        ],
+                        "required": ["name"],
                         "additionalProperties": False,
                     },
                     "grace": {
@@ -149,15 +139,19 @@ class Config:
 
         event_handler_section = self.config["sync"]["event_handler"]
 
-        if "name" in event_handler_section:
-            event_handler_class_name = event_handler_section["name"]
-            event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
-            event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
-        elif "class" in event_handler_section:
-            components = event_handler_section["class"].split('.')
+        event_handler_full_name = event_handler_section["name"]
+        if "." in event_handler_full_name:
+            # if there is a "." in the name we assume its a full package name
+            components = event_handler_full_name.split('.')
             event_handler_class_name = components[-1]
             event_handler_module_name = '.'.join(components[0:-1])
             event_handler_module = importlib.import_module(event_handler_module_name)
+        else:
+            # default to "SRAMsync" package if nothing special (old behaviour)
+            # is specified in the "name" attribute
+            event_handler_class_name = event_handler_full_name
+            event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
+            event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
 
         event_handler_class = getattr(event_handler_module, event_handler_class_name)
 

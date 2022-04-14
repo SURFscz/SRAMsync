@@ -48,3 +48,6 @@ jobs:
 
       - name: Run behave
         run: pipenv run behave
+
+      - name: Run test suite
+        run: pipenv run test -v

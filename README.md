@@ -355,8 +355,6 @@ sync:
       grace_period: <grace period in days>
 ```
 
-Note: Alternatively one can also specify an external Eventhandler via `class: <package.module.Class>` and omitting the `name` property.
-
 #### groups
 
 The group block specifies what groups need to be synced from SRAM. You must
@@ -560,7 +558,10 @@ times.
 ## EventHandler Classes
 
 A few EventHandler classes are available. Each has its own configuration and
-can be selected in the configuration file.
+can be selected in the configuration file by simply specifying the name of 
+the EventHandler in the `name` property.
+
+For creating your own custom EventHandler implementation see [below](#creating-a-custom-eventhandler). 
 
 ### DummyEventandler
 
@@ -799,3 +800,34 @@ The above example shows plain text passwords in the configuration file. Instead
 of using the `passwd` in the `smtp` block, one could also use `passwd_from_secrets`.
 This only works if you have opted to use the `secrets` block in the configuration.
 See [Password file format](#password-file-format) for more information.
+
+### Creating a custom EventHandler
+
+Alternatively one can also specify their own EventHandler class by setting the
+`name` property to the exact package & module name of the class.
+
+Assume we have the following EventHandler in the file `my_event_handler.py`
+in the folder `my_package`:
+
+```python
+from SRAMsync.event_handler import EventHandler
+
+class MyEventHandler(EventHandler):
+  <implementation of all abstract methods>
+```
+
+Then the `event_handler` property needs to be set to
+```yaml
+sync:
+  <other sync parameters ...>
+  event_handler:
+    name: my_package.my_event_handler.MyEventHandler
+    config:
+      <MyEventHandlerConfig (optional)>
+```
+
+The sources only need to be visible via `PYTHONPATH`:
+```bash
+export PYTHONPATH=/path/to/source/:$PYTHONPATH
+sync-with-sram -d path/to/config.yaml
+```
