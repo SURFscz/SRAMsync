@@ -17,6 +17,10 @@ pylint = "*"
 rope = "*"
 behave = "*"
 deepdiff = "*"
+pytest = "*"
 
 [pipenv]
 allow_prereleases = true
+
+[scripts]
+test = "bash -c \"PYTHONPATH=$PWD/.:$PWD/test/unit:$PYTHONPATH pytest\""
