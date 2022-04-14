@@ -3,7 +3,6 @@
   the main configuration. EventHandler classes may extent the
   configuration.
 """
-import importlib
 import json
 from typing import Any
 
@@ -11,7 +10,7 @@ import yaml
 from jsonschema import validate
 from ldap import ldapobject
 
-from .common import pascal_case_to_snake_case
+from .common import deduct_event_handler_class
 from .event_handler import EventHandler
 
 
@@ -139,21 +138,7 @@ class Config:
 
         event_handler_section = self.config["sync"]["event_handler"]
 
-        event_handler_full_name = event_handler_section["name"]
-        if "." in event_handler_full_name:
-            # if there is a "." in the name we assume its a full package name
-            components = event_handler_full_name.split('.')
-            event_handler_class_name = components[-1]
-            event_handler_module_name = '.'.join(components[0:-1])
-            event_handler_module = importlib.import_module(event_handler_module_name)
-        else:
-            # default to "SRAMsync" package if nothing special (old behaviour)
-            # is specified in the "name" attribute
-            event_handler_class_name = event_handler_full_name
-            event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
-            event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
-
-        event_handler_class = getattr(event_handler_module, event_handler_class_name)
+        event_handler_class = deduct_event_handler_class(event_handler_section["name"])
 
         handler_cfg = {}
         if "config" in event_handler_section:
