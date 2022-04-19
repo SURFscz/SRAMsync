@@ -185,7 +185,7 @@ class CuaScriptGenerator(EventHandler):
     def delete_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
-        adding deleting user's public SSH key. Call the auxiliary event class.
+        deleting a user's public SSH key. Call the auxiliary event class.
         """
         self.print(f"### Remove SSH Public key: {key}")
         self.print(f'{self.sshkey_cmd} --remove "{key}" {user}\n')

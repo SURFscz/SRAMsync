@@ -1,11 +1,11 @@
 """
-sync-with-sram is a command line untility to help synchronize a locol system,
+sync-with-sram is a command line untility to help synchronize a local system,
 e.g. LDAP, with the LDAP provided by SRAM. Keep in mind though that the SRAM
 LDAP provides attributes only and that it does not provide posix account and
 groups.
 
-sync-with-sram consists in essence out of twp part: 1) a main loop that
-iterates over the entries and retrieve attrbites from the SRAM LDAP, 2) an
+sync-with-sram consists in essence out of two parts: 1) a main loop that
+iterates over the entries and retrieves attrbutes from the SRAM LDAP, 2) an
 event like system that acts on detected changes between the current state of
 the SRAM LDAP and the current state of the destination system.
 
@@ -32,10 +32,10 @@ from .common import render_templated_string
 from .config import Config
 from .sramlogger import logger
 
-#  By defaukt click does not offer the short '-h' option.
+#  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
 
-#  Adjust some of the default of click_logging.
+#  Adjust some of the defaults of click_logging.
 click_logging_options = {
     "default": "WARNING",
     "metavar": "level",
@@ -53,11 +53,11 @@ class ConfigValidationError(jsonschema.exceptions.ValidationError):
 
 
 class MultipleLoginGroups(Exception):
-    """Exception is case multiple login groeps are found."""
+    """Exception in case multiple login groups are found."""
 
 
 class PasswordNotFound(Exception):
-    """Exception is case not password has been found."""
+    """Exception is case no password has been found."""
 
     def __init__(self, msg):
         super().__init__(msg)
@@ -66,8 +66,8 @@ class PasswordNotFound(Exception):
 
 def dn_to_rdns(dn: str) -> dict:
     """
-    Convert the given dn string represitation info a dictionary, where each
-    key value pair is an rdn.
+    Convert the given dn string representation info into a dictionary, where
+    each key value pair is an rdn.
     """
 
     rdns = {}
@@ -80,7 +80,7 @@ def dn_to_rdns(dn: str) -> dict:
 
 def get_ldap_passwd(config: dict, secrets: dict, service: str) -> str:
     """
-    Get the SRAM LDAP.
+    Get the SRAM LDAP password.
 
     The configuration file could contain the password, or a path to a password
     file. If either is used, retrieve the password through that method. If
@@ -100,7 +100,7 @@ def get_ldap_passwd(config: dict, secrets: dict, service: str) -> str:
 
         logger.error(
             "In the config file passwd_from_secrets is set to false and no environment "
-            "variable has been set."
+            "variable or no secrets file has been set."
         )
     except KeyError:
         pass
@@ -147,7 +147,7 @@ def get_previous_status(cfg: Config) -> dict:
 def is_user_eligible(uid: str, login_users: List[str], entry: dict) -> bool:
     """
     Check if the user (uid) is eligible for using the service. There are two
-    ways to determine it. i) if the users is found to be part of the
+    ways to determine this. i) if the users is found to be part of the
     login_users. ii) if the voPersonStatus is set for the user.
 
     If no login_users are defined nor is the voPersonStatus used, the user is
@@ -166,7 +166,7 @@ def is_user_eligible(uid: str, login_users: List[str], entry: dict) -> bool:
 
 def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     """
-    Check if there is at least one and not more then one group that controls
+    Check if there is at least one and not more than one group that controls
     which users are allowed to login. If there are none, it's okay to use all
     known users from the reserved '@all` group.
     """
@@ -282,7 +282,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
     The provided status is used to determine whether or not a user has already
     been added to the group in a previous run.
 
-    While looping over all users, a new_status is maintained to reflect the to
+    While looping over all groups, a new_status is maintained to reflect the to
     be situation of the destination LDAP. This to be situation will be achieved
     after a successful run of the resulting script.
     """
@@ -410,7 +410,7 @@ def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
 
 def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict) -> dict:
     """
-    Determine based on the (old) status and the new_status one which users are to be removed.
+    Determine based on the (old) status and new_status which users are to be removed.
     """
 
     event_handler = cfg.event_handler
@@ -450,8 +450,8 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
 
 def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
     """
-    Determine based on the (old) status and the new_status which groups are to
-    be removed. If any of those groups contain member, remove those members
+    Determine based on (old) status and new_status which groups are to
+    be removed. If any of those groups contain members, remove those members
     first from the group.
     """
 
@@ -548,9 +548,10 @@ def cli(configuration, debug, verbose):
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
 
-    sync_with_sram takes an configuration file which describes a source LDAP
-    with which the destination LDAP must be synchronized. This configuration
-    file also describes which groups need to be considered for synchronisation.
+    sync_with_sram takes a configuration file or path containing multiple files
+    which describe one or more source LDAPs with which the destination LDAP
+    must be synchronized. This configuration file also describes which groups
+    need to be considered for synchronisation.
 
     During a synchronisation run, a status is kept. It reflects the current
     state of what has been done in order to synchronize the destination LDAP.
@@ -561,7 +562,7 @@ def cli(configuration, debug, verbose):
 
     The generated status file is written to disk to keep this history. Upon a
     next run, the previous known status is read and used to determine if
-    additional actions are required to keep the destination LDAP in sync the
+    additional actions are required to keep the destination LDAP in sync with
     SRAM. Thus the status is used to prevent adding things to the destination
     LDAP when that already has happened.
 
