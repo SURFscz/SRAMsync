@@ -295,18 +295,13 @@ connections. Each source has its own part in the password file. All SRAM LDAP
 related passwords for example are grouped under `sram-ldap`, while the SMTP
 passwords are bundled under `smtp`. Below is an example of a password file.
 
-```json
-{
-  "sram-ldap": {
-    "my_service_A": "fh9dFDSf67fsd;fdsgh",
-    "my_service_B": "uirweSD_3$Afdhs!^Z1"
-  },
-  "smtp": {
-    "<smtp host name>": {
-      "<smtp login>": "fsdf,mm$$fgsff"
-    }
-  }
-}
+```yaml
+sram-ldap:
+  my_service_A: "fh9dFDSf67fsd;fdsgh"
+  my_service_B: "uirweSD_3$Afdhs!^Z1"
+smtp:
+  <smtp host name>:
+    <smtp login>: "fsdf,mm$$fgsff"
 ```
 
 If you don't use the `EmailNotifications` class for sending notification by e-mail,
