@@ -4,15 +4,21 @@ import re
 from typing import Type
 
 
+def get_attribute_from_entry(entry: dict, attribute: str) -> str:
+    """get the attribute value from entry and convert the value to UTF-8."""
+    return entry[attribute][0].decode("UTF-8")
+
+
 def render_templated_string(template_string: str, **kw: str) -> str:
     """
-    Contrain the possible keywords for substitution in a templated string.
+    Render a string based on a set of keywords. **kw contains defined keywords
+    than can be expanded.
     """
     return template_string.format(**kw)
 
 
 def pascal_case_to_snake_case(string: str) -> str:
-    """Convert a pascal case string to its snake case equivalant."""
+    """Convert a pascal case string to its snake case equivalent."""
     string = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", string)
     string = re.sub(r"([a-z])([A-Z])", r"\1_\2", string)
 
@@ -27,9 +33,9 @@ def deduct_event_handler_class(event_handler_full_name: str) -> Type:
     """
     if "." in event_handler_full_name:
         # if there is a "." in the name we assume its a full package name
-        components = event_handler_full_name.split('.')
+        components = event_handler_full_name.split(".")
         event_handler_class_name = components[-1]
-        event_handler_module_name = '.'.join(components[0:-1])
+        event_handler_module_name = ".".join(components[0:-1])
     else:
         # default to "SRAMsync" package if nothing special (old behaviour)
         # is specified in the "name" attribute

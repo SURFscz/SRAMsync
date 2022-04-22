@@ -73,8 +73,9 @@ SRAMsync defines the following events and their variables:
 * **add-new-group:** *co, group, attributes*
 * **remove-group:** *co, group, attributes*
 * **add-user-to-group:** *co, group, user, attributes*
-* **remove-user-from_group:** *co, group, user, attributes*
+* **start-grace-period-for-user:** *co, group, attributes, user, duration*
 * **remove-graced-user-from-group:** *co, group, user, attributes*
+* **remove-user-from_group:** *co, group, user, attributes*
 * **finalize**
 
 In fact, the above defined events are from the abstract base class found in the
@@ -141,7 +142,7 @@ but rather as removal of an old key and adding a new key instead.
 
 | Input      | Description |
 |:-----------|:------------|
-| co         | CO name for which the event was emitted.                             |
+| co         | CO name for which the event was emitted. |
 | group      | Name of the group that exists in SRAM but not yet at the destination.|
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
@@ -153,7 +154,7 @@ possible further processing.
 
 | Input      | Description |
 |:-----------|:------------|
-| co         | CO name for which the event was emitted.                             |
+| co         | CO name for which the event was emitted. |
 | group      | Name of the group that exists in SRAM but not yet at the destination.|
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
@@ -165,7 +166,7 @@ possible further processing.
 
 | Input     | Description |
 |:----------|:------------|
-| co        | CO name for which the event was emitted.                             |
+| co        | CO name for which the event was emitted. |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
@@ -175,25 +176,28 @@ different from the `add_new_user` event as that one is emitted for
 `login_group`s and this one for all other groups. In other words, the `user` is
 already provisioned at the destination, but not yet added to the `group`.
 
-#### remove-user-from-group
+#### start-grace-period-for-user
 
 | Input     | Description |
 |:----------|:------------|
-| co        | CO name for which the event was emitted.                             |
+| co        | CO name for which the event was emitted. |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
-| user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
+| user      | User name of the user at the destination.|
+| duration  | Length of grace period in days. |
 
-When a `user` is removed from a `group`, this event will be emitted. However,
-if the `group` has the `grace_period` attribute set, the user will not be
-removed until the grace period has ended. This event will be emitted non the
-less that the user has been removed from the group.
+When a `user` is removed from a `group`, this event will be emitted in case the
+`grace_preriod` was set in the group attributes list. If the `grace_preriod`
+attribute was not set, the `remove-user-from-group` event will be emitted
+instead. The user should not be removed during the grace period. When the
+`grace_preriod` has ended, the `remove-graced-user-from-group` is emitted to
+signal that the `user` must be removed.
 
 #### remove-graced-user-from-group
 
 | Input     | Description |
 |:----------|:------------|
-| co         | CO name for which the event was emitted.                            |
+| co        | CO name for which the event was emitted. |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
@@ -202,6 +206,20 @@ When a `user` has been removed from a `group`, for which the `grace_period`
 attribute was set, and the grace period of the user has passed, this event will
 be emitted. This also means that `sync-with-sram` will permanently remove this user from
 the group.
+
+#### remove-user-from-group
+
+| Input     | Description |
+|:----------|:------------|
+| co        | CO name for which the event was emitted. |
+| group     | Name of the group that exists in SRAM but not yet at the destination.|
+| user      | User name of the user at the destination.|
+| attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
+
+When a `user` is removed from a `group`, this event will be emitted. However,
+if the `group` has the `grace_period` attribute set, the user will not be
+removed until the grace period has ended. This event will be emitted non the
+less that the user has been removed from the group.
 
 #### finalize
 
@@ -233,20 +251,24 @@ As can be noticed from the above, two major blocks can be identified.
 1. `sram:` Connection details for SRAM
 2. `sync:` What and how to synchronize
 
-The `service` key is for specifying the name of the local (SRAM) service. Both
-`status_filename` and `provisional_status_filename` are file names where
-`sync-with-sram` keeps track of the current state. The `status_filename` is
-read at the beginning so that `sync-with-sram` can determine the state of the
-last sync. `provisional_status_filename` is optional. If you do use it,
-`sync-with-sram` will write its status info to that file instead and not
-`status_filename`. It is expected that the instantiated EventHandler object
-or its output, copies the `provisional_status_filename` to `status_filename`.
-If the responsible class fails to do so, `sync-with-sram` will always see new
-events as the `status_filename` is never updated to the latest sync state.
+The `service` key is for specifying the name of the service for which the
+configuration is created. Both `status_filename` and
+`provisional_status_filename` are file names where `sync-with-sram` keeps track
+of the current state. The `status_filename` is read at the beginning so that
+`sync-with-sram` can determine the state of the last sync.
+`provisional_status_filename` is optional. If you do use it, `sync-with-sram`
+will write its status info to that file instead and not `status_filename`. It
+is expected that the instantiated EventHandler object copies the
+`provisional_status_filename` to `status_filename`. If the instantiated object
+fails to do so, `sync-with-sram` will always see new events as the
+`status_filename` is never updated to the latest sync state.
 
 The `secrets` part is optional. However, if omitted, one does need to put any
-passwords in the configurations file itself, or use the appropriate environment
-variables.
+passwords in the configurations file itself. The exception to this is for the
+passwd of SRAM LDAP. In case this, one could use the environment variable
+`SRAM_LDAP_PASSWD`. Note however that for any other password in the config file
+the use of environment variables in unavailable. For those case, either use the
+`secrets` file, or put passwords in plain text into the configurarion file.
 
 ### SRAM connection details
 
@@ -316,10 +338,10 @@ value is the password for the SRAM LDAP subtree.
 ##### SMTP password
 
 The SMTP passwords take a slightly more complex structure then the key value
-pairs of SRAM LDAP passwords. For SMTP you need the FQDN (without the dot at
-the very end) of the SMTP host and the login account name. Login account names
+pairs of SRAM LDAP passwords. For SMTP you need the FQDN, i.e. hostname and
+domain name, of the SMTP host and the login account name. Login account names
 and the associated password form a key value pair and are grouped under the
-SMTP FQDN
+SMTP FQDN.
 
 #### Environment variable
 
@@ -551,10 +573,10 @@ times.
 ## EventHandler Classes
 
 A few EventHandler classes are available. Each has its own configuration and
-can be selected in the configuration file by simply specifying the name of 
+can be selected in the configuration file by simply specifying the name of
 the EventHandler in the `name` property.
 
-For creating your own custom EventHandler implementation see [below](#creating-a-custom-eventhandler). 
+For creating your own custom EventHandler implementation see [below](#creating-a-custom-eventhandler).
 
 ### DummyEventandler
 

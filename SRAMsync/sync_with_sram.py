@@ -28,7 +28,7 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from .common import render_templated_string
+from .common import render_templated_string, get_attribute_from_entry
 from .config import Config
 from .sramlogger import logger
 
@@ -157,7 +157,7 @@ def is_user_eligible(uid: str, login_users: List[str], entry: dict) -> bool:
         return False
 
     if "voPersonStatus" in entry:
-        vo_person_status = entry["voPersonStatus"][0].decode("UTF-8")
+        vo_person_status = get_attribute_from_entry(entry, "voPersonStatus")
         if vo_person_status != "active":
             return False
 
@@ -230,12 +230,12 @@ def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status
         )
 
         for _, entry in dns:  # type: ignore
-            uid = entry["uid"][0].decode("UTF-8")
+            uid = get_attribute_from_entry(entry, "uid")
             if is_user_eligible(uid, login_users, entry):
-                givenname = entry["givenName"][0].decode("UTF-8")
-                sn = entry["sn"][0].decode("UTF-8")
+                givenname = get_attribute_from_entry(entry, "givenName")
+                sn = get_attribute_from_entry(entry, "sn")
                 user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=uid)
-                mail = entry["mail"][0].decode("UTF-8")
+                mail = get_attribute_from_entry(entry, "mail")
 
                 new_status["users"][user] = {"sram": {"CO": co}}
                 if user not in status["users"]:
@@ -364,7 +364,7 @@ def add_missing_entries_to_ldap(cfg: Config, status: dict, new_status: dict) -> 
     )
 
     for _, entry in dns:  # type: ignore
-        fq_co = entry["o"][0].decode("UTF-8")
+        fq_co = get_attribute_from_entry(entry, "o")
         org, co = fq_co.split(".")
         event_handler.start_of_co_processing(co)
         logger.debug(f"Processing CO: {co}")
