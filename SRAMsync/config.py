@@ -118,7 +118,7 @@ class Config:
         self.secrets = {}
         if "secrets" in config:
             with open(config["secrets"]["file"]) as fd:
-                self.secrets = json.load(fd)
+                self.secrets = yaml.safe_load(fd)
 
         self.event_handler = self.get_event_handler(**args)
 
