@@ -131,7 +131,7 @@ class Config:
     def get_event_handler(self, **args: dict) -> EventHandler:
         """
         Dynamically load the configured class from the configuration. If the class
-        expects a configuration extraxt that from the configuration and pass it
+        expects a configuration extract that from the configuration and pass it
         along at instansiation time. Put the status_filename and the optional
         provisional_status_filename in the class configuration.
         """
