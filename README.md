@@ -10,13 +10,13 @@ SRAMsync is an LDAP synchronization script written in Python. Originally it was
 developed for synchronization between [SRAM](https://sbs.sram.surf.nl) and an
 LDAP at SURF, such that different SURF Research services would be able to
 obtain user attributes and grant users access to the services. The first
-versions were tailored towards the specifics needed by SURF, version 2 takes
+versions were tailored towards the specific needs of SURF, version 2 takes
 things a little further and generalizes a few pieces a bit more such that its
 applicability is extended.
 
 ## Installation
 
-The SRAMsync package can be installed by pip. Use the following the install
+The SRAMsync package can be installed by pip. Use the following to install
 the latest from the *main* branch on GitHub:
 
 ```bash
@@ -37,16 +37,16 @@ The exact versions, i.e. the  *@v3.0.0* in the above url, can be found the
 The SRAMsync package contains an executable called: `sync-with-sram`. It takes
 a single argument and options. This argument is a YAML configuration file that
 tells where to find the LDAP to sync from, baseDN, bindDN and password. The
-configuration file also tell what groups need to be synced and what they will
+configuration file also tells what groups need to be synced and what they will
 be called in the destination LDAP.
 
 ## Structure of sync-with-sram
 
-The `sync-with-sram` consists out of a main loop that iterates over the SRAM
+The `sync-with-sram` consists of a main loop that iterates over the SRAM
 LDAP as defined per configuration. The main loop does not do anything more than
 this iteration. For example, it does not write entries into a destination LDAP.
 In fact, the main loop in unaware what it should do with all encountered
-entries. All it does is emitting events when some action could be required.
+entries. All it does is emitting events when some action should be required.
 Events are triggered when for example the main loop detects that a new user is
 added to SRAM. Now it is up to whoever is responsible for dealing with such an
 event and what it really means. In case of a new user this should ultimately
@@ -86,7 +86,7 @@ you should derive such class from the `EventHandler` abstract base class.
 Event are emitted from the main loop of `sync-with-sram`. Some event are always
 emitted at the appropriate moment like: `start-co-processing` and `finalize`.
 The emitting of other events depends on the current state of SRAM LDAP and the
-destination. If there are no differences not events will be emitted.
+destination. If there are no differences no events will be emitted.
 
 #### start-co-processing
 
@@ -146,7 +146,7 @@ but rather as removal of an old key and adding a new key instead.
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
 When a new group appears in the SRAM LDAP for for the current CO, this event
-will be emitted. The attributes from the configuration file are send along for
+will be emitted. The attributes from the configuration file are sent along for
 possible further processing.
 
 #### remove-group
@@ -158,14 +158,14 @@ possible further processing.
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
 When a group is removed in the SRAM LDAP for for the current CO, this event
-will be emitted. The attributes from the configuration file are send along for
+will be emitted. The attributes from the configuration file are sent along for
 possible further processing.
 
 #### add-user-to-group
 
 | Input     | Description |
 |:----------|:------------|
-| co         | CO name for which the event was emitted.                            |
+| co        | CO name for which the event was emitted.                             |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
@@ -179,7 +179,7 @@ already provisioned at the destination, but not yet added to the `group`.
 
 | Input     | Description |
 |:----------|:------------|
-| co         | CO name for which the event was emitted.                            |
+| co        | CO name for which the event was emitted.                             |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | user      | User name of the user at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
@@ -200,8 +200,8 @@ less that the user has been removed from the group.
 
 When a `user` has been removed from a `group`, for which the `grace_period`
 attribute was set, and the grace period of the user has passed, this event will
-be emitted. This also means that `sync-with-sram` will remove this user from
-the group defiantly.
+be emitted. This also means that `sync-with-sram` will permanently remove this user from
+the group.
 
 #### finalize
 
@@ -233,27 +233,25 @@ As can be noticed from the above, two major blocks can be identified.
 1. `sram:` Connection details for SRAM
 2. `sync:` What and how to synchronize
 
-The `service` key is for specifying the name of the local service. Both
+The `service` key is for specifying the name of the local (SRAM) service. Both
 `status_filename` and `provisional_status_filename` are file names where
 `sync-with-sram` keeps track of the current state. The `status_filename` is
 read at the beginning so that `sync-with-sram` can determine the state of the
 last sync. `provisional_status_filename` is optional. If you do use it,
 `sync-with-sram` will write its status info to that file instead and not
 `status_filename`. It is expected that the instantiated EventHandler object
-copies the `provisional_status_filename` to `status_filename`. If the
-instantiated object fails to do so, `sync-with-sram` will always see new event
-as the `status_filename` is never updated to the latest sync state.
+or its output, copies the `provisional_status_filename` to `status_filename`.
+If the responsible class fails to do so, `sync-with-sram` will always see new
+events as the `status_filename` is never updated to the latest sync state.
 
 The `secrets` part is optional. However, if omitted, one does need to put any
 passwords in the configurations file itself, or use the appropriate environment
-variable. This, however, is only possible for the SRAM LDAP password. If you
-also need a password for for example an SMTP connection, this password must be
-put into the configuration file in plain text.
+variables.
 
 ### SRAM connection details
 
 The script needs to know how it should connect to the SRAM LDAP. As a service
-you are allowed to read, not write, to a subtree in LDAP that has been created
+you are allowed to read, not write, a subtree in LDAP that has been created
 for your service. You should have been given a base DN and accompanying bind DN
 and passwd. The full specification of the `sram:` key is as follows:
 
@@ -311,7 +309,7 @@ passwords are bundled under `smtp`. Below is an example of a password file.
 }
 ```
 
-If you do use the `EmailNotifications` class for sending notification by e-mail,
+If you don't use the `EmailNotifications` class for sending notification by e-mail,
 you don't have to have the `smtp` block in your password file.
 
 ##### SRAM LDAP passwords
@@ -338,8 +336,8 @@ shown.
 
 ### Synchronization details
 
-The `sync:` holds all information regarding what to sync and in which way
-to do it. Within this key there are three blocks: `groups:`, `event_handler:`
+The `sync:` holds all information regarding what to sync and in which way.
+Within this key there are three blocks: `groups:`, `event_handler:`
 and `grace:`. Thus on a high level, the `sync:` block look like this:
 
 ```yaml
@@ -365,13 +363,13 @@ must use the `destination:` key.
 
 The `EventHandler` might need some additional information. These are called
 attributes in the configuration and are a list (array) of strings to be passed
-along to the `EventHandler` instantiation. The values of these strings are
-meant to be interpreted by the instantiated class and are meaningless to the
+along to the `EventHandler` object. The values of these strings are
+meant to be interpreted by the EventHandler class and are meaningless to the
 main loop.
 
 Lets assume the short name of the CO group to be synchronized is:
 'experiment_A' and that we would like to call it 'sram_experiment_a' at the
-destination. The specification for a group is as follows:
+destination. The specification for a group could be as follows:
 
 ```yaml
 sync:
@@ -403,7 +401,7 @@ a grace period must be applied. See also [grace](#grace) section below.
 The `event_handler:` key understands two keys: `name:` and `config:`. The
 `name:` key specifies the class name of which an instance must be created at
 run time, while the `config:` key specifies a YAML configuration that needs to
-be passed on to the instantiation class. The main loop is unconcerned with this
+be passed on to the instantiated class. The main loop is unconcerned with this
 configuration and ignores its structure. The instantiated class however could
 check for its validity. The specification for `event_handler` is as follows:
 
@@ -458,10 +456,10 @@ sram:
 sync:
   groups:
     expermiment_A:
-       attributes: ["attibute_1", "attibute_2", "attibute_3"]
+       attributes: ["grace_period", "attibute_1", "attibute_2"]
        destination: sram_experiment_a
     expermiment_B:
-       attributes: ["attibute_4"]
+       attributes: ["attibute_3"]
        destination: sram_experiment_b
   event_handler:
     name: DummyEventHandler
@@ -473,7 +471,7 @@ provisional_status_filename: provisional-status.json
 ```
 
 In the above we see that two groups are synchronized: expermiment_A and
-expermiment_B. A DummyEventHandler class is used to deal the emitted events
+expermiment_B. A DummyEventHandler class is used to deal with the emitted events
 from the main loop. In case of the DummyEventHandler nothing is done except
 printing debug messages to stdout. It does not take any additional
 configuration and therefor the `config:` key is omitted.
@@ -550,7 +548,7 @@ it is not and removing of the status file can be done safely.
 
 SRAMsync supports different log levels: CRITICAL, ERROR, WARNING, INFO and
 DEBUG. The default level is set to ERROR and can be changed by the `--loglevel
-\<level>` option or its short hand equivalent `-l`. One could also switch on
+<level>` option or its short hand equivalent `-l`. One could also switch on
 debug logging quickly, by selecting either `--debug` or `-d`. The `--verbose`
 option increase the log level once each time selected and can be used multiple
 times.
@@ -565,7 +563,7 @@ For creating your own custom EventHandler implementation see [below](#creating-a
 
 ### DummyEventandler
 
-This the most basic implementation of an EventHandler class. All is does is
+This the most basic implementation of an EventHandler class. All it does is
 print an informative message, which shows up when the loglevel is set to DEBUG.
 
 A configuration could be passed at creation time and it will be printed out
@@ -574,11 +572,11 @@ for the DEBUG level.
 ### CuaScriptGenerator
 
 The purpose of the `CuaScriptGenerator` is for the SURF LDAP, called CUA. In
-order to interact with the CUA, a set of command line tools have been developed
+order to interact with the CUA, a set of commandline tools have been developed
 over the years. These are known as `sara_usertools`. Two commands are provided:
 `sara_adduser` and `sara_modifyuser`. These commands do the heavy lifting one
 normally needs to do with `ldapsearch`, `ldapadd` and `ldapmodify` commands. By
-providing these tools the CUA is shielded by incorrect usages of the low level
+providing these tools the CUA is shielded from incorrect usages of the low level
 LDAP commands.
 
 The `CuaScriptGenerator` generates a bash script composed of `sara_usertools`
@@ -590,16 +588,17 @@ of the CUA might be in some state between the original state at the beginning
 of the synchronization and the desired end goal. In order to guard against
 this situation, the status file is not created immediately. Instead a
 provisional status file is generated. It is up to the generated bash script
-to update the status file with the provisional one once all bash script
+to update the status file with the provisional one once the bash script
 reaches the end of its execution.
 
 If the status file is not replaced by the provisional one, SRAMsync will
 generate the same bash script again. Thus a replay of already executed commands
-cannot be avoided. It is thus replied upon that the `sara_usertools` is robust
+cannot be avoided. It is thus relied upon that the `sara_usertools` is robust
 against these kinds of replays.
 
-The `CuaScriptGenerator` makes use of any additional `EventHandler` class. This
-could be for example the `EmailNotifications` class for mailing events.
+The `CuaScriptGenerator` makes use of any additional `EventHandler` class in
+`auxiliary_event_handler`. This could be for example the `EmailNotifications`
+class for mailing events.
 
 #### Configuration
 
@@ -641,16 +640,16 @@ sync:
 
 ### CbaScriptGenerator
 
-The CbaScriptGenerator is tightly coupled to the CuaScriptGenerator class.
+The CbaScriptGenerator is derived from the CuaScriptGenerator class.
 Therefore the CbaScriptGenerator cannot be used independently from the
 CuaScriptGenerator. This means that if you use this class, you will need to
 provide a configuration for the CuaScriptGenerator class as well.
 
 The purpose of the CbaScriptGenerator class is to enhance the generated bash
 script of the CuaScriptGenerator class. When a user gets added and CBS
-accounting is need, this class inject the appropriate command for this. The
-same holds true for removing a user. The resulting bash script needs to
-executing in order for the generated command to take affect.
+accounting is needed, this class injects the appropriate command for this. The
+same holds true for removing a user. The resulting bash script needs to be
+executed in order for the generated command to take affect.
 
 #### Configuration
 
@@ -674,7 +673,7 @@ fields must be present: `cba_add_cmd`, `cba_del_cmd`, `cba_machine` and
 `cba_budget_account`. The fifth, `cua_config` is also required and marks the
 start of the CUA configuration. Please refer to
 [CuaScriptGenerator](#CuaScriptGenerator) for additional information on the
-CuaScriptGenerator class and how it is configured. Note that the what follows
+CuaScriptGenerator class and how it is configured. Note that what follows
 the `config` CuaScriptGenerator class should follow the `cua_config` for the
 CbaScriptGenerator configuration.
 
@@ -788,7 +787,7 @@ event_handler:
 ```
 
 The `aggregate_mails` is optional and when left out defaults to `true`, in
-which case a single mail will be send for the enitre synchrnonization run. In
+which case a single mail will be sent for the enitre synchronization run. In
 this e-mail all events are grouped per CO. If `aggregate_mails` is set to
 `false`, a mail for each CO is generated. If there are no important events to
 be reported, i.e. events other that `start-co-processing` and `finalize` the
