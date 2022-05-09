@@ -13,7 +13,7 @@ setup(
     url="https://github.com/venekamp/CUA-sync",
     install_requires=["Click", "pyldap", "jsonschema", "pyyaml", "click_logging"],
     entry_points={"console_scripts": ["sync-with-sram = SRAMsync.sync_with_sram:cli"]},
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     packages=find_packages(),
     include_package_data=True,
     classifiers=[
