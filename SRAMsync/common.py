@@ -9,6 +9,11 @@ def get_attribute_from_entry(entry: dict, attribute: str) -> str:
     return entry[attribute][0].decode("UTF-8")
 
 
+def get_attribute_list_from_entry(entry: dict, attribute: str) -> list:
+    """Get the attribute list from entry and convert the values to UTF-8."""
+    return [v.decode("UTF-8") for v in entry[attribute]]
+
+
 def render_templated_string(template_string: str, **kw: str) -> str:
     """
     Render a string based on a set of keywords. **kw contains defined keywords
