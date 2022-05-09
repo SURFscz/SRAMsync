@@ -8,9 +8,10 @@ the CUA.
 """
 
 import importlib
-from datetime import datetime
+import logging
 import os
 import stat
+from datetime import datetime
 
 from jsonschema import ValidationError, validate
 
@@ -19,7 +20,6 @@ from .dummy_event_handler import DummyEventHandler
 from .event_handler import EventHandler
 from .sramlogger import logger
 from .sync_with_sram import ConfigValidationError
-import logging
 
 
 class CuaScriptGenerator(EventHandler):
@@ -57,10 +57,6 @@ class CuaScriptGenerator(EventHandler):
 
     def __init__(self, service, cfg, cfg_path, **args) -> None:
         super().__init__(service, cfg, cfg_path, args)
-
-        self.log_level = logging.ERROR
-        if "log_level" in args:
-            self.log_level = args["log_level"]
 
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg)
@@ -129,7 +125,7 @@ class CuaScriptGenerator(EventHandler):
         self.print("#")
         self.print("#" * 80)
         self.print("")
-        if self.log_level <= logging.DEBUG:
+        if logging.getLogger("SRAMsync").getEffectiveLevel() <= logging.DEBUG:
             self.print("set -o xtrace")
             self.print("")
         self.print("trap quit INT")
@@ -226,14 +222,15 @@ class CuaScriptGenerator(EventHandler):
 
         self.print(f"## Adding group: {group}")
         self.print(f"{self.check_cmd} {group} ||")
-        self.print(f'  {{\n    echo "{line}" | {self.add_cmd} -f-\n  }}\n')
+        self.print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a new CUA project group. Call the auxiliary event class.
         """
-        self.print("#!!! Remove group")
+        self.print(f"# Removing group {group}")
+        self.print(f"{self.add_cmd} --remove {group}")
 
         self.notify.remove_group(co, group, group_attributes)
 
