@@ -589,8 +589,6 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
                 value = None
             eventhandler_args[key] = value
 
-    print(eventhandler_args)
-
     if debug:
         logging.getLogger("SRAMsync").setLevel(logging.DEBUG)
 
