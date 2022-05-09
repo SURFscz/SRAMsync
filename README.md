@@ -35,10 +35,11 @@ The exact versions, i.e. the  *@v3.0.0* in the above url, can be found the
 ## Invocation
 
 The SRAMsync package contains an executable called: `sync-with-sram`. It takes
-a single argument and options. This argument is a YAML configuration file that
-tells where to find the LDAP to sync from, baseDN, bindDN and password. The
-configuration file also tells what groups need to be synced and what they will
-be called in the destination LDAP.
+a single argument and options. This argument is either a YAML configuration
+file that tells where to find the LDAP to sync from, baseDN, bindDN and
+password, or it is a path to a directory containing at least one configuration
+file. The configuration file also tells what groups need to be synced and what
+they will be called in the destination LDAP.
 
 ## Structure of sync-with-sram
 
@@ -400,18 +401,25 @@ The number of groups is unlimited.
 
 ##### Exceptions to the rule
 
-The previous sub section stated that the attributes are meaningless to the
-main loop. There are, however, two exceptions: `login_users` and
-`grace_period`. All users within a CO are also available in the `@all`
-entry. A service might wish for a more fine grained control on what users
-are allowed access. For this purpose a group can be marked `login_users`
-through the attributes. This tells `sync-with-sram` that it should not use
-the `@all` group, but rather the group with this attribute. This means that
-`sync-with-sram` will only use this group for adding users. In case there
-is not group with such an attribute, the main loop will you the `@all` instead.
+The previous sub section stated that the attributes are meaningless to the main
+loop. There are, however, three exceptions: `login_users`, `grace_period` and
+`ignore`. All users within a CO are also available in the `@all` entry. A
+service might wish for a more fine grained control on what users are allowed
+access. For this purpose a group can be marked `login_users` through the
+attributes. This tells `sync-with-sram` that it should not use the `@all`
+group, but rather the group with this attribute. This means that
+`sync-with-sram` will only use this group for adding users. In case there is
+not group with such an attribute, the main loop will use the `@all` instead.
+Only one group is allowed to have the `login_users` attribute. When a second
+group carries this attribute, `sync-with-sram` will issue an error.
 
-The `grace_period` attribute tells `sync-with-sram` for this particular group
-a grace period must be applied. See also [grace](#grace) section below.
+The `grace_period` attribute tells `sync-with-sram` that for this particular
+group a grace period must be applied. See also [grace](#grace) section below.
+
+In case you want to ignore a defined group in the configuration file, you could
+use the `ignore` attribute. When `sync-with-sram` encounters this attribute, it
+will completely ignores its existence and continues as though the group was never
+defined.
 
 #### event_handler
 
@@ -558,8 +566,11 @@ The following tags are available:
 
 When the status file is removed, it effectively means that all SRAM LDAP entries
 appear as new and thus each entry will be up for synchronization. Weather this is
-a problem or not depends on the EventHandler. In case of the `CuaScriptGenerator`
-it is not and removing of the status file can be done safely.
+a problem or not depends on the EventHandler and how it deals with wiping graced
+users. Remember that the status file keeps track of graced users and by deleting
+the status file this information is lost. This means that for graced users
+`sync-with-sram` will never be able to detect when a grace user must be removed.
+Effectively graced users will continue to exits until removed manually.
 
 ## Logging
 
