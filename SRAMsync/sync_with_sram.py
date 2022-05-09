@@ -28,7 +28,7 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from .common import render_templated_string, get_attribute_from_entry
+from .common import get_attribute_list_from_entry, render_templated_string, get_attribute_from_entry
 from .config import Config
 from .sramlogger import logger
 
@@ -534,6 +534,12 @@ def show_configuration_error(
 
 
 @click.command(context_settings=click_ctx_settings)
+@click.option(
+    "-e",
+    "--eventhandler-args",
+    "raw_eventhandler_args",
+    help="Add additional arguments for EventHandler classes.",
+)
 @click.option("-d", "--debug", is_flag=True, default=False, help="Set log level to DEBUG")
 @click.option(
     "-v",
@@ -544,7 +550,7 @@ def show_configuration_error(
 @click.version_option()
 @click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
-def cli(configuration, debug, verbose):
+def cli(configuration, debug, verbose, raw_eventhandler_args):
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
 
@@ -566,12 +572,24 @@ def cli(configuration, debug, verbose):
     SRAM. Thus the status is used to prevent adding things to the destination
     LDAP when that already has happened.
 
-    CONFIGURATION: Path to a configuration file. OUTPUT: Path of the resulting
-    script.
+    CONFIGURATION: Path to a configuration file, or directory containing
+    configuration files.
     """
 
     clean_exit = False
     configuration_path = ""
+
+    eventhandler_args = {}
+    if raw_eventhandler_args:
+        for argument in raw_eventhandler_args.split(","):
+            if "=" in argument:
+                key, value = argument.split("=", 1)
+            else:
+                key = argument
+                value = None
+            eventhandler_args[key] = value
+
+    print(eventhandler_args)
 
     if debug:
         logging.getLogger("SRAMsync").setLevel(logging.DEBUG)
@@ -592,7 +610,11 @@ def cli(configuration, debug, verbose):
             logger.info(f"Handling configuration: {configuration_path}")
 
             new_status = {"users": {}, "groups": {}}
-            cfg = Config(configuration_path, log_level=logging.getLogger("SRAMsync").getEffectiveLevel())
+            cfg = Config(
+                configuration_path,
+                log_level=logging.getLogger("SRAMsync").getEffectiveLevel(),
+                **dict(eventhandler_args),
+            )
 
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)
