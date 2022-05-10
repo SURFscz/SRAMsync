@@ -11,15 +11,16 @@ import importlib
 import logging
 import os
 import stat
+import subprocess
 from datetime import datetime
 
 from jsonschema import ValidationError, validate
 
-from .common import pascal_case_to_snake_case, render_templated_string
-from .dummy_event_handler import DummyEventHandler
-from .event_handler import EventHandler
-from .sramlogger import logger
-from .sync_with_sram import ConfigValidationError
+from SRAMsync.common import pascal_case_to_snake_case, render_templated_string
+from SRAMsync.dummy_event_handler import DummyEventHandler
+from SRAMsync.event_handler import EventHandler
+from SRAMsync.sramlogger import logger
+from SRAMsync.sync_with_sram import ConfigValidationError
 
 
 class CuaScriptGenerator(EventHandler):
@@ -211,7 +212,7 @@ class CuaScriptGenerator(EventHandler):
         sara_usertool do not support this and hence a warning message is
         displayed instead.
         """
-        logger.warning(f"Ignoring adding system group {group}. It should be done by the CUA team.")
+        logger.warning("Ignoring adding system group %s. It should be done by the CUA team.", group)
 
     def add_new_project_group(self, group: str) -> None:
         """

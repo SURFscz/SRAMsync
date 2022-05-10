@@ -6,8 +6,8 @@ doing so, the functionallity of CuaScriptGenerator can be resused here.
 
 from jsonschema import ValidationError, validate
 
-from .cua_script_generator import CuaScriptGenerator
-from .sync_with_sram import ConfigValidationError
+from SRAMsync.cua_script_generator import CuaScriptGenerator
+from SRAMsync.sync_with_sram import ConfigValidationError
 
 
 class CbaScriptGenerator(CuaScriptGenerator):

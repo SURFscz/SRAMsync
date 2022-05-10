@@ -3,15 +3,15 @@
   the main configuration. EventHandler classes may extent the
   configuration.
 """
-import json
+
 from typing import Any
 
 import yaml
 from jsonschema import validate
 from ldap import ldapobject
 
-from .common import deduct_event_handler_class
-from .event_handler import EventHandler
+from SRAMsync.common import deduct_event_handler_class
+from SRAMsync.event_handler import EventHandler
 
 
 class ConfigurationError(Exception):
