@@ -11,10 +11,10 @@ from email.utils import formatdate
 
 from jsonschema import ValidationError, validate
 
-from .common import render_templated_string
-from .event_handler import EventHandler
-from .sramlogger import logger
-from .sync_with_sram import ConfigValidationError, PasswordNotFound
+from SRAMsync.common import render_templated_string
+from SRAMsync.event_handler import EventHandler
+from SRAMsync.sramlogger import logger
+from SRAMsync.sync_with_sram import ConfigValidationError, PasswordNotFound
 
 
 class SMTPclient:
@@ -34,7 +34,6 @@ class SMTPclient:
         mail_from: str,
         mail_subject: str,
         mail_message: str,
-        **args,
     ) -> None:
         self.server = self.conntect_to_smtp_server(cfg)
         self.mail_to = mail_to

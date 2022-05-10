@@ -28,9 +28,9 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from .common import get_attribute_list_from_entry, render_templated_string, get_attribute_from_entry
-from .config import Config
-from .sramlogger import logger
+from SRAMsync.common import render_templated_string, get_attribute_from_entry
+from SRAMsync.config import Config
+from SRAMsync.sramlogger import logger
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
