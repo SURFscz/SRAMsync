@@ -52,7 +52,7 @@ class CuaScriptGenerator(EventHandler):
         "optional": ["auxiliary_event_handler"],
     }
 
-    script_file_descriptor = None
+    # script_file_descriptor = None
 
     cua_group_types = {"system_group", "project_group"}
 
@@ -61,6 +61,8 @@ class CuaScriptGenerator(EventHandler):
 
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg)
+
+            self.run = bool("run" in args)
 
             if "auxiliary_event_handler" in cfg:
                 cfg_path.append("auxiliary_event_handler")
@@ -77,9 +79,9 @@ class CuaScriptGenerator(EventHandler):
                 self.notify = DummyEventHandler(service, cfg, cfg_path)
 
             self.cfg = cfg
-            script_name = render_templated_string(cfg["filename"], service=service)
-            self.script_file_descriptor = open(script_name, "w+")
-            os.chmod(script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
+            self.script_name = render_templated_string(cfg["filename"], service=service)
+            self.script_file_descriptor = open(self.script_name, "w+")  # pylint: disable=consider-using-with
+            os.chmod(self.script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
             self.service_name = service
             self.add_cmd = cfg["add_cmd"]
             self.modify_cmd = cfg["modify_cmd"]
@@ -110,6 +112,7 @@ class CuaScriptGenerator(EventHandler):
     def generate_header(self) -> None:
         """Generate an explanatory header in the generated script."""
 
+        self.print("#!/usr/bin/env bash\n")
         self.print("#" * 80)
         self.print("#")
         self.print("#  Automatically generated script by cua-sync")
@@ -137,7 +140,7 @@ class CuaScriptGenerator(EventHandler):
         self.print("}")
         self.print("")
 
-    def print(self, string):
+    def print(self, string: str):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
@@ -333,5 +336,23 @@ class CuaScriptGenerator(EventHandler):
         self.print("#  Script generation ended successfully.  #")
         self.print("#" + " " * 41 + "#")
         self.print("#" * 43)
+
+        if self.run:
+            logger.info("Executing generated script")
+            self.script_file_descriptor.flush()
+            try:
+                result = subprocess.run(
+                    ["../tmp/test-delena.sh"], check=True, capture_output=True, shell=True
+                )
+                logger.debug("script retuned: %d", result.returncode)
+                logger.debug("script output: %s", result.stdout)
+            except subprocess.TimeoutExpired as e:
+                logger.error("Script execution has been aborted. It took too long for the script to finish.")
+            except subprocess.CalledProcessError as e:
+                logger.error(
+                    "Something went wrong during the execution of the generated script. The follwing error was reported:"
+                )
+                logger.error("Command '%s' returned non-zero exit status %d.", e.cmd[0], e.returncode)
+            logger.info("Finished script execution")
 
         self.notify.finalize()
