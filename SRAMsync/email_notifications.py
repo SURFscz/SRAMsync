@@ -113,7 +113,7 @@ class SMTPclient:
 
 class EmailNotifications(EventHandler):
     """
-    For each emited event by sync-with-sram produce a message discribing the
+    For each emitted event by sync-with-sram produce a message describing the
     event. Messages are collect and sent upon deletion of the
     EmailNotifications object.
     """
