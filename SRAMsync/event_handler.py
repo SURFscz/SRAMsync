@@ -1,13 +1,13 @@
 """
 The event_handler class must be used as a base class for implementing
-what needs to be done when the sync-with-sram main loopt emits events.
+what needs to be done when the sync-with-sram main loop emits events.
 """
 
 from abc import ABC, abstractmethod
 
 
 class EventHandler(ABC):
-    """Abstract implementatation of the EventHandler class."""
+    """Abstract implementation of the EventHandler class."""
 
     @abstractmethod
     def __init__(self, service, cfg, cfg_path, args):

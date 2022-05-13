@@ -25,7 +25,7 @@ from SRAMsync.sync_with_sram import ConfigValidationError
 
 class CuaScriptGenerator(EventHandler):
     """
-    This class genertates a bash script containing all necessary sara_usertool
+    This class generates a bash script containing all necessary sara_usertool
     commands in order to get the state of the CUA synchronized with the SRAM
     LDAP.
     """
@@ -63,20 +63,6 @@ class CuaScriptGenerator(EventHandler):
             validate(schema=CuaScriptGenerator._schema, instance=cfg)
 
             self.run = bool("run" in args)
-
-            if "auxiliary_event_handler" in cfg:
-                cfg_path.append("auxiliary_event_handler")
-
-                auxiliary_config = {}
-                if "secrets" in cfg:
-                    auxiliary_config["secrets"] = cfg["secrets"]
-                auxiliary_config.update(cfg["auxiliary_event_handler"]["config"])
-
-                self.notify = self.get_auxiliary_notificaion_instance(
-                    cfg["auxiliary_event_handler"]["name"], auxiliary_config, service, cfg_path, **args
-                )
-            else:
-                self.notify = DummyEventHandler(service, cfg, cfg_path)
 
             self.cfg = cfg
             self.script_name = render_templated_string(cfg["filename"], service=service)
@@ -122,7 +108,7 @@ class CuaScriptGenerator(EventHandler):
         self.print("#  at the time this script has been generated. The service this script was")
         self.print(f"#  generated for is: {self.service_name}")
         self.print("#")
-        self.print("#  This script looses its purpuse after running it and a new one must be")
+        self.print("#  This script looses its purpose after running it and a new one must be")
         self.print(f"#  generated to sync future changes in the COs for {self.service_name}.")
         self.print("#")
         self.print("#  The script might be empty, in which case there was nothing to be synced.")
@@ -135,7 +121,7 @@ class CuaScriptGenerator(EventHandler):
         self.print("trap quit INT")
         self.print("")
         self.print("function quit() {")
-        self.print("  echo 'quiting'")
+        self.print("  echo 'quitting'")
         self.print("  exit")
         self.print("}")
         self.print("")
@@ -151,7 +137,6 @@ class CuaScriptGenerator(EventHandler):
         """
 
         self.print(f"\n# service: {self.service_name}/{co}")
-        self.notify.start_of_co_processing(co)
 
     def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
         """
@@ -170,8 +155,6 @@ class CuaScriptGenerator(EventHandler):
             f"  }}\n"
         )
 
-        self.notify.add_new_user(co, group, givenname, sn, user, mail)
-
     def add_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
@@ -180,8 +163,6 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"### SSH Public key: {key[:30]}...{key[-40:]}")
         self.print(f'{self.sshkey_cmd} "{key}" {user}\n')
 
-        self.notify.add_public_ssh_key(co, user, key)
-
     def delete_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
@@ -189,8 +170,6 @@ class CuaScriptGenerator(EventHandler):
         """
         self.print(f"### Remove SSH Public key: {key}")
         self.print(f'{self.sshkey_cmd} --remove "{key}" {user}\n')
-
-        self.notify.delete_public_ssh_key(co, user, key)
 
     def add_new_group(self, co: str, group: str, group_attributes: list) -> None:
         """
@@ -204,8 +183,6 @@ class CuaScriptGenerator(EventHandler):
             self.add_new_project_group(group)
         else:
             logger.error("Could not determine group type (system_group or project_group) for {group}.")
-
-        self.notify.add_new_group(co, group, group_attributes)
 
     @staticmethod
     def add_new_system_group(group: str) -> None:
@@ -236,8 +213,6 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"# Removing group {group}")
         self.print(f"{self.add_cmd} --remove {group}")
 
-        self.notify.remove_group(co, group, group_attributes)
-
     def add_user_to_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
@@ -246,15 +221,12 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"# Add {user} to group {group}")
         self.update_user_in_group(group, group_attributes, user, add=True)
 
-        self.notify.add_user_to_group(co, group, group_attributes, user)
-
     def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
         """
         The grace period for user user has started. However, for the CUA this
         has no implications. Until the grace period has ended, nothing will change
         for the CUA.
         """
-        self.notify.start_grace_period_for_user(co, group, group_attributes, user, duration)
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
         """
@@ -264,8 +236,6 @@ class CuaScriptGenerator(EventHandler):
         self.print(f"# Remove {user} from group {group}")
         self.update_user_in_group(group, group_attributes, user, add=False)
 
-        self.notify.remove_user_from_group(co, group, group_attributes, user)
-
     def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
         """
         Write the appropriate sara_usertools command to the bash script for
@@ -273,8 +243,6 @@ class CuaScriptGenerator(EventHandler):
         """
         self.print(f"# Grace time has ended for user {user} from group {group}")
         self.remove_user_from_group(co, group, group_attributes, user)
-
-        self.notify.remove_graced_user_from_group(co, group, group_attributes, user)
 
     def update_user_in_group(self, group: str, group_attributes: list, user: str, add: bool) -> None:
         """
@@ -350,9 +318,8 @@ class CuaScriptGenerator(EventHandler):
                 logger.error("Script execution has been aborted. It took too long for the script to finish.")
             except subprocess.CalledProcessError as e:
                 logger.error(
-                    "Something went wrong during the execution of the generated script. The follwing error was reported:"
+                    "Something went wrong during the execution of the generated script. "
+                    "The following error was reported:"
                 )
                 logger.error("Command '%s' returned non-zero exit status %d.", e.cmd[0], e.returncode)
             logger.info("Finished script execution")
-
-        self.notify.finalize()
