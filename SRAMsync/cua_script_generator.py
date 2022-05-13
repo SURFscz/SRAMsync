@@ -49,7 +49,6 @@ class CuaScriptGenerator(EventHandler):
             },
         },
         "required": ["filename", "add_cmd", "modify_cmd", "check_cmd", "sshkey_cmd"],
-        "optional": ["auxiliary_event_handler"],
     }
 
     # script_file_descriptor = None
