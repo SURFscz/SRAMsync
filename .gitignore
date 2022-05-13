@@ -2,3 +2,6 @@ build/
 __pycache__/
 SRAMsync.egg-info/
 test/status/
+pylintrc
+pyproject.toml
+pyrightconfig.json
