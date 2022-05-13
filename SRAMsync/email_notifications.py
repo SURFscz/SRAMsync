@@ -185,10 +185,7 @@ class EmailNotifications(EventHandler):
             self.service = service
             self._messages = {}
             self.finalize_message = ""
-            if "aggregate_mails" in cfg:
-                self.aggregate_mails = cfg["aggregate_mails"]
-            else:
-                self.aggregate_mails = True
+            self.aggregate_mails = cfg.get("aggregate_mails", True)
 
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
