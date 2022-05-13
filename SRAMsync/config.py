@@ -4,14 +4,16 @@
   configuration.
 """
 
-from typing import Any
+from typing import Any, List
 
 import yaml
 from jsonschema import validate
 from ldap import ldapobject
+from SRAMsync import event_handler
 
 from SRAMsync.common import deduct_event_handler_class
 from SRAMsync.event_handler import EventHandler
+from SRAMsync.event_handler_proxy import EventHandlerProxy
 
 
 class ConfigurationError(Exception):
@@ -75,13 +77,16 @@ class Config:
                         },
                     },
                     "event_handler": {
-                        "type": "object",
-                        "properties": {
-                            "name": {"type": "string"},
-                            "config": {"type": "object"},
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "config": {"type": "object"},
+                            },
+                            "required": ["name"],
+                            "additionalProperties": False,
                         },
-                        "required": ["name"],
-                        "additionalProperties": False,
                     },
                     "grace": {
                         "type": "object",
@@ -120,7 +125,8 @@ class Config:
             with open(config["secrets"]["file"]) as fd:
                 self.secrets = yaml.safe_load(fd)
 
-        self.event_handler = self.get_event_handler(**args)
+        event_handlers = self.get_event_handlers(**args)
+        self.event_handler_proxy = EventHandlerProxy(event_handlers)
 
     def __getitem__(self, item: str) -> Any:
         return self.config[item]
@@ -128,7 +134,7 @@ class Config:
     def __contains__(self, item: str) -> bool:
         return item in self.config
 
-    def get_event_handler(self, **args: dict) -> EventHandler:
+    def get_event_handlers(self, **args: dict) -> List[EventHandler]:
         """
         Dynamically load the configured class from the configuration. If the class
         expects a configuration extract that from the configuration and pass it
@@ -138,25 +144,34 @@ class Config:
 
         event_handler_section = self.config["sync"]["event_handler"]
 
-        event_handler_class = deduct_event_handler_class(event_handler_section["name"])
+        # event_handler_class = deduct_event_handler_class(event_handler_section["name"])
 
-        handler_cfg = {}
-        if "config" in event_handler_section:
-            handler_cfg = event_handler_section["config"]
+        event_handler_instances = []
+        for event in event_handler_section:
+            print(event["name"])
+            event_handler_class = deduct_event_handler_class(event["name"])
 
-        handler_cfg.update({"status_filename": self.config["status_filename"]})
+            event_handler_cfg = {}
+            if "config" in event:
+                event_handler_cfg = event["config"]
 
-        if "provisional_status_filename" in self.config:
-            handler_cfg.update({"provisional_status_filename": self.config["provisional_status_filename"]})
+            event_handler_cfg.update({"status_filename": self.config["status_filename"]})
 
-        if hasattr(self, "secrets"):
-            handler_cfg["secrets"] = self.secrets
+            if "provisional_status_filename" in self.config:
+                event_handler_cfg.update(
+                    {"provisional_status_filename": self.config["provisional_status_filename"]}
+                )
 
-        event_handler_instance = event_handler_class(
-            self.config["service"], handler_cfg, ["sync", "event_handler", "config"], **args
-        )
+            if hasattr(self, "secrets"):
+                event_handler_cfg["secrets"] = self.secrets
 
-        return event_handler_instance
+            event_handler_instance = event_handler_class(
+                self.config["service"], event_handler_cfg, ["sync", "event_handler", "config"], **args
+            )
+
+            event_handler_instances.append(event_handler_instance)
+
+        return event_handler_instances
 
     def get_sram_basedn(self) -> str:
         """Get the base DN"""
@@ -175,4 +190,4 @@ class Config:
 
     def set_event_handler(self, event_handler: EventHandler) -> None:
         """Set the event handler."""
-        self.event_handler = event_handler
+        self.event_handlers = event_handler

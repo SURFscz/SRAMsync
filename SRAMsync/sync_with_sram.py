@@ -217,7 +217,7 @@ def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status
     """
 
     ldap_conn = cfg.get_ldap_connector()
-    event_handler = cfg.event_handler
+    event_handler = cfg.event_handler_proxy
     group = f"{cfg['service']}_login"
 
     login_users = get_login_users(cfg, fq_co, co)
@@ -287,7 +287,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
     after a successful run of the resulting script.
     """
 
-    event_handler = cfg.event_handler
+    event_handler = cfg.event_handler_proxy
     ldap_conn = cfg.get_ldap_connector()
     service = cfg["service"]  # service might be accessed indirectly
 
@@ -354,7 +354,7 @@ def add_missing_entries_to_ldap(cfg: Config, status: dict, new_status: dict) -> 
     new_status, while status is the previous known status of the destination
     LDAP."""
 
-    event_handler = cfg.event_handler
+    event_handler = cfg.event_handler_proxy
     ldap_conn = cfg.get_ldap_connector()
     basedn = cfg.get_sram_basedn()
     dns = ldap_conn.search_s(
@@ -381,7 +381,7 @@ def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
     if "groups" not in new_status:
         return new_status
 
-    event_handler = cfg.event_handler
+    event_handler = cfg.event_handler_proxy
 
     for group, group_attributes in status["groups"].items():
         if "graced_users" in group_attributes:
@@ -413,7 +413,7 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
     Determine based on the (old) status and new_status which users are to be removed.
     """
 
-    event_handler = cfg.event_handler
+    event_handler = cfg.event_handler_proxy
 
     for group, group_values in status["groups"].items():
         removed_users = [
@@ -455,7 +455,7 @@ def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
     first from the group.
     """
 
-    event_handler = cfg.event_handler
+    event_handler = cfg.event_handler_proxy
 
     removed_groups = [group for group in status["groups"] if group not in new_status["groups"]]
 
@@ -616,7 +616,7 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
             new_status = add_missing_entries_to_ldap(cfg, status, new_status)
             new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
 
-            cfg.event_handler.finalize()
+            cfg.event_handler_proxy.finalize()
 
             keep_new_status(cfg, new_status)
 
