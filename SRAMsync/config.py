@@ -116,7 +116,6 @@ class Config:
 
         validate(schema=self._schema, instance=config)
 
-        self.config_filename = config_file
         self.config = config
         self._ldap_connector = None
 
