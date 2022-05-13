@@ -9,7 +9,7 @@ class DummyEventHandler(EventHandler):
 
     def __init__(self, service, cfg, cfg_path, **args):
         super().__init__(service, cfg, cfg_path, args)
-        logger.info(">>>service: %s", service)
+        logger.info("service: %s", service)
         logger.info("config: %s", cfg)
         logger.info("config path: %s", cfg_path)
 

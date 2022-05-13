@@ -53,7 +53,7 @@ class EventHandlerProxy(EventHandler):
     def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
         """Call start_grace_period_for_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
-            event_handler.start_grace_period_for_user(co, group_attributes, user, duration)
+            event_handler.start_grace_period_for_user(co, group, group_attributes, user, duration)
 
     def remove_user_from_group(self, co, group, group_attributes: list, user):
         """Call remove_user_from_group event for all EventHandlers."""

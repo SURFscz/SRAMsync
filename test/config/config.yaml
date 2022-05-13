@@ -11,17 +11,9 @@ sync:
     rename_user: "middle_earth-{co}-{uid}"
   groups:
     shirecloud_login: { attributes: ["system_group", "grace_period", "login_users"], destination: "{service}_login" }
-    # delena_cpu: { attributes: ["system_group"], destination: "{service}_cpu" }
-    # user: { attributes: ["project_group"], destination: "sram-{service}-{org}-{co}-user" }
-    # data: { attributes: ["project_group"], destination: "sram-{service}-{org}-{co}-data" }
-    # sw: { attributes: ["project_group"], destination: "sram-{service}-{org}-{co}-sw" }
-    # dcache: { attributes: ["ignore"], destination: "dcache" }
-    # intelc: { attributes: ["ignore"], destination: "intelc" }
-    # memberless_group: { attributes: ["project_group"], destination: "sram-memberless-group" }
   event_handler:
-    name: DummyEventHandler
+    - name: DummyEventHandler
   grace:
     shirecloud_login:
-      # grace_period: 0.000347222222222
       grace_period: 0.0000578703703704
 status_filename: "test/status/{service}.json"

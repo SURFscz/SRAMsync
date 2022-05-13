@@ -1,5 +1,5 @@
 """
-Singleton logging with click
+Singleton logging with click.
 """
 
 import logging
