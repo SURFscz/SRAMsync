@@ -17,6 +17,7 @@ could be interacting with the destination system.
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import List
@@ -28,12 +29,15 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from SRAMsync.common import render_templated_string, get_attribute_from_entry
+from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.config import Config
 from SRAMsync.sramlogger import logger
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
+re_grace_period = re.compile(
+    "^grace_period=(?:(?:[0-9]+[d|m|H|M|s]?)$|(?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$"
+)
 
 #  Adjust some of the defaults of click_logging.
 click_logging_options = {
@@ -424,9 +428,7 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
         for user in removed_users:
             if "grace_period" in group_values["attributes"]:
                 if "grace" in cfg["sync"] and group in cfg["sync"]["grace"]:
-                    grace_until = datetime.now(timezone.utc) + timedelta(
-                        cfg["sync"]["grace"][group]["grace_period"]
-                    )
+                    grace_until = datetime.now(timezone.utc) + timedelta(new_status["grace"][group])
                     remaining_time = grace_until - datetime.now(timezone.utc)
                     logger.info(
                         f"User '{user}' has been removed but not deleted due to grace time. "
@@ -649,6 +651,8 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         logger.error(f"{e}. Please check your config file.")
     except MultipleLoginGroups:
         logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
+    except ValueError as e:
+        logger.error(e)
 
     if not clean_exit:
         sys.exit(1)

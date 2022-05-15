@@ -4,12 +4,13 @@
   configuration.
 """
 
+from datetime import timedelta
+import re
 from typing import Any, List
 
 import yaml
 from jsonschema import validate
 from ldap import ldapobject
-from SRAMsync import event_handler
 
 from SRAMsync.common import deduct_event_handler_class
 from SRAMsync.event_handler import EventHandler
@@ -22,6 +23,63 @@ class ConfigurationError(Exception):
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
+
+
+def _normalize_grace_periods(cfg: dict) -> None:
+    """
+    Check all defined attributes for all groups in the configuration file
+    for the occurrence of a grace_period attribute. If found, normalize it
+    by taking the right hand side of the '=' sign and create a new grace_period
+    item for that group in the configuration with the grace period in seconds.
+    """
+    re_grace_period = re.compile(
+        r"^grace_period=(?:(?:[0-9]+(?:\.[0-9]+)?[s|d|H|M|m]?)$|(?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$"
+    )
+
+    if "grace-periods" not in cfg:
+        cfg["grace-periods"] = {}
+
+    for group, values in cfg["sync"]["groups"].items():
+        for attribute in values["attributes"]:
+            if attribute == "grace_period":
+                raise ValueError("grace_period attribute found without a value. Check configuration.")
+
+            if re_grace_period.match(attribute):
+                _, raw_period = attribute.split("=")
+                grace_period = to_seconds(raw_period)
+
+                cfg["grace-periods"] = {group: grace_period}
+            elif attribute.startswith("grace_period="):
+                raise ValueError("grace_period has wrong value.")
+
+
+def to_seconds(raw_period: str) -> int:
+    """Convert the raw_period string into seconds."""
+    units = {"d": 86400, "m": 2592000, "H": 3600, "M": 60, "s": 1}
+    last = raw_period[-1]
+
+    try:
+        seconds = float(raw_period) * 86400
+    except ValueError:
+        if last in units.keys():
+            seconds = float(raw_period[:-1]) * units[last]
+        else:
+            coluns = raw_period.count(":")
+            if coluns == 3:
+                days, hours, minutes, seconds = raw_period.split(":")
+            elif coluns == 2:
+                days = 0
+                hours, minutes, seconds = raw_period.split(":")
+            else:
+                days = 0
+                seconds = 0
+                hours, minutes = raw_period.split(":")
+
+            seconds = timedelta(
+                days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds)
+            ).total_seconds()
+
+    return int(seconds + 0.5)
 
 
 class Config:
@@ -88,18 +146,6 @@ class Config:
                             "additionalProperties": False,
                         },
                     },
-                    "grace": {
-                        "type": "object",
-                        "patternProperties": {
-                            ".*": {
-                                "type": "object",
-                                "properties": {"grace_period": {"type": "number"}},
-                                "required": ["grace_period"],
-                            }
-                        },
-                        "minProperties": 1,
-                        "additionalProperties": False,
-                    },
                 },
                 "required": ["users", "groups", "event_handler"],
             },
@@ -115,6 +161,8 @@ class Config:
             config = yaml.safe_load(fd)
 
         validate(schema=self._schema, instance=config)
+
+        _normalize_grace_periods(config)
 
         self.config = config
         self._ldap_connector = None
@@ -147,7 +195,6 @@ class Config:
 
         event_handler_instances = []
         for event in event_handler_section:
-            print(event["name"])
             event_handler_class = deduct_event_handler_class(event["name"])
 
             event_handler_cfg = {}
