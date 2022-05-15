@@ -36,11 +36,10 @@ def _normalize_grace_periods(cfg: dict) -> None:
         r"^grace_period=(?:(?:[0-9]+(?:\.[0-9]+)?[s|d|H|M|m]?)$|(?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$"
     )
 
-    if "grace-periods" not in cfg:
-        cfg["grace-periods"] = {}
+    groups = cfg["sync"]["groups"]
 
-    for group, values in cfg["sync"]["groups"].items():
-        for attribute in values["attributes"]:
+    for group, values in groups.items():
+        for i, attribute in enumerate(values["attributes"]):
             if attribute == "grace_period":
                 raise ValueError("grace_period attribute found without a value. Check configuration.")
 
@@ -48,7 +47,7 @@ def _normalize_grace_periods(cfg: dict) -> None:
                 _, raw_period = attribute.split("=")
                 grace_period = to_seconds(raw_period)
 
-                cfg["grace-periods"] = {group: grace_period}
+                groups[group]["attributes"][i] = f"grace_period={grace_period}"
             elif attribute.startswith("grace_period="):
                 raise ValueError("grace_period has wrong value.")
 

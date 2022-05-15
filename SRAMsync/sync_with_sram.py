@@ -35,9 +35,6 @@ from SRAMsync.sramlogger import logger
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
-re_grace_period = re.compile(
-    "^grace_period=(?:(?:[0-9]+[d|m|H|M|s]?)$|(?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$"
-)
 
 #  Adjust some of the defaults of click_logging.
 click_logging_options = {
@@ -419,6 +416,8 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
 
     event_handler = cfg.event_handler_proxy
 
+    re_grace_period = re.compile(r"grace_period=[0-9]+")
+
     for group, group_values in status["groups"].items():
         removed_users = [
             user for user in group_values["members"] if user not in new_status["groups"][group]["members"]
@@ -426,24 +425,21 @@ def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict
         co = group_values["sram"]["CO"]
 
         for user in removed_users:
-            if "grace_period" in group_values["attributes"]:
-                if "grace" in cfg["sync"] and group in cfg["sync"]["grace"]:
-                    grace_until = datetime.now(timezone.utc) + timedelta(new_status["grace"][group])
-                    remaining_time = grace_until - datetime.now(timezone.utc)
-                    logger.info(
-                        f"User '{user}' has been removed but not deleted due to grace time. "
-                        f"Remaining time: {remaining_time}"
-                    )
-                    event_handler.start_grace_period_for_user(
-                        co, group, group_values["attributes"], user, remaining_time
-                    )
-                    new_status["groups"][group]["graced_users"] = {
-                        user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
-                    }
-                else:
-                    logger.warning(
-                        f'Grace has not been defined for group "{group}" in the configuration file.'
-                    )
+            tmp_list = list(filter(re_grace_period.match, group_values["attributes"]))
+            if len(tmp_list) == 1:
+                _, seconds = tmp_list[0].split("=")
+                grace_until = datetime.now(timezone.utc) + timedelta(seconds=float(seconds))
+                remaining_time = grace_until - datetime.now(timezone.utc)
+                logger.info(
+                    f"User '{user}' has been removed but not deleted due to grace time. "
+                    f"Remaining time: {remaining_time}"
+                )
+                event_handler.start_grace_period_for_user(
+                    co, group, group_values["attributes"], user, remaining_time
+                )
+                new_status["groups"][group]["graced_users"] = {
+                    user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
+                }
             else:
                 event_handler.remove_user_from_group(co, group, group_values["attributes"], user)
 
