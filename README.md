@@ -355,20 +355,19 @@ shown.
 ### Synchronization details
 
 The `sync:` holds all information regarding what to sync and in which way.
-Within this key there are three blocks: `groups:`, `event_handler:`
-and `grace:`. Thus on a high level, the `sync:` block look like this:
+Within this key there are two blocks: `groups:` and `event_handler:`. Thus
+on a high level, the `sync:` block look like this:
 
 ```yaml
 sync:
   groups:
     <group synchronization information>
   event_handler:
-    name: <SRAMsync event handler class name to instantiate>
-    config:
-      <configuration belonging to the instantiated EventHandler class>
-  grace:
-    <group names for which to apply a grace period>:
-      grace_period: <grace period in days>
+    - name: <SRAMsync event handler class name to instantiate>
+      config:
+        <configuration belonging to the instantiated EventHandler class>
+    - name: <another event handler name>
+      config: <config for this event handler>
 ```
 
 #### groups
@@ -414,7 +413,28 @@ Only one group is allowed to have the `login_users` attribute. When a second
 group carries this attribute, `sync-with-sram` will issue an error.
 
 The `grace_period` attribute tells `sync-with-sram` that for this particular
-group a grace period must be applied. See also [grace](#grace) section below.
+group a grace period must be applied. Normally `sync-with-sram` would emit a
+removal event when it detects that a user is no-longer present in a group.
+This would then trigger an immediate removal of that users. The grace key
+allows for a delay by specifying for which groups a grace period exists and
+the length of this period.
+
+The grace period is specified in the attribute itself. The format of the
+`grace_period` is: `grace_period=<period>`. The `<period>` is the time frame
+for which the grace period is in effect. Allowed time specification are:
+
+- <decimal>: days
+- <decimal>d: days
+- <decimal>m: months (30 days)
+- <decimal>H: hours
+- <decimal>M: minutes
+- <decimal>s: seconds
+- <days>:<hours>:<minutes>:<seconds>
+- <hours>:<minutes>:<seconds>
+- <hours>:<minutes>
+  
+Only 24h notation is suppored, not AM/PM. <hours>, <minutes> and <seconds> are
+always two digits. If no unit is used (d, m, H, M, or s), d (days) is assumed.
 
 In case you want to ignore a defined group in the configuration file, you could
 use the `ignore` attribute. When `sync-with-sram` encounters this attribute, it
@@ -423,46 +443,28 @@ defined.
 
 #### event_handler
 
-The `event_handler:` key understands two keys: `name:` and `config:`. The
+The `event_handler:` key takes an array of two keys: `name:` and `config:`. The
 `name:` key specifies the class name of which an instance must be created at
-run time, while the `config:` key specifies a YAML configuration that needs to
-be passed on to the instantiated class. The main loop is unconcerned with this
-configuration and ignores its structure. The instantiated class however could
-check for its validity. The specification for `event_handler` is as follows:
+run time, while the `config:` key, which is optional, specifies a YAML
+configuration that needs to be passed on to the instantiated class. The main
+oop is unconcerned with this configuration and ignores its structure. The
+instantiated class however could check for its validity. The specification for
+`event_handler` is as follows:
 
 ```yaml
 sync:
   event_handler:
-    name: <class name>
-    config:
-       ...
-       ...
+    - name: <class name>
+      config:
+        ...
+        ...
+    - name: <class name>
+      config:
+        ...
+        ...
 ```
 
 The `config:` in the above is optional.
-
-#### grace
-
-The grace key is used when the removal of users should not take place
-immediately, but should be effectuated after a grace period. Normally
-`sync-with-sram` would emit a removal event when it detects that a user is
-no-longer present in a group. This would then trigger an immediate removal of
-that users. The grace key allows for a delay by specifying for which groups a
-grace period exists and the length of this period.
-
-The grace key lists the short names for groups in SRAM for which you want to
-use a grace period and then you specify the period in the number of days. The
-specification for grace is as follows:
-
-```yaml
-sync:
-  grace:
-    expermiment_A:
-      grace_period: 90
-```
-
-The `grace:` key is not mandatory, but must be used when at least one group
-has the `grace_period` attribute.
 
 ## Putting it together
 
@@ -488,9 +490,6 @@ sync:
        destination: sram_experiment_b
   event_handler:
     name: DummyEventHandler
-  grace:
-    expermiment_A:
-      grace_period: 90
 status_filename: status.json
 provisional_status_filename: provisional-status.json
 ```
