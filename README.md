@@ -398,7 +398,7 @@ sync:
 
 The number of groups is unlimited.
 
-##### Exceptions to the rule
+##### Predefined attributes
 
 The previous sub section stated that the attributes are meaningless to the main
 loop. There are, however, three exceptions: `login_users`, `grace_period` and
