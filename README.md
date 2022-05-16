@@ -398,7 +398,7 @@ sync:
 
 The number of groups is unlimited.
 
-##### Predefined attributes
+#### Predefined attributes
 
 The previous sub section stated that the attributes are meaningless to the main
 loop. There are, however, three exceptions: `login_users`, `grace_period` and
@@ -423,18 +423,22 @@ The grace period is specified in the attribute itself. The format of the
 `grace_period` is: `grace_period=<period>`. The `<period>` is the time frame
 for which the grace period is in effect. Allowed time specification are:
 
-- <decimal>: days
-- <decimal>d: days
-- <decimal>m: months (30 days)
-- <decimal>H: hours
-- <decimal>M: minutes
-- <decimal>s: seconds
-- <days>:<hours>:<minutes>:<seconds>
-- <hours>:<minutes>:<seconds>
-- <hours>:<minutes>
+| Period                                     | Comment          |
+|--------------------------------------------|------------------|
+| \<Rational number\>                        | days             |
+| \<Rational number\>d                       | days             |
+| \<Rational number\>m                       | months (30 days) |
+| \<Rational number\>H                       | hours            |
+| \<Rational number\>M                       | minutes          |
+| \<Rational number\>s                       | seconds          |
+| \<days\>:\<hours\>:\<minutes\>:\<seconds\> | days:HH:MM:SS    |
+| \<hours\>:\<minutes\>:\<seconds\>          | HH:MM:SS         |
+| \<hours\>:\<minutes\>                      | HH:MM            |
   
-Only 24h notation is suppored, not AM/PM. <hours>, <minutes> and <seconds> are
-always two digits. If no unit is used (d, m, H, M, or s), d (days) is assumed.
+The rational numbers (ℚ) are limited to positive numbers. One cannot specify
+-1H for example. When using the time format (HH:MM:SS), only the 24h notation
+is suppored, not AM/PM. Always use twi digits for: \<hours\>, \<minutes\> and
+\<seconds\>. If no unit is used (d, m, H, M, or s), d (days) is assumed.
 
 In case you want to ignore a defined group in the configuration file, you could
 use the `ignore` attribute. When `sync-with-sram` encounters this attribute, it
