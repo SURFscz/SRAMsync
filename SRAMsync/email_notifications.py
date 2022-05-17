@@ -244,7 +244,7 @@ class EmailNotifications(EventHandler):
                 message = message.strip()
                 smtp_client.send_message(message, self.service)
 
-    def render_message(self, messages):
+    def render_message(self, messages: dict) -> str:
         """Render a final message for collected event messages."""
         events = [k for k, v in messages.items() if v["important"] is True]
         if not events:
