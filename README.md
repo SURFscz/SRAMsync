@@ -434,7 +434,7 @@ for which the grace period is in effect. Allowed time specification are:
 | \<days\>:\<hours\>:\<minutes\>:\<seconds\> | days:HH:MM:SS    |
 | \<hours\>:\<minutes\>:\<seconds\>          | HH:MM:SS         |
 | \<hours\>:\<minutes\>                      | HH:MM            |
-  
+
 The rational numbers (ℚ) are limited to positive numbers. One cannot specify
 -1H for example. When using the time format (HH:MM:SS), only the 24h notation
 is suppored, not AM/PM. Always use twi digits for: \<hours\>, \<minutes\> and
@@ -499,9 +499,9 @@ provisional_status_filename: provisional-status.json
 ```
 
 In the above we see that two groups are synchronized: expermiment_A and
-expermiment_B. A DummyEventHandler class is used to deal with the emitted events
-from the main loop. In case of the DummyEventHandler nothing is done except
-printing debug messages to stdout. It does not take any additional
+expermiment_B. A DummyEventHandler class is used to deal with the emitted
+events from the main loop. In case of the DummyEventHandler nothing is done
+except printing info messages to stdout. It does not take any additional
 configuration and therefor the `config:` key is omitted.
 
 Note that in the above `sram` block,
