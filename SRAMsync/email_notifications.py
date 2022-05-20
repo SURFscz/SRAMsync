@@ -211,6 +211,8 @@ class EmailNotifications(EventHandler):
             self._messages[co][event]["important"] = important
             self._messages[co][event]["messages"] = set()
 
+        # The same message might be added multiple times, e.g. adding multiple SSH keys for a user.
+        # Using set() automatically filters out double messages.
         self._messages[co][event]["messages"].add(event_message)
 
     def send_queued_messages(self) -> None:
