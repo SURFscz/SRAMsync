@@ -72,7 +72,7 @@ class CuaScriptGenerator(EventHandler):
             self.modify_cmd = cfg["modify_cmd"]
             self.check_cmd = cfg["check_cmd"]
             self.sshkey_cmd = cfg["sshkey_cmd"]
-            self.generate_header()
+            self._generate_header()
         except ConfigValidationError as e:
             raise e
         except ValidationError as e:
@@ -94,38 +94,38 @@ class CuaScriptGenerator(EventHandler):
 
         return event_handler_class(service, cfg, cfg_path, **args)
 
-    def generate_header(self) -> None:
+    def _generate_header(self) -> None:
         """Generate an explanatory header in the generated script."""
 
-        self.print("#!/usr/bin/env bash\n")
-        self.print("#" * 80)
-        self.print("#")
-        self.print("#  Automatically generated script by cua-sync")
-        self.print(f"#  Date: {datetime.now()}")
-        self.print("#")
-        self.print("#  By executing this script, the CUA is synchronized with the state in SRAM")
-        self.print("#  at the time this script has been generated. The service this script was")
-        self.print(f"#  generated for is: {self.service_name}")
-        self.print("#")
-        self.print("#  This script looses its purpose after running it and a new one must be")
-        self.print(f"#  generated to sync future changes in the COs for {self.service_name}.")
-        self.print("#")
-        self.print("#  The script might be empty, in which case there was nothing to be synced.")
-        self.print("#")
-        self.print("#" * 80)
-        self.print("")
+        self._print("#!/usr/bin/env bash\n")
+        self._print("#" * 80)
+        self._print("#")
+        self._print("#  Automatically generated script by cua-sync")
+        self._print(f"#  Date: {datetime.now()}")
+        self._print("#")
+        self._print("#  By executing this script, the CUA is synchronized with the state in SRAM")
+        self._print("#  at the time this script has been generated. The service this script was")
+        self._print(f"#  generated for is: {self.service_name}")
+        self._print("#")
+        self._print("#  This script looses its purpose after running it and a new one must be")
+        self._print(f"#  generated to sync future changes in the COs for {self.service_name}.")
+        self._print("#")
+        self._print("#  The script might be empty, in which case there was nothing to be synced.")
+        self._print("#")
+        self._print("#" * 80)
+        self._print("")
         if logging.getLogger("SRAMsync").getEffectiveLevel() <= logging.DEBUG:
-            self.print("set -o xtrace")
-            self.print("")
-        self.print("trap quit INT")
-        self.print("")
-        self.print("function quit() {")
-        self.print("  echo 'quitting'")
-        self.print("  exit")
-        self.print("}")
-        self.print("")
+            self._print("set -o xtrace")
+            self._print("")
+        self._print("trap quit INT")
+        self._print("")
+        self._print("function quit() {")
+        self._print("  echo 'quitting'")
+        self._print("  exit")
+        self._print("}")
+        self._print("")
 
-    def print(self, string: str):
+    def _print(self, string: str):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
@@ -135,7 +135,7 @@ class CuaScriptGenerator(EventHandler):
         the auxiliary event class.
         """
 
-        self.print(f"\n# service: {self.service_name}/{co}")
+        self._print(f"\n# service: {self.service_name}/{co}")
 
     def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
         """
@@ -145,9 +145,9 @@ class CuaScriptGenerator(EventHandler):
 
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
-        self.print(f"## Adding user: {user}")
-        self.print(f"{self.check_cmd} {user} ||")
-        self.print(
+        self._print(f"## Adding user: {user}")
+        self._print(f"{self.check_cmd} {user} ||")
+        self._print(
             f"  {{\n"
             f'    echo "{line}" | {self.add_cmd} -f-\n'
             f"    {self.modify_cmd} --service sram:{self.service_name} {user}\n"
@@ -159,16 +159,16 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         adding a user's public SSH key. Call the auxiliary event class.
         """
-        self.print(f"### SSH Public key: {key[:30]}...{key[-40:]}")
-        self.print(f'{self.sshkey_cmd} "{key}" {user}\n')
+        self._print(f"### SSH Public key: {key[:30]}...{key[-40:]}")
+        self._print(f'{self.sshkey_cmd} "{key}" {user}\n')
 
     def delete_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         deleting a user's public SSH key. Call the auxiliary event class.
         """
-        self.print(f"### Remove SSH Public key: {key}")
-        self.print(f'{self.sshkey_cmd} --remove "{key}" {user}\n')
+        self._print(f"### Remove SSH Public key: {key}")
+        self._print(f'{self.sshkey_cmd} --remove "{key}" {user}\n')
 
     def add_new_group(self, co: str, group: str, group_attributes: list) -> None:
         """
@@ -177,14 +177,14 @@ class CuaScriptGenerator(EventHandler):
         specified per configuration file. Call the auxiliary event class.
         """
         if "system_group" in group_attributes:
-            self.add_new_system_group(group)
+            self._add_new_system_group(group)
         elif "project_group" in group_attributes:
-            self.add_new_project_group(group)
+            self._add_new_project_group(group)
         else:
             logger.error("Could not determine group type (system_group or project_group) for {group}.")
 
     @staticmethod
-    def add_new_system_group(group: str) -> None:
+    def _add_new_system_group(group: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA system group. However, the current version of the
@@ -193,32 +193,32 @@ class CuaScriptGenerator(EventHandler):
         """
         logger.warning("Ignoring adding system group %s. It should be done by the CUA team.", group)
 
-    def add_new_project_group(self, group: str) -> None:
+    def _add_new_project_group(self, group: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
         """
         line = f"sram_group:description:dummy:{group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
-        self.print(f"## Adding group: {group}")
-        self.print(f"{self.check_cmd} {group} ||")
-        self.print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
+        self._print(f"## Adding group: {group}")
+        self._print(f"{self.check_cmd} {group} ||")
+        self._print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a new CUA project group. Call the auxiliary event class.
         """
-        self.print(f"# Removing group {group}")
-        self.print(f"{self.add_cmd} --remove {group}")
+        self._print(f"# Removing group {group}")
+        self._print(f"{self.add_cmd} --remove {group}")
 
     def add_user_to_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a user to a group. Call the auxiliary event class.
         """
-        self.print(f"# Add {user} to group {group}")
-        self.update_user_in_group(group, group_attributes, user, add=True)
+        self._print(f"# Add {user} to group {group}")
+        self._update_user_in_group(group, group_attributes, user, add=True)
 
     def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
         """
@@ -232,18 +232,18 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a group. Call the auxiliary event class.
         """
-        self.print(f"# Remove {user} from group {group}")
-        self.update_user_in_group(group, group_attributes, user, add=False)
+        self._print(f"# Remove {user} from group {group}")
+        self._update_user_in_group(group, group_attributes, user, add=False)
 
     def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a graced group. Call the auxiliary event class.
         """
-        self.print(f"# Grace time has ended for user {user} from group {group}")
+        self._print(f"# Grace time has ended for user {user} from group {group}")
         self.remove_user_from_group(co, group, group_attributes, user)
 
-    def update_user_in_group(self, group: str, group_attributes: list, user: str, add: bool) -> None:
+    def _update_user_in_group(self, group: str, group_attributes: list, user: str, add: bool) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         updating users in a graced group. Call the auxiliary event class.
@@ -259,10 +259,10 @@ class CuaScriptGenerator(EventHandler):
 
         if number_of_attributes - length2 == 1:
             if "system_group" in attr:
-                self.print(f"{self.modify_cmd}{remove}--access {self.service_name} {group} {user}\n")
+                self._print(f"{self.modify_cmd}{remove}--access {self.service_name} {group} {user}\n")
 
             if "project_group" in attr:
-                self.print(f"{self.modify_cmd}{remove}--group {group} {user}\n")
+                self._print(f"{self.modify_cmd}{remove}--group {group} {user}\n")
         elif number_of_attributes - length2 == 0:
             error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
             raise ValueError(error)
@@ -287,22 +287,22 @@ class CuaScriptGenerator(EventHandler):
                 provisional_status_filename, service=service
             )
 
-            self.print("\n" + "#" * 32)
-            self.print("# Cleaning provisional status. #")
-            self.print("#" * 32)
-            self.print(f'if [ -f "{provisional_status_filename}" ]; then')
-            self.print(f'  mv "{provisional_status_filename}" "{status_filename}"')
-            self.print("else")
-            self.print(
+            self._print("\n" + "#" * 32)
+            self._print("# Cleaning provisional status. #")
+            self._print("#" * 32)
+            self._print(f'if [ -f "{provisional_status_filename}" ]; then')
+            self._print(f'  mv "{provisional_status_filename}" "{status_filename}"')
+            self._print("else")
+            self._print(
                 f"  echo 'Cannot find {provisional_status_filename}. Has this script been run before?'"
             )
-            self.print("fi")
+            self._print("fi")
 
-        self.print("\n" + "#" * 43)
-        self.print("#" + " " * 41 + "#")
-        self.print("#  Script generation ended successfully.  #")
-        self.print("#" + " " * 41 + "#")
-        self.print("#" * 43)
+        self._print("\n" + "#" * 43)
+        self._print("#" + " " * 41 + "#")
+        self._print("#  Script generation ended successfully.  #")
+        self._print("#" + " " * 41 + "#")
+        self._print("#" * 43)
 
         if self.run:
             logger.info("Executing generated script")
