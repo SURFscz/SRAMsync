@@ -40,25 +40,25 @@ class CbaScriptGenerator(CuaScriptGenerator):
         except ValidationError as e:
             raise ConfigValidationError(e, path) from e
 
+    def _insert_cba_command(self, cmd: str, user: str) -> None:
+        """Insert the cba command with arguments into the generated bash script."""
+        self._print(
+            f"{cmd} --machine {self.cfg['cba_machine']} "
+            f"--account {self.cfg['cba_budget_account']} --user {user}\n"
+        )
+
     def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
         """add_new_user event."""
         super().add_new_user(co, group, givenname, sn, user, mail)
-        self.print("# Adding user CBA account.")
-        self.insert_cba_command(self.cfg["cba_add_cmd"], user)
+        self._print("# Adding user CBA account.")
+        self._insert_cba_command(self.cfg["cba_add_cmd"], user)
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
         """remove_user_from_group event."""
         super().remove_user_from_group(co, group, group_attributes, user)
-        self.insert_cba_command(self.cfg["cba_del_cmd"], user)
+        self._insert_cba_command(self.cfg["cba_del_cmd"], user)
 
     def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
         """remove_graced_user_from_group event."""
         super().remove_graced_user_from_group(co, group, group_attributes, user)
-        self.insert_cba_command(self.cfg["cba_del_cmd"], user)
-
-    def insert_cba_command(self, cmd: str, user: str) -> None:
-        """Insert the cba command with arguments into the generated bash script."""
-        self.print(
-            f"{cmd} --machine {self.cfg['cba_machine']} "
-            f"--account {self.cfg['cba_budget_account']} --user {user}\n"
-        )
+        self._insert_cba_command(self.cfg["cba_del_cmd"], user)
