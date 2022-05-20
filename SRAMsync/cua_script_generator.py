@@ -17,7 +17,6 @@ from datetime import datetime
 from jsonschema import ValidationError, validate
 
 from SRAMsync.common import pascal_case_to_snake_case, render_templated_string
-from SRAMsync.dummy_event_handler import DummyEventHandler
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError
@@ -81,18 +80,6 @@ class CuaScriptGenerator(EventHandler):
     def __del__(self):
         if self.script_file_descriptor:
             self.script_file_descriptor.close()
-
-    @staticmethod
-    def get_auxiliary_notificaion_instance(
-        event_handler_class_name: str, cfg: dict, service: str, cfg_path: str, **args
-    ) -> EventHandler:
-        """Load the auxiliary event handler class."""
-
-        event_handler_module_name = pascal_case_to_snake_case(event_handler_class_name)
-        event_handler_module = importlib.import_module(f"SRAMsync.{event_handler_module_name}")
-        event_handler_class = getattr(event_handler_module, event_handler_class_name)
-
-        return event_handler_class(service, cfg, cfg_path, **args)
 
     def _generate_header(self) -> None:
         """Generate an explanatory header in the generated script."""
