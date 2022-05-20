@@ -115,7 +115,7 @@ def init_ldap(config: dict, secrets: dict, service: str) -> ldapobject.LDAPObjec
     """
     logger.debug(f"LDAP: connecting to: {config['uri']}")
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)  # type: ignore pylint: disable=E1101
-    ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore, pylint: disable=E1101
+    ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore pylint: disable=E1101
     ldap_conn = ldap.initialize(config["uri"])
     passwd = get_ldap_passwd(config, secrets, service)
     ldap_conn.simple_bind_s(config["binddn"], passwd)
@@ -370,8 +370,8 @@ def add_missing_entries_to_ldap(cfg: Config, status: dict, new_status: dict) -> 
         event_handler.start_of_co_processing(co)
         logger.debug(f"Processing CO: {co}")
 
-        new_status = process_user_data(cfg, fq_co, co, status, new_status)
-        new_status = process_group_data(cfg, fq_co, org, co, status, new_status)
+        process_user_data(cfg, fq_co, co, status, new_status)
+        process_group_data(cfg, fq_co, org, co, status, new_status)
 
     return new_status
 
@@ -463,7 +463,7 @@ def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
         new_group_status = {"groups": new_status["groups"][group]}
         new_group_status["groups"][group]["members"] = {}
 
-        new_status = remove_deleted_users_from_groups(cfg, old_group_status, new_group_status)
+        remove_deleted_users_from_groups(cfg, old_group_status, new_group_status)
 
         logger.debug(f"Removing group: '{group}'")
         event_handler.remove_group(co, group, status["groups"][group]["attributes"])
@@ -477,9 +477,9 @@ def remove_superfluous_entries_from_ldap(cfg: Config, status: dict, new_status: 
     status and new_status.
     """
 
-    new_status = remove_deleted_groups(cfg, status, new_status)
-    new_status = remove_graced_users(cfg, status, new_status)
-    new_status = remove_deleted_users_from_groups(cfg, status, new_status)
+    remove_deleted_groups(cfg, status, new_status)
+    remove_graced_users(cfg, status, new_status)
+    remove_deleted_users_from_groups(cfg, status, new_status)
 
     return new_status
 
@@ -611,8 +611,8 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)
             status = get_previous_status(cfg)
-            new_status = add_missing_entries_to_ldap(cfg, status, new_status)
-            new_status = remove_superfluous_entries_from_ldap(cfg, status, new_status)
+            add_missing_entries_to_ldap(cfg, status, new_status)
+            remove_superfluous_entries_from_ldap(cfg, status, new_status)
 
             cfg.event_handler_proxy.finalize()
 
