@@ -148,10 +148,15 @@ class Config:
                 },
                 "required": ["users", "groups", "event_handler"],
             },
-            "status_filename": {"type": "string"},
-            "provisional_status_filename": {"type": "string"},
+            "status": {
+                "type": "object",
+                "properties": {
+                    "status_filename": {"type": "string"},
+                    "provisional_status_filename": {"type": "string"},
+                },
+            },
         },
-        "required": ["service", "sram", "sync", "status_filename"],
+        "required": ["service", "sram", "sync", "status"],
         "additionalProperties": False,
     }
 
@@ -232,7 +237,3 @@ class Config:
     def set_set_ldap_connector(self, ldap_connector: ldapobject.LDAPObject) -> None:
         """Set the LDAP connector."""
         self._ldap_connector = ldap_connector
-
-    def set_event_handler(self, event_handler: EventHandler) -> None:
-        """Set the event handler."""
-        self.event_handlers = event_handler
