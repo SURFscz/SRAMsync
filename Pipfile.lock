@@ -431,11 +431,11 @@
         },
         "rope": {
             "hashes": [
-                "sha256:09aeb99b8932661a40cd3a0a9d2245271fa7a565806d45271aa79eebd69b5626",
-                "sha256:2f24190da86556dadab58ab2d5629d8410803cc3985ef9dbbf559d15e72d6607"
+                "sha256:13048ff0245a0fa187f282697a55add46e4ccf083e7670f868bdf54ee9e47f2e",
+                "sha256:216390b6342bde8ef1f27a6663554de0ea0b1fdad7c421deb3d5a3f6c5fc01e7"
             ],
             "index": "pypi",
-            "version": "==1.1.0"
+            "version": "==1.1.1"
         },
         "setuptools": {
             "hashes": [
