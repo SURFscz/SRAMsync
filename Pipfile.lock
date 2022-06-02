@@ -40,11 +40,11 @@
         },
         "jsonschema": {
             "hashes": [
-                "sha256:636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83",
-                "sha256:77281a1f71684953ee8b3d488371b162419767973789272434bbc3f29d9c8823"
+                "sha256:1c92d2db1900b668201f1797887d66453ab1fbfea51df8e4b46236689c427baf",
+                "sha256:9d6397ba4a6c0bf0300736057f649e3e12ecbc07d3e81a0dacb72de4e9801957"
             ],
             "index": "pypi",
-            "version": "==4.4.0"
+            "version": "==4.6.0"
         },
         "pyasn1": {
             "hashes": [
