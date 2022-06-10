@@ -13,4 +13,7 @@ sync:
     shirecloud_login: { attributes: ["system_group", "grace_period=5s", "login_users"], destination: "{service}_login" }
   event_handler:
     - name: DummyEventHandler
-status_filename: "test/status/{service}.json"
+status:
+  name: JsonFile
+  config:
+    status_filename: "test/status/{service}.json"
