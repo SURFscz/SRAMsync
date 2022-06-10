@@ -17,7 +17,6 @@ could be interacting with the destination system.
 import json
 import logging
 import os
-import re
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import List
@@ -32,6 +31,7 @@ from ldap.dn import str2dn
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.config import Config
 from SRAMsync.sramlogger import logger
+from SRAMsync.state import NoGracePeriodForGroupError
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
@@ -137,7 +137,7 @@ def get_previous_status(cfg: Config) -> dict:
 
     filename = render_templated_string(cfg["status_filename"], service=cfg["service"])
     try:
-        with open(filename) as json_file:
+        with open(filename, encoding="utf8") as json_file:
             status = json.load(json_file)
     except FileNotFoundError:
         pass
@@ -201,7 +201,7 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     return login_users
 
 
-def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status: dict) -> dict:
+def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
     """
     Process the CO user data as found in SRAM for the service.
 
@@ -238,24 +238,22 @@ def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status
                 user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=uid)
                 mail = get_attribute_from_entry(entry, "mail")
 
-                new_status["users"][user] = {"sram": {"CO": co}}
-                if user not in status["users"]:
+                cfg.state.add_user(user, co)
+                if not cfg.state.is_known_user(user):
                     logger.debug(f"  Found new user: {user}")
                     event_handler.add_new_user(co, group, givenname, sn, user, mail)
 
                 if "sshPublicKey" in entry:
                     raw_ssh_public_keys = entry["sshPublicKey"]
-                    ssh_public_keys = set([raw_ssh_public_keys[0].decode("UTF-8").rstrip()])
+                    current_ssh_public_keys = set([raw_ssh_public_keys[0].decode("UTF-8").rstrip()])
                     for key in raw_ssh_public_keys[1:]:
-                        ssh_public_keys = ssh_public_keys | {key.decode("UTF-8").rstrip()}
+                        current_ssh_public_keys = current_ssh_public_keys | {key.decode("UTF-8").rstrip()}
 
-                    known_ssh_public_keys = set()
-                    if user in status["users"] and "sshPublicKey" in status["users"][user]:
-                        known_ssh_public_keys = set(status["users"][user]["sshPublicKey"])
-                    new_status["users"][user]["sshPublicKey"] = list(ssh_public_keys)
+                    known_ssh_public_keys = cfg.state.get_known_user_public_ssh_keys(user)
+                    cfg.state.set_user_public_ssh_keys(user, current_ssh_public_keys)
 
-                    new_ssh_public_keys = ssh_public_keys - known_ssh_public_keys
-                    dropped_ssh_public_leys = known_ssh_public_keys - ssh_public_keys
+                    new_ssh_public_keys = current_ssh_public_keys - known_ssh_public_keys
+                    dropped_ssh_public_leys = known_ssh_public_keys - current_ssh_public_keys
 
                     for key in new_ssh_public_keys:
                         logger.debug(f"    Adding public SSH key: {key[:50]}…")
@@ -268,10 +266,8 @@ def process_user_data(cfg: Config, fq_co: str, co: str, status: dict, new_status
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
-    return new_status
 
-
-def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict, new_status: dict) -> dict:
+def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     """
     Process the CO group data as found in SRAM for the service. Only those
     groups that are defined in the configuration file are processed.
@@ -310,19 +306,11 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
             dest_group_name = render_templated_string(dest_group_name, service=service, org=org, co=co)
 
             # Create groups
-            if dest_group_name not in status["groups"]:
+            if not cfg.state.is_known_group(dest_group_name):
                 logger.debug(f"  Adding group: {dest_group_name}")
                 event_handler.add_new_group(co, dest_group_name, group_attributes)
 
-            if dest_group_name not in new_status["groups"]:
-                new_status["groups"][dest_group_name] = {
-                    "members": [],
-                    "attributes": group_attributes,
-                    "sram": {
-                        "CO": co,
-                        "sram-group": sram_group,
-                    },
-                }
+            cfg.state.add_group(dest_group_name, co, sram_group, group_attributes)
 
             # Find members
             for _, entry in dns:  # type: ignore
@@ -331,17 +319,23 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str, status: dict,
                 for member in members:
                     m_uid = dn_to_rdns(member)["uid"][0]
                     user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
-                    new_status["groups"][dest_group_name]["members"].append(user)
-                    if dest_group_name in status["groups"]:
-                        if user not in status["groups"][dest_group_name]["members"]:
+                    cfg.state.add_member(dest_group_name, user)
+                    try:
+                        if not cfg.state.is_user_member_of_group(dest_group_name, user):
                             event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
+                    except KeyError:
+                        logger.error(
+                            "Error in status detected. User % was not added to group % of CO %.",
+                            user,
+                            dest_group_name,
+                            co,
+                        )
+
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning(f"service '{fq_co}' does not contain group '{sram_group}'")
 
-    return new_status
 
-
-def add_missing_entries_to_ldap(cfg: Config, status: dict, new_status: dict) -> dict:
+def add_missing_entries_to_ldap(cfg: Config) -> None:
     """
     Determine which entries in the SRAM LDAP have not been processed before.
 
@@ -370,27 +364,22 @@ def add_missing_entries_to_ldap(cfg: Config, status: dict, new_status: dict) -> 
         event_handler.start_of_co_processing(co)
         logger.debug(f"Processing CO: {co}")
 
-        process_user_data(cfg, fq_co, co, status, new_status)
-        process_group_data(cfg, fq_co, org, co, status, new_status)
-
-    return new_status
+        process_user_data(cfg, fq_co, co)
+        process_group_data(cfg, fq_co, org, co)
 
 
-def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
+def remove_graced_users(cfg: Config) -> None:
     """Remove users that have passed the grace period."""
-
-    if "groups" not in new_status:
-        return new_status
 
     event_handler = cfg.event_handler_proxy
 
-    for group, group_attributes in status["groups"].items():
+    for group, group_attributes in cfg.state.get_known_groups_and_attributes().items():
         if "graced_users" in group_attributes:
             logger.debug(f"Checking graced users for group: {group}")
             for user, grace_until_str in group_attributes["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
-                co = status["groups"][group]["sram"]["CO"]
+                co = cfg.state.get_co_of_known_group(group)
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
@@ -400,53 +389,40 @@ def remove_graced_users(cfg: Config, status: dict, new_status: dict) -> dict:
                     group_attributes = cfg["sync"]["groups"][group]["attributes"]
                     event_handler.remove_graced_user_from_group(co, group, group_attributes, user)
                 else:
-                    if "graced_users" not in new_status["groups"][group]:
-                        new_status["groups"][group]["graced_users"] = {}
-                    new_status["groups"][group]["graced_users"][user] = grace_until_str
+                    cfg.state.set_graced_period_for_user(group, user, grace_until)
 
                     remaining_time = grace_until - now
                     logger.info(f"{user} from {group} has {remaining_time} left of its grace time.")
-    return new_status
 
 
-def remove_deleted_users_from_groups(cfg: Config, status: dict, new_status: dict) -> dict:
+def remove_deleted_users_from_groups(cfg: Config) -> None:
     """
     Determine based on the (old) status and new_status which users are to be removed.
     """
 
     event_handler = cfg.event_handler_proxy
 
-    re_grace_period = re.compile(r"grace_period=[0-9]+")
-
-    for group, group_values in status["groups"].items():
-        removed_users = [
-            user for user in group_values["members"] if user not in new_status["groups"][group]["members"]
-        ]
-        co = group_values["sram"]["CO"]
-
+    for group in cfg.state.get_known_groups():
+        removed_users = cfg.state.get_removed_users(group)
+        co = cfg.state.get_co_of_known_group(group)
         for user in removed_users:
-            tmp_list = list(filter(re_grace_period.match, group_values["attributes"]))
-            if len(tmp_list) == 1:
-                _, seconds = tmp_list[0].split("=")
+            group_attributes = cfg.state.get_known_group_attributes(group)
+            try:
+                seconds = cfg.get_grace_period(group)
                 grace_until = datetime.now(timezone.utc) + timedelta(seconds=float(seconds))
                 remaining_time = grace_until - datetime.now(timezone.utc)
                 logger.info(
                     f"User '{user}' has been removed but not deleted due to grace time. "
                     f"Remaining time: {remaining_time}"
                 )
-                event_handler.start_grace_period_for_user(
-                    co, group, group_values["attributes"], user, remaining_time
-                )
-                new_status["groups"][group]["graced_users"] = {
-                    user: datetime.strftime(grace_until, "%Y-%m-%d %H:%M:%S%z")
-                }
-            else:
-                event_handler.remove_user_from_group(co, group, group_values["attributes"], user)
+                event_handler.start_grace_period_for_user(co, group, group_attributes, user, remaining_time)
+                cfg.state.set_graced_period_for_user(group, user, grace_until)
 
-    return new_status
+            except NoGracePeriodForGroupError:
+                event_handler.remove_user_from_group(co, group, group_attributes, user)
 
 
-def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
+def remove_deleted_groups(cfg: Config) -> None:
     """
     Determine based on (old) status and new_status which groups are to
     be removed. If any of those groups contain members, remove those members
@@ -455,33 +431,30 @@ def remove_deleted_groups(cfg: Config, status: dict, new_status: dict) -> dict:
 
     event_handler = cfg.event_handler_proxy
 
-    removed_groups = [group for group in status["groups"] if group not in new_status["groups"]]
+    known_groups = cfg.state.get_known_groups()
+    added_groups = cfg.state.get_added_groups()
+    removed_groups = [group for group in known_groups if group not in added_groups]
 
     for group in removed_groups:
-        co = status["groups"][group]["sram"]["CO"]
-        old_group_status = {"groups": status["groups"][group]}
-        new_group_status = {"groups": new_status["groups"][group]}
+        co = cfg.state.get_co_of_known_group(group)
+        new_group_status = {"groups": cfg.state.get_added_group(group)}
         new_group_status["groups"][group]["members"] = {}
 
-        remove_deleted_users_from_groups(cfg, old_group_status, new_group_status)
+        remove_deleted_users_from_groups(cfg)
 
         logger.debug(f"Removing group: '{group}'")
-        event_handler.remove_group(co, group, status["groups"][group]["attributes"])
-
-    return new_status
+        event_handler.remove_group(co, group, cfg.state.get_known_group_attributes(group))
 
 
-def remove_superfluous_entries_from_ldap(cfg: Config, status: dict, new_status: dict) -> dict:
+def remove_superfluous_entries_from_ldap(cfg: Config) -> None:
     """
     Remove entries in the destination LDAP based on the difference between
     status and new_status.
     """
 
-    remove_deleted_groups(cfg, status, new_status)
-    remove_graced_users(cfg, status, new_status)
-    remove_deleted_users_from_groups(cfg, status, new_status)
-
-    return new_status
+    remove_deleted_groups(cfg)
+    remove_graced_users(cfg)
+    remove_deleted_users_from_groups(cfg)
 
 
 def keep_new_status(cfg: Config, new_status: dict) -> None:
@@ -605,18 +578,16 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         for configuration_path in configuration_paths:
             logger.info(f"Handling configuration: {configuration_path}")
 
-            new_status = {"users": {}, "groups": {}}
             cfg = Config(configuration_path, **dict(eventhandler_args))
 
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)
-            status = get_previous_status(cfg)
-            add_missing_entries_to_ldap(cfg, status, new_status)
-            remove_superfluous_entries_from_ldap(cfg, status, new_status)
+            add_missing_entries_to_ldap(cfg)
+            remove_superfluous_entries_from_ldap(cfg)
 
             cfg.event_handler_proxy.finalize()
 
-            keep_new_status(cfg, new_status)
+            cfg.state.dump_state()
 
         logger.info("Finished syncing with SRAM")
         clean_exit = True

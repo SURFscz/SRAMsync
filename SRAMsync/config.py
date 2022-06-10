@@ -15,6 +15,7 @@ from ldap import ldapobject
 from SRAMsync.common import deduct_event_handler_class
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
+from SRAMsync.state import State
 
 
 class ConfigurationError(Exception):
@@ -50,6 +51,13 @@ def _normalize_grace_periods(cfg: dict) -> None:
                 groups[group]["attributes"][i] = f"grace_period={grace_period}"
             elif attribute.startswith("grace_period="):
                 raise ValueError("grace_period has wrong value.")
+
+
+def get_status_object(cfg: dict, **kwargs: str) -> State:
+    """Return the configured status object."""
+    state_class = deduct_event_handler_class(cfg["name"])
+    state_object = state_class(cfg["config"], **kwargs)
+    return state_object
 
 
 def to_seconds(raw_period: str) -> int:
@@ -151,9 +159,11 @@ class Config:
             "status": {
                 "type": "object",
                 "properties": {
-                    "status_filename": {"type": "string"},
-                    "provisional_status_filename": {"type": "string"},
+                    "name": {"type": "string"},
+                    "config": {"type": "object"},
                 },
+                "required": ["name", "config"],
+                "additionalProperties": False,
             },
         },
         "required": ["service", "sram", "sync", "status"],
@@ -178,6 +188,8 @@ class Config:
 
         event_handlers = self.get_event_handlers(**args)
         self.event_handler_proxy = EventHandlerProxy(event_handlers)
+
+        self.state = get_status_object(config["status"], service=config["service"])
 
     def __getitem__(self, item: str) -> Any:
         return self.config[item]
@@ -205,12 +217,12 @@ class Config:
             if "config" in event:
                 event_handler_cfg = event["config"]
 
-            event_handler_cfg.update({"status_filename": self.config["status_filename"]})
+            # event_handler_cfg.update({"status_filename": self.config["status_filename"]})
 
-            if "provisional_status_filename" in self.config:
-                event_handler_cfg.update(
-                    {"provisional_status_filename": self.config["provisional_status_filename"]}
-                )
+            # if "provisional_status_filename" in self.config:
+            #     event_handler_cfg.update(
+            #         {"provisional_status_filename": self.config["provisional_status_filename"]}
+            #     )
 
             if hasattr(self, "secrets"):
                 event_handler_cfg["secrets"] = self.secrets
@@ -237,3 +249,14 @@ class Config:
     def set_set_ldap_connector(self, ldap_connector: ldapobject.LDAPObject) -> None:
         """Set the LDAP connector."""
         self._ldap_connector = ldap_connector
+
+    def get_grace_period(self, group: str) -> int:
+        """Get the defined grace period for group in seconds."""
+        re_grace_period = "grace_period=[0-9]+"
+
+        for attribute in self.config["sync"]["groups"][group]["attributes"]:
+            if re.search(re_grace_period, attribute):
+                _, seconds = attribute.split("=")
+                return seconds
+
+        return -1
