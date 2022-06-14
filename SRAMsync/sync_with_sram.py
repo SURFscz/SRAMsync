@@ -113,7 +113,7 @@ def init_ldap(config: dict, secrets: dict, service: str) -> ldapobject.LDAPObjec
     """
     Initialization and binding an LDAP connection.
     """
-    logger.debug(f"LDAP: connecting to: {config['uri']}")
+    logger.debug("LDAP: connecting to: %s", config["uri"])
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)  # type: ignore pylint: disable=E1101
     ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore pylint: disable=E1101
     ldap_conn = ldap.initialize(config["uri"])
@@ -131,7 +131,7 @@ def get_previous_status(cfg: Config) -> dict:
     status = {"users": {}, "groups": {}}
 
     if "provisional_status_filename" in cfg and os.path.isfile(cfg["provisional_status_filename"]):
-        logger.warning(f"Found unexpected provisional status file: {cfg['provisional_status_filename']}.")
+        logger.warning("Found unexpected provisional status file: %s", cfg["provisional_status_filename"])
         logger.warning("Possible reason is that the generated script has not been run yet.")
         logger.warning("It is okay to continue this sync and generate a new up-to-date script.")
 
@@ -196,7 +196,7 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
                     uid = dn_to_rdns(member)["uid"][0]
                     login_users.append(uid)
     except ldap.NO_SUCH_OBJECT:  # type: ignore: pylint: disable=E1101
-        logger.warning(f"login group '{group}' has been defined but could not be found for CO '{co}'.")
+        logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
 
     return login_users
 
@@ -240,7 +240,7 @@ def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
 
                 cfg.state.add_user(user, co)
                 if not cfg.state.is_known_user(user):
-                    logger.debug(f"  Found new user: {user}")
+                    logger.debug("  Found new user: %s", user)
                     event_handler.add_new_user(co, group, givenname, sn, user, mail)
 
                 if "sshPublicKey" in entry:
@@ -256,11 +256,11 @@ def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
                     dropped_ssh_public_leys = known_ssh_public_keys - current_ssh_public_keys
 
                     for key in new_ssh_public_keys:
-                        logger.debug(f"    Adding public SSH key: {key[:50]}…")
+                        logger.debug("    Adding public SSH key: %s…", key[:50])
                         event_handler.add_public_ssh_key(co, user, key)
 
                     for key in dropped_ssh_public_leys:
-                        logger.debug(f"    Removing public SSH key: {key[:50]}…")
+                        logger.debug("    Removing public SSH key: %s…", key[:50])
                         event_handler.delete_public_ssh_key(co, user, key)
 
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
@@ -307,7 +307,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
             # Create groups
             if not cfg.state.is_known_group(dest_group_name):
-                logger.debug(f"  Adding group: {dest_group_name}")
+                logger.debug("  Adding group: %s", dest_group_name)
                 event_handler.add_new_group(co, dest_group_name, group_attributes)
 
             cfg.state.add_group(dest_group_name, co, sram_group, group_attributes)
@@ -332,7 +332,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         )
 
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
-            logger.warning(f"service '{fq_co}' does not contain group '{sram_group}'")
+            logger.warning("service '%s' does not contain group '%s'", fq_co, sram_group)
 
 
 def add_missing_entries_to_ldap(cfg: Config) -> None:
@@ -362,7 +362,7 @@ def add_missing_entries_to_ldap(cfg: Config) -> None:
         fq_co = get_attribute_from_entry(entry, "o")
         org, co = fq_co.split(".")
         event_handler.start_of_co_processing(co)
-        logger.debug(f"Processing CO: {co}")
+        logger.debug("Processing CO: %s", co)
 
         process_user_data(cfg, fq_co, co)
         process_group_data(cfg, fq_co, org, co)
@@ -375,7 +375,7 @@ def remove_graced_users(cfg: Config) -> None:
 
     for group, group_attributes in cfg.state.get_known_groups_and_attributes().items():
         if "graced_users" in group_attributes:
-            logger.debug(f"Checking graced users for group: {group}")
+            logger.debug("Checking graced users for group: %s", group)
             for user, grace_until_str in group_attributes["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
@@ -385,14 +385,14 @@ def remove_graced_users(cfg: Config) -> None:
                     # copied over to new_status if it needs to be preserved. Not doing
                     # so automatically disregards this information automatically and
                     # it is the intended behaviour
-                    logger.info(f"Grace time ended for user {user} in {group}")
+                    logger.info("Grace time ended for user %s in %s", user, group)
                     group_attributes = cfg["sync"]["groups"][group]["attributes"]
                     event_handler.remove_graced_user_from_group(co, group, group_attributes, user)
                 else:
                     cfg.state.set_graced_period_for_user(group, user, grace_until)
 
                     remaining_time = grace_until - now
-                    logger.info(f"{user} from {group} has {remaining_time} left of its grace time.")
+                    logger.info("%s from %s has %s left of its grace time.", user, group, remaining_time)
 
 
 def remove_deleted_users_from_groups(cfg: Config) -> None:
@@ -412,8 +412,9 @@ def remove_deleted_users_from_groups(cfg: Config) -> None:
                 grace_until = datetime.now(timezone.utc) + timedelta(seconds=float(seconds))
                 remaining_time = grace_until - datetime.now(timezone.utc)
                 logger.info(
-                    f"User '{user}' has been removed but not deleted due to grace time. "
-                    f"Remaining time: {remaining_time}"
+                    "User '%s' has been removed but not deleted due to grace time. Remaining time: %s",
+                    user,
+                    remaining_time,
                 )
                 event_handler.start_grace_period_for_user(co, group, group_attributes, user, remaining_time)
                 cfg.state.set_graced_period_for_user(group, user, grace_until)
@@ -442,7 +443,7 @@ def remove_deleted_groups(cfg: Config) -> None:
 
         remove_deleted_users_from_groups(cfg)
 
-        logger.debug(f"Removing group: '{group}'")
+        logger.debug("Removing group: '%s'", group)
         event_handler.remove_group(co, group, cfg.state.get_known_group_attributes(group))
 
 
@@ -470,10 +471,10 @@ def keep_new_status(cfg: Config, new_status: dict) -> None:
 
     filename = render_templated_string(filename, service=cfg["service"])
 
-    with open(filename, "w") as status_file:
+    with open(filename, "w", encoding="utf8") as status_file:
         json.dump(new_status, status_file, indent=2)
 
-    logger.info(f"new status file has been written to: {filename}")
+    logger.info("new status file has been written to: %s", filename)
 
 
 def get_configuration_paths(path: str) -> List[str]:
@@ -495,13 +496,13 @@ def show_configuration_error(
     configuration_path: str, path: dict, exception: jsonschema.exceptions.ValidationError
 ) -> None:
     """Display the path in the configuration where the error occured."""
-    logger.error(f"Syntax error in configuration file {configuration_path} at:")
+    logger.error("Syntax error in configuration file  at: %s", configuration_path)
 
-    indent_level = 0
+    indent = ""
     for path_element in path:
-        logger.error(" " * indent_level * 2 + f"{path_element}:")
-        indent_level = indent_level + 1
-    logger.error(" " * indent_level * 2 + exception.message)
+        logger.error("%s%s:", indent, path_element)
+        indent = indent + "  "
+    logger.error("%s%s", indent, exception.message)
 
 
 @click.command(context_settings=click_ctx_settings)
@@ -576,7 +577,7 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         configuration_paths = get_configuration_paths(configuration)
 
         for configuration_path in configuration_paths:
-            logger.info(f"Handling configuration: {configuration_path}")
+            logger.info("Handling configuration: {}", configuration_path)
 
             cfg = Config(configuration_path, **dict(eventhandler_args))
 
@@ -615,7 +616,7 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         if "desc" in e.args[0]:
             logger.error(e.args[0]["desc"])
     except ModuleNotFoundError as e:
-        logger.error(f"{e}. Please check your config file.")
+        logger.error("%s. Please check your config file.", e)
     except MultipleLoginGroups:
         logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
     except ValueError as e:

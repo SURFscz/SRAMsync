@@ -126,7 +126,20 @@ class EmailNotifications(EventHandler):
             "report_events": {
                 "type": "object",
                 "patternProperties": {
-                    "^start-co-processing$|^add-new-user$|^add-ssh-key$|^delete-ssh-key$|^delete-ssh-key$|^add-group$|^remove-group$|^add-user-to-group$|^start-grace-period-for-user$|^remove-user-from-group$|^remove-graced-user-from-group$|^finalize$": {
+                    """
+                    ^start-co-processing$|
+                    ^add-new-user$|
+                    ^add-ssh-key$|
+                    ^delete-ssh-key$|
+                    ^delete-ssh-key$|
+                    ^add-group$|
+                    ^remove-group$|
+                    ^add-user-to-group$|
+                    ^start-grace-period-for-user$|
+                    ^remove-user-from-group$|
+                    ^remove-graced-user-from-group$|
+                    ^finalize$
+                    """: {
                         "type": "object",
                         "properties": {"line": {"type": "string"}},
                         "required": ["line"],
