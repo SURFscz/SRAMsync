@@ -34,7 +34,14 @@ def _normalize_grace_periods(cfg: dict) -> None:
     item for that group in the configuration with the grace period in seconds.
     """
     re_grace_period = re.compile(
-        r"^grace_period=(?:(?:[0-9]+(?:\.[0-9]+)?[s|d|H|M|m]?)$|(?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$"
+        r"""
+        ^grace_period=   # Must start with grace_period=
+        (?:
+          (?:[0-9]+(?:\.[0-9]+)?[s|d|H|M|m]?)$      # Interger or float, might end with suffix
+         |                                          # alternative duration notation
+         (?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$  # HH:MM notation
+         """,
+        re.VERBOSE,
     )
 
     groups = cfg["sync"]["groups"]
@@ -68,7 +75,7 @@ def to_seconds(raw_period: str) -> int:
     try:
         seconds = float(raw_period) * 86400
     except ValueError:
-        if last in units.keys():
+        if last in units:
             seconds = float(raw_period[:-1]) * units[last]
         else:
             coluns = raw_period.count(":")
@@ -171,7 +178,7 @@ class Config:
     }
 
     def __init__(self, config_file: str, **args) -> None:
-        with open(config_file) as fd:
+        with open(config_file, encoding="utf8") as fd:
             config = yaml.safe_load(fd)
 
         validate(schema=self._schema, instance=config)
@@ -183,7 +190,7 @@ class Config:
 
         self.secrets = {}
         if "secrets" in config:
-            with open(config["secrets"]["file"]) as fd:
+            with open(config["secrets"]["file"], encoding="utf8") as fd:
                 self.secrets = yaml.safe_load(fd)
 
         event_handlers = self.get_event_handlers(**args)

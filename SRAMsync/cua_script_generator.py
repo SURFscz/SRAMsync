@@ -7,7 +7,6 @@ The generated script makes use of the sara_usertool to interact with
 the CUA.
 """
 
-import importlib
 import logging
 import os
 import stat
@@ -16,7 +15,7 @@ from datetime import datetime
 
 from jsonschema import ValidationError, validate
 
-from SRAMsync.common import pascal_case_to_snake_case, render_templated_string
+from SRAMsync.common import render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError
@@ -64,7 +63,9 @@ class CuaScriptGenerator(EventHandler):
 
             self.cfg = cfg
             self.script_name = render_templated_string(cfg["filename"], service=service)
-            self.script_file_descriptor = open(self.script_name, "w+")  # pylint: disable=consider-using-with
+            self.script_file_descriptor = open(  # pylint: disable=consider-using-with
+                self.script_name, "w+", encoding="utf8"
+            )
             os.chmod(self.script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
             self.service_name = service
             self.add_cmd = cfg["add_cmd"]
@@ -300,7 +301,7 @@ class CuaScriptGenerator(EventHandler):
                 )
                 logger.debug("script retuned: %d", result.returncode)
                 logger.debug("script output: %s", result.stdout)
-            except subprocess.TimeoutExpired as e:
+            except subprocess.TimeoutExpired:
                 logger.error("Script execution has been aborted. It took too long for the script to finish.")
             except subprocess.CalledProcessError as e:
                 logger.error(
