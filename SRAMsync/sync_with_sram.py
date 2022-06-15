@@ -577,7 +577,7 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         configuration_paths = get_configuration_paths(configuration)
 
         for configuration_path in configuration_paths:
-            logger.info("Handling configuration: {}", configuration_path)
+            logger.info("Handling configuration: %s", configuration_path)
 
             cfg = Config(configuration_path, **dict(eventhandler_args))
 
