@@ -325,7 +325,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                             event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
                     except KeyError:
                         logger.error(
-                            "Error in status detected. User % was not added to group % of CO %.",
+                            "Error in status detected. User %s was not added to group %s of CO %s.",
                             user,
                             dest_group_name,
                             co,
