@@ -187,7 +187,7 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     try:
         dns = ldap_conn.search_s(
             f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
-            ldap.SCOPE_ONELEVEL,  # type: ignore: pylint: disable=E1101
+            ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
             f"(cn={group})",
         )
         for _, entry in dns:  # type: ignore
@@ -195,7 +195,7 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
                 for member in entry["member"]:
                     uid = dn_to_rdns(member)["uid"][0]
                     login_users.append(uid)
-    except ldap.NO_SUCH_OBJECT:  # type: ignore: pylint: disable=E1101
+    except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
 
     return login_users
