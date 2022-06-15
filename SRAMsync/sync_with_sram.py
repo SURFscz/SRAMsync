@@ -31,7 +31,7 @@ from ldap.dn import str2dn
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.config import Config
 from SRAMsync.sramlogger import logger
-from SRAMsync.state import NoGracePeriodForGroupError
+from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
@@ -323,7 +323,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                     try:
                         if not cfg.state.is_user_member_of_group(dest_group_name, user):
                             event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
-                    except KeyError:
+                    except UnkownGroup:
                         logger.error(
                             "Error in status detected. User %s was not added to group %s of CO %s.",
                             user,

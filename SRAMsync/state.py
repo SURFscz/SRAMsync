@@ -16,6 +16,14 @@ class NoGracePeriodForGroupError(Exception):
     """
 
 
+class UnkownGroup(Exception):
+    """Exception in case an unknown group is acccessed."""
+
+    def __init__(self, unknown_group):
+        super().__init__()
+        self._unknown_group = unknown_group
+
+
 class State(ABC):
     """
     Class for keeping track of the last known and current state of the SRAMsync

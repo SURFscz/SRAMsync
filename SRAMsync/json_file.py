@@ -10,7 +10,7 @@ from typing import Any
 from jsonschema import validate
 
 from SRAMsync.common import render_templated_string
-from SRAMsync.state import State
+from SRAMsync.state import State, UnkownGroup
 
 
 class JsonFile(State):
@@ -67,7 +67,10 @@ class JsonFile(State):
         return group in self._last_known_state["groups"]
 
     def is_user_member_of_group(self, dest_group_name, user) -> bool:
-        return user in self._new_state["groups"][dest_group_name]["members"]
+        try:
+            return user in self._new_state["groups"][dest_group_name]["members"]
+        except KeyError:
+            raise UnkownGroup(dest_group_name)
 
     def is_found_group(self, group: str) -> bool:
         return group in self._new_state["groups"]
