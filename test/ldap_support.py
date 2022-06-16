@@ -1,12 +1,13 @@
 """ldap helper functions"""
-from SRAMsync.sync_with_sram import init_ldap
-import SRAMsync.config
-
 import copy
+import json
+import random
+
 import ldap
 from ldap import modlist
-import random
-import json
+
+import SRAMsync.config
+from SRAMsync.sync_with_sram import init_ldap
 
 BASEDN = "dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl"
 
@@ -123,3 +124,38 @@ def is_member_of(ldap_conn, org, co, group, uid):
     dns = ldap_conn.search_s(dn, ldap.SCOPE_BASE, f"(&(objectClass=groupOfMembers)(member={dn_uid}))")
 
     return len(dns) > 0
+
+
+def get_ssh_keys(ldap_conn, org, co, uid):
+    dn = f"uid={uid},ou=People,o={org}.{co},dc=ordered,{BASEDN}"
+    attributes = ldap_conn.search_s(dn, ldap.SCOPE_SUBTREE, "(objectClass=person)")
+
+    return attributes[0][1]["sshPublicKey"]
+
+
+def add_ssh_key(ldap_conn, org, co, uid, ssh_key):
+    dn = f"uid={uid},ou=People,o={org}.{co},dc=ordered,{BASEDN}"
+
+    if type(ssh_key) != bytes:
+        ssh_key = ssh_key.encode()
+
+    old_entry = ldap_conn.search_s(dn, ldap.SCOPE_BASE, "(objectClass=person)")[0][1]
+    new_entry = copy.deepcopy(old_entry)
+    new_entry["sshPublicKey"].append(ssh_key)
+    mod_list = ldap.modlist.modifyModlist(old_entry, new_entry)
+
+    ldap_conn.modify_s(dn, mod_list)
+
+
+def remove_ssh_key(ldap_conn, org, co, uid, ssh_key):
+    dn = f"uid={uid},ou=People,o={org}.{co},dc=ordered,{BASEDN}"
+
+    if type(ssh_key) != bytes:
+        ssh_key = ssh_key.encode()
+
+    old_entry = ldap_conn.search_s(dn, ldap.SCOPE_BASE, "(objectClass=person)")[0][1]
+    new_entry = copy.deepcopy(old_entry)
+    new_entry["sshPublicKey"].remove(ssh_key)
+    mod_list = ldap.modlist.modifyModlist(old_entry, new_entry)
+
+    ldap_conn.modify_s(dn, mod_list)
