@@ -30,6 +30,7 @@ from ldap.dn import str2dn
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.config import Config
+from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
 
@@ -201,6 +202,33 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     return login_users
 
 
+def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict, event_handler: EventHandler) -> None:
+    """
+    Determine if a public SSH had been added or deleted and generate the
+    appropriate event if necessary.
+    """
+
+    if "sshPublicKey" in entry:
+        raw_ssh_public_keys = entry["sshPublicKey"]
+        current_ssh_public_keys = set([raw_ssh_public_keys[0].decode("UTF-8").rstrip()])
+        for key in raw_ssh_public_keys[1:]:
+            current_ssh_public_keys = current_ssh_public_keys | {key.decode("UTF-8").rstrip()}
+
+        known_ssh_public_keys = cfg.state.get_known_user_public_ssh_keys(user)
+        cfg.state.set_user_public_ssh_keys(user, current_ssh_public_keys)
+
+        new_ssh_public_keys = current_ssh_public_keys - known_ssh_public_keys
+        dropped_ssh_public_leys = known_ssh_public_keys - current_ssh_public_keys
+
+        for key in new_ssh_public_keys:
+            logger.debug("    Adding public SSH key: %s…", key[:50])
+            event_handler.add_public_ssh_key(co, user, key)
+
+        for key in dropped_ssh_public_leys:
+            logger.debug("    Removing public SSH key: %s…", key[:50])
+            event_handler.delete_public_ssh_key(co, user, key)
+
+
 def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
     """
     Process the CO user data as found in SRAM for the service.
@@ -243,26 +271,7 @@ def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
                     logger.debug("  Found new user: %s", user)
                     event_handler.add_new_user(co, group, givenname, sn, user, mail)
 
-                if "sshPublicKey" in entry:
-                    raw_ssh_public_keys = entry["sshPublicKey"]
-                    current_ssh_public_keys = set([raw_ssh_public_keys[0].decode("UTF-8").rstrip()])
-                    for key in raw_ssh_public_keys[1:]:
-                        current_ssh_public_keys = current_ssh_public_keys | {key.decode("UTF-8").rstrip()}
-
-                    known_ssh_public_keys = cfg.state.get_known_user_public_ssh_keys(user)
-                    cfg.state.set_user_public_ssh_keys(user, current_ssh_public_keys)
-
-                    new_ssh_public_keys = current_ssh_public_keys - known_ssh_public_keys
-                    dropped_ssh_public_leys = known_ssh_public_keys - current_ssh_public_keys
-
-                    for key in new_ssh_public_keys:
-                        logger.debug("    Adding public SSH key: %s…", key[:50])
-                        event_handler.add_public_ssh_key(co, user, key)
-
-                    for key in dropped_ssh_public_leys:
-                        logger.debug("    Removing public SSH key: %s…", key[:50])
-                        event_handler.delete_public_ssh_key(co, user, key)
-
+                handle_public_ssh_keys(cfg, co, user, entry, event_handler)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
