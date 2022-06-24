@@ -187,7 +187,6 @@ class EmailNotifications(EventHandler):
     def __init__(self, service: str, cfg: dict, config_path, **args: dict) -> None:
         super().__init__(service, cfg, config_path, args)
         try:
-            print(self._schema)
             validate(schema=self._schema, instance=cfg)
 
             if "passwd_from_secrets" in cfg["smtp"]:
