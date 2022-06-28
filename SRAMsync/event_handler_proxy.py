@@ -20,10 +20,10 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
-    def add_new_user(self, co, group, givenname, sn, user, mail):
+    def add_new_user(self, co, group, user, entry):
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
-            event_handler.add_new_user(co, group, givenname, sn, user, mail)
+            event_handler.add_new_user(co, group, user, entry)
 
     def add_public_ssh_key(self, co, user, key):
         """Call add_public_ssh_key event for all EventHandlers."""

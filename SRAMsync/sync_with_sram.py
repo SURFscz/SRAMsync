@@ -261,16 +261,13 @@ def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
         for _, entry in dns:  # type: ignore
             uid = get_attribute_from_entry(entry, "uid")
             if is_user_eligible(uid, login_users, entry):
-                givenname = get_attribute_from_entry(entry, "givenName")
-                sn = get_attribute_from_entry(entry, "sn")
                 user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=uid)
-                mail = get_attribute_from_entry(entry, "mail")
 
                 cfg.state.add_user(user, co)
                 if not cfg.state.is_known_user(user):
                     logger.debug("  Found new user: %s", user)
                     event_handler = cfg.event_handler_proxy
-                    event_handler.add_new_user(co, group, givenname, sn, user, mail)
+                    event_handler.add_new_user(co, group, user, entry)
 
                 handle_public_ssh_keys(cfg, co, user, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101

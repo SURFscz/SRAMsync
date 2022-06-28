@@ -7,15 +7,15 @@ The generated script makes use of the sara_usertool to interact with
 the CUA.
 """
 
+from datetime import datetime
 import logging
 import os
 import stat
 import subprocess
-from datetime import datetime
 
 from jsonschema import ValidationError, validate
 
-from SRAMsync.common import render_templated_string
+from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError
@@ -125,12 +125,15 @@ class CuaScriptGenerator(EventHandler):
 
         self._print(f"\n# service: {self.service_name}/{co}")
 
-    def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
+    def add_new_user(self, co: str, group: str, user: str, entry: dict) -> None:
         """
         Write the appropriate sara_usertools commands to the bash script for
         adding new users. Call the auxiliary event class.
         """
 
+        givenname = get_attribute_from_entry(entry, "givenName")
+        sn = get_attribute_from_entry(entry, "sn")
+        mail = get_attribute_from_entry(entry, "mail")
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self._print(f"## Adding user: {user}")

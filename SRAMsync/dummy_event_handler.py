@@ -1,7 +1,8 @@
 """Write a simple log message for each received event."""
 
-from SRAMsync.sramlogger import logger
+from SRAMsync.common import get_attribute_from_entry
 from SRAMsync.event_handler import EventHandler
+from SRAMsync.sramlogger import logger
 
 
 class DummyEventHandler(EventHandler):
@@ -17,8 +18,11 @@ class DummyEventHandler(EventHandler):
         """Log the start_of_co_processing event."""
         logger.info("  start_of_co_processing(%s)", co)
 
-    def add_new_user(self, co, group, givenname, sn, user, mail):
+    def add_new_user(self, co, group, user, entry):
         """Log the add_new_user event."""
+        givenname = get_attribute_from_entry(entry, "givenName")
+        sn = get_attribute_from_entry(entry, "sn")
+        mail = get_attribute_from_entry(entry, "mail")
         logger.info("  add_new_user(%s, %s, %s, %s, %s, %s", co, group, givenname, sn, user, mail)
 
     def add_public_ssh_key(self, co, user, key):

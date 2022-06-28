@@ -4,14 +4,14 @@ events to send email is configurable and also some basic formatting can be
 applied.
 """
 
-import smtplib
-import ssl
 from email.message import EmailMessage
 from email.utils import formatdate
+import smtplib
+import ssl
 
 from jsonschema import ValidationError, validate
 
-from SRAMsync.common import render_templated_string
+from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError, PasswordNotFound
@@ -288,8 +288,12 @@ class EmailNotifications(EventHandler):
         """Add start event message to the message queue."""
         self.add_event_message(co, "start-co-processing", important=False)
 
-    def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
+    def add_new_user(self, co: str, group: str, user: str, entry: dict) -> None:
         """Add add-new-user event message to the message queue."""
+        givenname = get_attribute_from_entry(entry, "givenName")
+        sn = get_attribute_from_entry(entry, "sn")
+        mail = get_attribute_from_entry(entry, "mail")
+
         self.add_event_message(
             co, "add-new-user", group=group, givenname=givenname, sn=sn, user=user, mail=mail
         )

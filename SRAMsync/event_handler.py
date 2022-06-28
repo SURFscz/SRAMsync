@@ -18,7 +18,7 @@ class EventHandler(ABC):
         """start_of_co_processing event."""
 
     @abstractmethod
-    def add_new_user(self, co, group, givenname, sn, user, mail):
+    def add_new_user(self, co, group, user, entry):
         """add_new_user event."""
 
     @abstractmethod
