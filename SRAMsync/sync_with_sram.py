@@ -202,7 +202,7 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     return login_users
 
 
-def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict, event_handler: EventHandler) -> None:
+def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict) -> None:
     """
     Determine if a public SSH had been added or deleted and generate the
     appropriate event if necessary.
@@ -220,6 +220,7 @@ def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict, event_h
         new_ssh_public_keys = current_ssh_public_keys - known_ssh_public_keys
         dropped_ssh_public_leys = known_ssh_public_keys - current_ssh_public_keys
 
+        event_handler = cfg.event_handler_proxy
         for key in new_ssh_public_keys:
             logger.debug("    Adding public SSH key: %s…", key[:50])
             event_handler.add_public_ssh_key(co, user, key)
@@ -246,7 +247,6 @@ def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
     """
 
     ldap_conn = cfg.get_ldap_connector()
-    event_handler = cfg.event_handler_proxy
     group = f"{cfg['service']}_login"
 
     login_users = get_login_users(cfg, fq_co, co)
@@ -269,9 +269,10 @@ def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
                 cfg.state.add_user(user, co)
                 if not cfg.state.is_known_user(user):
                     logger.debug("  Found new user: %s", user)
+                    event_handler = cfg.event_handler_proxy
                     event_handler.add_new_user(co, group, givenname, sn, user, mail)
 
-                handle_public_ssh_keys(cfg, co, user, entry, event_handler)
+                handle_public_ssh_keys(cfg, co, user, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
