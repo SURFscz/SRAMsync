@@ -40,11 +40,11 @@
         },
         "jsonschema": {
             "hashes": [
-                "sha256:1c92d2db1900b668201f1797887d66453ab1fbfea51df8e4b46236689c427baf",
-                "sha256:9d6397ba4a6c0bf0300736057f649e3e12ecbc07d3e81a0dacb72de4e9801957"
+                "sha256:5eb781753403847fb320f05e9ab2191725b58c5e7f97f1bed63285ca423159bc",
+                "sha256:ec2802e6a37517f09d47d9ba107947589ae1d25ff557b925d83a321fc2aa5d3b"
             ],
             "index": "pypi",
-            "version": "==4.6.0"
+            "version": "==4.6.1"
         },
         "pyasn1": {
             "hashes": [
@@ -457,11 +457,11 @@
         },
         "setuptools": {
             "hashes": [
-                "sha256:990a4f7861b31532871ab72331e755b5f14efbe52d336ea7f6118144dd478741",
-                "sha256:c1848f654aea2e3526d17fc3ce6aeaa5e7e24e66e645b5be2171f3f6b4e5a178"
+                "sha256:ca71b042399c2207a2672082b8a69d0a5777538eae1efd28006eea516e7fad8d",
+                "sha256:e887bc4f4f8056b458dce34a8af45a84bbd64970343f1cf35d6d57dd2af1bc64"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==62.6.0"
+            "version": "==63.0.0b1"
         },
         "six": {
             "hashes": [
@@ -484,7 +484,7 @@
                 "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
                 "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
             ],
-            "markers": "python_version >= '3.7'",
+            "markers": "python_version < '3.11'",
             "version": "==2.0.1"
         },
         "tomlkit": {
