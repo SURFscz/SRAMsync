@@ -44,6 +44,9 @@ def _normalize_grace_periods(cfg: dict) -> None:
         re.VERBOSE,
     )
 
+    if "groups" not in cfg["sync"]:
+        return
+
     groups = cfg["sync"]["groups"]
 
     for group, values in groups.items():
@@ -164,7 +167,8 @@ class Config:
                         },
                     },
                 },
-                "required": ["users", "groups", "event_handler"],
+                "required": ["users", "event_handler"],
+                "additionalProperties": False,
             },
             "status": {
                 "type": "object",

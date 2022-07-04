@@ -195,7 +195,11 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     """
     ldap_conn = cfg.get_ldap_connector()
 
-    login_groups = [group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]]
+    login_groups = []
+    if "groups" in cfg["sync"]:
+        login_groups = [
+            group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]
+        ]
     login_users = []
     number_of_groups = len(login_groups)
 
@@ -315,6 +319,9 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     be situation of the destination LDAP. This to be situation will be achieved
     after a successful run of the resulting script.
     """
+
+    if "groups" not in cfg["sync"]:
+        return
 
     event_handler = cfg.event_handler_proxy
     ldap_conn = cfg.get_ldap_connector()
