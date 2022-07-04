@@ -19,6 +19,8 @@
             * [SMTP password](#smtp-password)
         * [Environment variable](#environment-variable)
     * [Synchronization details](#synchronization-details)
+        * [aup_enforcement](#aup_enforcement)
+        * [users](#users)
         * [groups](#groups)
         * [Predefined attributes](#predefined-attributes)
         * [event_handler](#event_handler)
@@ -229,11 +231,14 @@ shown.
 ### Synchronization details
 
 The `sync:` holds all information regarding what to sync and in which way.
-Within this key there are two blocks: `groups:` and `event_handler:`. Thus
-on a high level, the `sync:` block look like this:
+Within this key there are four keys: `aup_enforcement`, `users`, `groups:` and
+`event_handler:`. Thus on a high level, the `sync:` block look like this:
 
 ```yaml
 sync:
+  aup_enforcement: <boolean>
+  users:
+    rename_user: <template string>
   groups:
     <group synchronization information>
   event_handler:
@@ -243,6 +248,40 @@ sync:
     - name: <another event handler name>
       config: <config for this event handler>
 ```
+
+#### aup_enforcement
+
+Service providers can request SRAM to have users accept an Acceptable User
+Policy (AUP). If this is the case, then by setting the `aup_enforcement` key to
+`true`, SRAMsync will check this value. SRAMsync uses this value, amongst
+others, to determine if a user should be provisioned. If a user has not
+accepted the AUP, then the receiving end of the synchronization will not be
+informed about this user. Once the user has accepted the AUP in SRAM, the
+receiving end will be notified when the synchronization is run.
+
+#### users
+
+The nameing convention is configurable and a template can be users to customize
+the conversion. It is used to create non conflicting users names at the
+destination. The `uid` from SRAM is unique within SRAM, but that does not
+guarentee that it will be unique at the destination. The following templates
+can be used to better tailor what is needed:
+
+* `{service}`
+* `{org}`
+* `{co}`
+* `{uid}`
+
+If you would like to add a prefix to the destination name and include CO
+information you could do something like this:
+
+```yaml
+users:
+  rename_user: "sram-{co}-{uid}"
+```
+
+The `{uid}` must be included to ensure uniqueness. If it is missing an error
+is displayed and the sync will be aborted.
 
 #### groups
 
