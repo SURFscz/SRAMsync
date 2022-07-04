@@ -131,7 +131,10 @@ class Config:
                 "properties": {
                     "users": {
                         "type": "object",
-                        "properties": {"rename_user": {"type": "string"}},
+                        "properties": {
+                            "rename_user": {"type": "string"},
+                            "aup_enforcement": {"type": "boolean"},
+                        },
                         "required": ["rename_user"],
                         "additionalProperties": False,
                     },

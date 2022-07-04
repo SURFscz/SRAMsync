@@ -30,7 +30,6 @@ from ldap.dn import str2dn
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.config import Config
-from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
 
@@ -52,6 +51,14 @@ class ConfigValidationError(jsonschema.exceptions.ValidationError):
         super().__init__(exception, path)
         self.path = path
         self.exception = exception
+
+
+class MissingUidInRenameUser(Exception):
+    """Exception in case the {uid} tag is missing from rename_user."""
+
+    def __init__(self, msg):
+        super().__init__(msg)
+        self.msg = msg
 
 
 class MultipleLoginGroups(Exception):
@@ -146,15 +153,29 @@ def get_previous_status(cfg: Config) -> dict:
     return status
 
 
-def is_user_eligible(uid: str, login_users: List[str], entry: dict) -> bool:
+def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
     """
     Check if the user (uid) is eligible for using the service. There are two
     ways to determine this. i) if the users is found to be part of the
     login_users. ii) if the voPersonStatus is set for the user.
 
-    If no login_users are defined nor is the voPersonStatus used, the user is
-    always eligible.
+    A user is eligible if all of the following is true:
+      - voPersonPolicyAgreement is defined
+      - if the user is in the login_users or no login_users are defined
+      - voPersonStatus defined and set to 'active'
     """
+
+    uid = get_attribute_from_entry(entry, "uid")
+
+    if "aup_enforcement" in cfg["sync"]["users"] and cfg["sync"]["users"]["aup_enforcement"]:
+        if "voPersonPolicyAgreement" not in entry:
+            logger.debug("AUP attribute (voPersonPolicyAgreement) missing for user: %s", uid)
+            return False
+
+        vo_person_policy_agreement = get_attribute_from_entry(entry, "voPersonPolicyAgreement")
+        for date in vo_person_policy_agreement:
+            logger.debug("policies accepted on: %s", date)
+
     if login_users and uid not in login_users:
         return False
 
@@ -230,7 +251,7 @@ def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict) -> None
             event_handler.delete_public_ssh_key(co, user, key)
 
 
-def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
+def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     """
     Process the CO user data as found in SRAM for the service.
 
@@ -258,10 +279,14 @@ def process_user_data(cfg: Config, fq_co: str, co: str) -> None:
             "(objectClass=person)",
         )
 
+        template = cfg["sync"]["users"]["rename_user"]
+        if "{uid}" not in template:
+            raise MissingUidInRenameUser("'{uid}' is missing from the 'rename_user' template.")
+
         for _, entry in dns:  # type: ignore
-            uid = get_attribute_from_entry(entry, "uid")
-            if is_user_eligible(uid, login_users, entry):
-                user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=uid)
+            if is_user_eligible(cfg, login_users, entry):
+                uid = get_attribute_from_entry(entry, "uid")
+                user = render_templated_string(template, service=cfg["service"], org=org, co=co, uid=uid)
 
                 cfg.state.add_user(user, co)
                 if not cfg.state.is_known_user(user):
@@ -371,7 +396,7 @@ def add_missing_entries_to_ldap(cfg: Config) -> None:
         event_handler.start_of_co_processing(co)
         logger.debug("Processing CO: %s", co)
 
-        process_user_data(cfg, fq_co, co)
+        process_user_data(cfg, fq_co, org, co)
         process_group_data(cfg, fq_co, org, co)
 
 
@@ -627,6 +652,8 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
     except MultipleLoginGroups:
         logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
     except ValueError as e:
+        logger.error(e)
+    except MissingUidInRenameUser:
         logger.error(e)
 
     if not clean_exit:
