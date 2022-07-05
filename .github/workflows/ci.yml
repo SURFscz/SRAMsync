@@ -40,6 +40,9 @@ jobs:
       - name: Install needed python packages
         run: pipenv install --dev
 
+      - name: Install missing importlib_resources
+        run: pipenv install importlib_resources
+        
       - name: Start LDAP server
         run: |
           ./test/start-ldap.sh
