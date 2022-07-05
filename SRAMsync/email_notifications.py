@@ -203,7 +203,9 @@ class EmailNotifications(EventHandler):
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
         except KeyError as e:
-            raise PasswordNotFound("Password not found. Check your password source.") from e
+            raise PasswordNotFound(
+                f"SMTP password for host {cfg['smtp']['host']} not found. Check your password source."
+            ) from e
 
         self.report_events = cfg["report_events"]
         self.msg_content = cfg["mail-message"]
