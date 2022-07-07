@@ -13,6 +13,7 @@
 * [Invocation](#invocation)
 * [Structure of sync-with-sram](#structure-of-sync-with-sram)
 * [Configuration details](#configuration-details)
+    * [Multiple configurations](#multiple-configurations)
     * [SRAM connection details](#sram-connection-details)
         * [Password file format](#password-file-format)
             * [SRAM LDAP passwords](#sram-ldap-passwords)
@@ -132,20 +133,30 @@ status:
   <status details>
 ```
 
-As can be noticed from the above, three major blocks can be identified:
+As can be noticed from the above, five parts can be identified:
 
-1. `sram:` Connection details for SRAM
-2. `sync:` What and how to synchronize
-3. `status:` How to keep track of the current state of the synchronization process
+1. `service:` Define the service name
+2. `secrets:` Configuration details concerning secrets
+3. `sram:` Connection details for SRAM
+4. `sync:` What and how to synchronize
+5. `status:` How to keep track of the current state of the synchronization process
 
-Next to these blocks, there is the `service` key which is for specifying the
-name of the service for which the configuration is created. The `secrets` part
-is optional. However, if omitted, one does need to put any passwords in the
-configuration file itself. The exception to this is for the passwd of SRAM
-LDAP. In case this, one could use the environment variable `SRAM_LDAP_PASSWD`.
-Note however that for any other password in the configuration file the use of
-environment variables in unavailable. For those cases, either use the `secrets`
-file, or put passwords in plain text into the configuration file.
+The `secrets` part is optional. However, if omitted, one does need to put any
+passwords in the configuration file itself. The exception to this is for the
+passwd of SRAM LDAP. In case this, one could use the environment variable
+`SRAM_LDAP_PASSWD`. Note however that for any other passwords in the
+configuration file the use of environment variables in unavailable. For those
+cases, either use the `secrets` file, or put passwords in plain text into the
+configuration file.
+
+### Multiple configurations
+
+If a service provide supports multiple services and each service needs to be
+synchronized, it is possible to put all those configuration files into a single
+directory and instead of calling `sync-with-sram` with a single configuration
+file, use the directory instead. `sync-with-sram` will loop over all `*.yml`
+and `*.yaml` files in that directory and consider them to be configuration
+files.
 
 ### SRAM connection details
 
