@@ -176,7 +176,7 @@ def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
         for date in vo_person_policy_agreement:
             logger.debug("policies accepted on: %s", date)
 
-    if login_users and uid not in login_users:
+    if uid not in login_users:
         return False
 
     if "voPersonStatus" in entry:
