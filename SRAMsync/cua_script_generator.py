@@ -299,9 +299,7 @@ class CuaScriptGenerator(EventHandler):
             logger.info("Executing generated script")
             self.script_file_descriptor.flush()
             try:
-                result = subprocess.run(
-                    ["../tmp/test-delena.sh"], check=True, capture_output=True, shell=True
-                )
+                result = subprocess.run([self.script_name], check=True, capture_output=True, shell=True)
                 logger.debug("script retuned: %d", result.returncode)
                 logger.debug("script output: %s", result.stdout)
             except subprocess.TimeoutExpired:
