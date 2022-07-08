@@ -111,10 +111,10 @@
         },
         "python-ldap": {
             "hashes": [
-                "sha256:60464c8fc25e71e0fd40449a24eae482dcd0fb7fcf823e7de627a6525b3e0d12"
+                "sha256:b16470a0983aaf09a00ffb8f40b69a2446f3d0be639a229256bce381fcb268f7"
             ],
             "index": "pypi",
-            "version": "==3.4.0"
+            "version": "==3.4.2"
         },
         "pyyaml": {
             "hashes": [
@@ -489,11 +489,11 @@
         },
         "tomlkit": {
             "hashes": [
-                "sha256:0f4050db66fd445b885778900ce4dd9aea8c90c4721141fde0d6ade893820ef1",
-                "sha256:71ceb10c0eefd8b8f11fe34e8a51ad07812cb1dc3de23247425fbc9ddc47b9dd"
+                "sha256:1c5bebdf19d5051e2e1de6cf70adfc5948d47221f097fcff7a3ffc91e953eaf5",
+                "sha256:61901f81ff4017951119cd0d1ed9b7af31c821d6845c8c477587bbdcd5e5854e"
             ],
             "markers": "python_version >= '3.6' and python_version < '4.0'",
-            "version": "==0.11.0"
+            "version": "==0.11.1"
         },
         "wrapt": {
             "hashes": [
