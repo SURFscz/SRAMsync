@@ -102,9 +102,6 @@ class CuaScriptGenerator(EventHandler):
         self._print("#")
         self._print("#" * 80)
         self._print("")
-        if logging.getLogger("SRAMsync").getEffectiveLevel() <= logging.DEBUG:
-            self._print("set -o xtrace")
-            self._print("")
         self._print("trap quit INT")
         self._print("")
         self._print("function quit() {")
