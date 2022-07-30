@@ -54,7 +54,8 @@
         * [remove-graced-user-from-group](#remove-graced-user-from-group)
         * [remove-user-from-group](#remove-user-from-group)
         * [finalize](#finalize)
-
+  * [Acknowledgment](#acknowledgment)
+  
 <!-- vim-markdown-toc -->
 ## Purpose of SRAMsync
 
@@ -993,3 +994,7 @@ Input: *none*
 
 This is the very last event to be emitted. It signals that the synchronization has
 finished and is always emitted
+
+## Acknowledgment
+
+This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 101017529.
