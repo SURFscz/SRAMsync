@@ -358,7 +358,6 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                 for member in members:
                     m_uid = dn_to_rdns(member)["uid"][0]
                     user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
-                    cfg.state.add_member(dest_group_name, user)
                     try:
                         if not cfg.state.is_user_member_of_group(dest_group_name, user):
                             event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
@@ -369,6 +368,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                             dest_group_name,
                             co,
                         )
+                    cfg.state.add_member(dest_group_name, user)
 
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning("service '%s' does not contain group '%s'", fq_co, sram_group)
