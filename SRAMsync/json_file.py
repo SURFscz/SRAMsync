@@ -68,7 +68,7 @@ class JsonFile(State):
 
     def is_user_member_of_group(self, dest_group_name, user) -> bool:
         try:
-            return user in self._new_state["groups"][dest_group_name]["members"]
+            return user in self._last_known_state["groups"][dest_group_name]["members"]
         except KeyError:
             raise UnkownGroup(dest_group_name)
 
