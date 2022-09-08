@@ -221,22 +221,13 @@ class Config:
 
         event_handler_section = self.config["sync"]["event_handler"]
 
-        # event_handler_class = deduct_event_handler_class(event_handler_section["name"])
-
         event_handler_instances = []
         for event in event_handler_section:
             event_handler_class = deduct_event_handler_class(event["name"])
 
             event_handler_cfg = {}
             if "config" in event:
-                event_handler_cfg = event["config"]
-
-            # event_handler_cfg.update({"status_filename": self.config["status_filename"]})
-
-            # if "provisional_status_filename" in self.config:
-            #     event_handler_cfg.update(
-            #         {"provisional_status_filename": self.config["provisional_status_filename"]}
-            #     )
+                event_handler_cfg["event_handler_config"] = event["config"]
 
             if hasattr(self, "secrets"):
                 event_handler_cfg["secrets"] = self.secrets

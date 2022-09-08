@@ -57,22 +57,22 @@ class CuaScriptGenerator(EventHandler):
         super().__init__(service, cfg, state, cfg_path, args)
 
         try:
-            validate(schema=CuaScriptGenerator._schema, instance=cfg)
+            validate(schema=CuaScriptGenerator._schema, instance=cfg["event_handler_config"])
 
             self.run = bool("run" in args)
 
-            self.cfg = cfg
+            self.cfg = cfg["event_handler_config"]
             self.state = state
-            self.script_name = render_templated_string(cfg["filename"], service=service)
+            self.script_name = render_templated_string(self.cfg["filename"], service=service)
             self.script_file_descriptor = open(  # pylint: disable=consider-using-with
                 self.script_name, "w+", encoding="utf8"
             )
             os.chmod(self.script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
             self.service_name = service
-            self.add_cmd = cfg["add_cmd"]
-            self.modify_cmd = cfg["modify_cmd"]
-            self.check_cmd = cfg["check_cmd"]
-            self.sshkey_cmd = cfg["sshkey_cmd"]
+            self.add_cmd = self.cfg["add_cmd"]
+            self.modify_cmd = self.cfg["modify_cmd"]
+            self.check_cmd = self.cfg["check_cmd"]
+            self.sshkey_cmd = self.cfg["sshkey_cmd"]
             self._generate_header()
         except ConfigValidationError as e:
             raise e
