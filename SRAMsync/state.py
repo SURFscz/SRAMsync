@@ -30,9 +30,17 @@ class State(ABC):
     process. Either state can be querried for known or unknown things.
     """
 
-    @abstractmethod
-    def __init__(self, cfg: dict, **kwargs: str):
+    def __init__(self, cfg: dict):
         """init"""
+        self.cfg = cfg
+
+    def get_config(self) -> dict:
+        """Get the config for the State class."""
+        return self.cfg
+
+    def get_state_name(self) -> str:
+        """Get the name from the config for this State."""
+        return self.cfg["name"]
 
     @abstractmethod
     def __getitem__(self, key: str) -> Any:

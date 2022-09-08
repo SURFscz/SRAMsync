@@ -200,10 +200,10 @@ class Config:
             with open(config["secrets"]["file"], encoding="utf8") as fd:
                 self.secrets = yaml.safe_load(fd)
 
-        event_handlers = self.get_event_handlers(**args)
-        self.event_handler_proxy = EventHandlerProxy(event_handlers)
-
         self.state = get_status_object(config["status"], service=config["service"])
+
+        event_handlers = self.get_event_handlers(self.state, **args)
+        self.event_handler_proxy = EventHandlerProxy(event_handlers)
 
     def __getitem__(self, item: str) -> Any:
         return self.config[item]
@@ -211,7 +211,7 @@ class Config:
     def __contains__(self, item: str) -> bool:
         return item in self.config
 
-    def get_event_handlers(self, **args: dict) -> List[EventHandler]:
+    def get_event_handlers(self, state: State, **args: dict) -> List[EventHandler]:
         """
         Dynamically load the configured class from the configuration. If the class
         expects a configuration extract that from the configuration and pass it
@@ -242,7 +242,7 @@ class Config:
                 event_handler_cfg["secrets"] = self.secrets
 
             event_handler_instance = event_handler_class(
-                self.config["service"], event_handler_cfg, ["sync", "event_handler", "config"], **args
+                self.config["service"], event_handler_cfg, state, ["sync", "event_handler", "config"], **args
             )
 
             event_handler_instances.append(event_handler_instance)

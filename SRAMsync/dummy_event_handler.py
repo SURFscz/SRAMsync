@@ -10,8 +10,8 @@ from SRAMsync.sramlogger import logger
 class DummyEventHandler(EventHandler):
     """Write a simple log message for each received event."""
 
-    def __init__(self, service, cfg, cfg_path, **args):
-        super().__init__(service, cfg, cfg_path, args)
+    def __init__(self, service, cfg, state, cfg_path, **args):
+        super().__init__(service, cfg, state, cfg_path, args)
         logger.info(click.style("service: ", fg="magenta") + click.style(service, fg="bright_white"))
         logger.info(click.style("config: ", fg="magenta") + str(cfg))
         logger.info(click.style("config path: ", fg="magenta") + str(cfg_path))

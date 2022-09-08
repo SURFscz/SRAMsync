@@ -5,7 +5,7 @@ the State class based on a JSON file.
 
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from jsonschema import validate
 
@@ -24,23 +24,31 @@ class JsonFile(State):
         "type": "object",
         "properties": {
             "status_filename": {"type": "string"},
+            "provisional_status_filename": {"type": "string"},
         },
         "required": ["status_filename"],
         "additionalProperties": False,
     }
 
     def __init__(self, cfg: dict, **kwargs: str):
-        super().__init__(cfg, **kwargs)
+        super().__init__(cfg)
 
         validate(schema=self._schema, instance=cfg)
 
-        self.status_filename = render_templated_string(cfg["status_filename"], **kwargs)
+        if "provisional_status_filename" in cfg:
+            status_filename = cfg["provisional_status_filename"]
+        else:
+            status_filename = cfg["status_filename"]
+
+        self.status_filename = render_templated_string(status_filename, **kwargs)
+
         try:
             with open(self.status_filename, encoding="utf8") as fd:
                 self._last_known_state = json.load(fd)
         except FileNotFoundError:
             self._last_known_state = {"users": {}, "groups": {}}
 
+        self.cfg = cfg
         self._new_state = {"users": {}, "groups": {}}
 
     def __getitem__(self, key: str) -> Any:
@@ -51,6 +59,15 @@ class JsonFile(State):
         if key not in self._new_state:
             self._new_state[key] = value
         self._new_state[key] = value
+
+    def get_status_filename(self) -> str:
+        """Return the status file name."""
+        return self.cfg["status_filename"]
+
+    def get_provisional_status_filename(self) -> Optional[str]:
+        """If the provisional_status_filename is defined, return it."""
+        if "provisional_status_filename" in self.cfg:
+            return self.cfg["provisional_status_filename"]
 
     def dump_state(self) -> None:
         try:

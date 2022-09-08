@@ -14,6 +14,7 @@ from jsonschema import ValidationError, validate
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
+from SRAMsync.state import State
 from SRAMsync.sync_with_sram import ConfigValidationError, PasswordNotFound
 
 
@@ -184,8 +185,8 @@ class EmailNotifications(EventHandler):
         "!eNULL:!MD5"
     )
 
-    def __init__(self, service: str, cfg: dict, config_path, **args: dict) -> None:
-        super().__init__(service, cfg, config_path, args)
+    def __init__(self, service: str, cfg: dict, state: State, config_path, **args: dict) -> None:
+        super().__init__(service, cfg, state, config_path, args)
         try:
             validate(schema=self._schema, instance=cfg)
 

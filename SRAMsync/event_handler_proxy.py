@@ -12,7 +12,7 @@ class EventHandlerProxy(EventHandler):
     """Proxy class to iterate over EventHandlers."""
 
     def __init__(self, event_handlers):
-        super().__init__(None, None, None, None)
+        super().__init__(None, None, None, None, None)
         self.event_handlers = event_handlers
 
     def start_of_co_processing(self, co):

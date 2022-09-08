@@ -8,6 +8,7 @@ from jsonschema import ValidationError, validate
 
 from SRAMsync.cua_script_generator import CuaScriptGenerator
 from SRAMsync.sync_with_sram import ConfigValidationError
+from SRAMsync.state import State
 
 
 class CbaScriptGenerator(CuaScriptGenerator):
@@ -30,10 +31,10 @@ class CbaScriptGenerator(CuaScriptGenerator):
         "required": ["cba_add_cmd", "cba_del_cmd", "cba_machine", "cba_budget_account", "cua_config"],
     }
 
-    def __init__(self, service: str, cfg: dict, path: str, **args) -> None:
+    def __init__(self, service: str, cfg: dict, state: State, path: str, **args) -> None:
         try:
             validate(schema=CbaScriptGenerator._schema, instance=cfg)
-            super().__init__(service, cfg["cua_config"], path, **args)
+            super().__init__(service, cfg["cua_config"], state, path, **args)
             self.cfg = cfg
         except ConfigValidationError as e:
             raise e

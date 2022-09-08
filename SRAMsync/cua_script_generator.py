@@ -53,8 +53,8 @@ class CuaScriptGenerator(EventHandler):
 
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service, cfg, cfg_path, **args) -> None:
-        super().__init__(service, cfg, cfg_path, args)
+    def __init__(self, service, cfg, state, cfg_path, **args) -> None:
+        super().__init__(service, cfg, state, cfg_path, args)
 
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg)
@@ -62,6 +62,7 @@ class CuaScriptGenerator(EventHandler):
             self.run = bool("run" in args)
 
             self.cfg = cfg
+            self.state = state
             self.script_name = render_templated_string(cfg["filename"], service=service)
             self.script_file_descriptor = open(  # pylint: disable=consider-using-with
                 self.script_name, "w+", encoding="utf8"
@@ -266,25 +267,24 @@ class CuaScriptGenerator(EventHandler):
         Close the generated script with final bash command. This includes for example
         replacing the status file with the provisional one.
         """
-        if "provisional_status_filename" in self.cfg:
-            service = self.service_name
-            status_filename = self.cfg["status_filename"]
-            status_filename = render_templated_string(status_filename, service=service)
-            provisional_status_filename = self.cfg["provisional_status_filename"]
-            provisional_status_filename = render_templated_string(
-                provisional_status_filename, service=service
-            )
+        if type(self.state).__name__ == "JsonFile":
+            provisional_filename = self.state.get_provisional_status_filename()
+            if provisional_filename:
+                service = self.service_name
+                status_filename = self.state.get_status_filename()
+                status_filename = render_templated_string(status_filename, service=service)
+                provisional_status_filename = render_templated_string(provisional_filename, service=service)
 
-            self._print("\n" + "#" * 32)
-            self._print("# Cleaning provisional status. #")
-            self._print("#" * 32)
-            self._print(f'if [ -f "{provisional_status_filename}" ]; then')
-            self._print(f'  mv "{provisional_status_filename}" "{status_filename}"')
-            self._print("else")
-            self._print(
-                f"  echo 'Cannot find {provisional_status_filename}. Has this script been run before?'"
-            )
-            self._print("fi")
+                self._print("\n" + "#" * 32)
+                self._print("# Cleaning provisional status. #")
+                self._print("#" * 32)
+                self._print(f'if [ -f "{provisional_status_filename}" ]; then')
+                self._print(f'  mv "{provisional_status_filename}" "{status_filename}"')
+                self._print("else")
+                self._print(
+                    f"  echo 'Cannot find {provisional_status_filename}. Has this script been run before?'"
+                )
+                self._print("fi")
 
         self._print("\n" + "#" * 43)
         self._print("#" + " " * 41 + "#")
