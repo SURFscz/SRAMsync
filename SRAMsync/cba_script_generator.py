@@ -33,9 +33,9 @@ class CbaScriptGenerator(CuaScriptGenerator):
 
     def __init__(self, service: str, cfg: dict, state: State, path: str, **args) -> None:
         try:
-            validate(schema=CbaScriptGenerator._schema, instance=cfg)
+            validate(schema=CbaScriptGenerator._schema, instance=cfg["event_handler_config"])
             super().__init__(service, cfg["cua_config"], state, path, **args)
-            self.cfg = cfg
+            self.cfg = cfg["event_handler_config"]
         except ConfigValidationError as e:
             raise e
         except ValidationError as e:

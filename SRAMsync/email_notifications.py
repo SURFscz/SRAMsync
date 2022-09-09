@@ -188,18 +188,19 @@ class EmailNotifications(EventHandler):
     def __init__(self, service: str, cfg: dict, state: State, config_path, **args: dict) -> None:
         super().__init__(service, cfg, state, config_path, args)
         try:
-            validate(schema=self._schema, instance=cfg)
+            validate(schema=self._schema, instance=cfg["event_handler_config"])
 
-            if "passwd_from_secrets" in cfg["smtp"]:
-                login_name = cfg["smtp"]["login"]
-                host = cfg["smtp"]["host"]
-                cfg["smtp"]["passwd"] = cfg["secrets"]["smtp"][host][login_name]
+            self.cfg = cfg["event_handler_config"]
 
-            self.cfg = cfg
+            if "passwd_from_secrets" in self.cfg["smtp"]:
+                login_name = self.cfg["smtp"]["login"]
+                host = self.cfg["smtp"]["host"]
+                self.cfg["smtp"]["passwd"] = cfg["secrets"]["smtp"][host][login_name]
+
             self.service = service
             self._messages = {}
             self.finalize_message = ""
-            self.aggregate_mails = cfg.get("aggregate_mails", True)
+            self.aggregate_mails = self.cfg.get("aggregate_mails", True)
 
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
@@ -209,12 +210,11 @@ class EmailNotifications(EventHandler):
                 "Check your password source."
             ) from e
 
-        self.report_events = cfg["report_events"]
-        self.msg_content = cfg["mail-message"]
+        self.report_events = self.cfg["report_events"]
+        self.msg_content = self.cfg["mail-message"]
 
     def __del__(self) -> None:
-        if hasattr(self, "cfg"):
-            self.send_queued_messages()
+        self.send_queued_messages()
 
     def add_message_to_current_co_group(
         self, co: str, event: str, event_message: str, important: bool = False
