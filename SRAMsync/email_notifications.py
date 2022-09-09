@@ -175,8 +175,8 @@ class EmailNotifications(EventHandler):
             "mail-subject": {"type": "string"},
             "mail-message": {"type": "string"},
         },
-        "required": ["report_events", "mail-from", "mail-to", "mail-subject", "mail-message"],
-        "optional": ["aggregate_mails", "smtp"],
+        "required": ["report_events", "smtp", "mail-from", "mail-to", "mail-subject", "mail-message"],
+        "optional": ["aggregate_mails"],
     }
 
     _DEFAULT_CIPHERS = (
