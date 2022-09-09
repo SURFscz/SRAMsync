@@ -89,8 +89,8 @@ class JsonFile(State):
                 return False
 
             return user in self._last_known_state["groups"][dest_group_name]["members"]
-        except KeyError:
-            raise UnkownGroup(dest_group_name)
+        except KeyError as e:
+            raise UnkownGroup(dest_group_name) from e
 
     def is_found_group(self, group: str) -> bool:
         return group in self._new_state["groups"]
