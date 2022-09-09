@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="SRAMsync",
-    version="4.0.5",
+    version="4.0.6",
     author="Gerben Venekamp",
     author_email="gerben.venekamp@surf.nl",
     description="Reading entries and attributes from SRAM LDAP and process them",
