@@ -36,11 +36,11 @@ class JsonFile(State):
         validate(schema=self._schema, instance=cfg)
 
         if "provisional_status_filename" in cfg:
-            status_filename = cfg["provisional_status_filename"]
-        else:
-            status_filename = cfg["status_filename"]
+            self.provisional_status_filename = render_templated_string(
+                cfg["provisional_status_filename"], **kwargs
+            )
 
-        self.status_filename = render_templated_string(status_filename, **kwargs)
+        self.status_filename = render_templated_string(cfg["status_filename"], **kwargs)
 
         try:
             with open(self.status_filename, encoding="utf8") as fd:
@@ -67,11 +67,16 @@ class JsonFile(State):
     def get_provisional_status_filename(self) -> Optional[str]:
         """If the provisional_status_filename is defined, return it."""
         if "provisional_status_filename" in self.cfg:
-            return self.cfg["provisional_status_filename"]
+            return self.provisional_status_filename
 
     def dump_state(self) -> None:
         try:
-            with open(self.status_filename, "w", encoding="utf8") as fd:
+            if "provisional_status_filename" in self.cfg:
+                status_filename = self.provisional_status_filename
+            else:
+                status_filename = self.status_filename
+
+            with open(status_filename, "w", encoding="utf8") as fd:
                 json.dump(self._new_state, fd, indent=2, sort_keys=True)
                 fd.write("\n")
         except FileNotFoundError:
