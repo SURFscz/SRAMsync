@@ -283,7 +283,7 @@ class EmailNotifications(EventHandler):
         return final_message
 
     def add_event_message(self, co: str, event: str, important: bool = True, **args) -> None:
-        """Add a event message and apply formatting to it."""
+        """Add an event message and apply formatting to it."""
         if event in self.report_events:
             event_message = f"{self.report_events[event]['line']}".format(co=co, **args)
             self.add_message_to_current_co_group(co, event, event_message, important)
