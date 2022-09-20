@@ -2,7 +2,7 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-ble.svg)](http://perso.crans.org/besson/LICENSE.html)
-![workflow](https://github.com/venekamp/SRAMsync/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/SURFscz/SRAMsync/actions/workflows/ci.yml/badge.svg)](https://github.com/SURFscz/SRAMsync/actions/workflows/ci.yml)
 
 ## Table of Contents
 
@@ -55,7 +55,7 @@
         * [remove-user-from-group](#remove-user-from-group)
         * [finalize](#finalize)
   * [Acknowledgment](#acknowledgment)
-  
+
 <!-- vim-markdown-toc -->
 ## Purpose of SRAMsync
 
