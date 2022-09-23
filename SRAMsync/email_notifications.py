@@ -123,6 +123,7 @@ class EmailNotifications(EventHandler):
         "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+            "collect_events": {"type": "boolean"},
             "aggregate_mails": {"type": "boolean"},
             "report_events": {
                 "type": "object",
@@ -176,7 +177,7 @@ class EmailNotifications(EventHandler):
             "mail-message": {"type": "string"},
         },
         "required": ["report_events", "smtp", "mail-from", "mail-to", "mail-subject", "mail-message"],
-        "optional": ["aggregate_mails"],
+        "optional": ["collect_events", "aggregate_mails"],
     }
 
     _DEFAULT_CIPHERS = (
@@ -191,6 +192,14 @@ class EmailNotifications(EventHandler):
             validate(schema=self._schema, instance=cfg["event_handler_config"])
 
             self.cfg = cfg["event_handler_config"]
+
+            try:
+                if not self.cfg["collect_events"] and self.cfg["aggregate_mails"]:
+                    logger.warning(
+                        "Ignoring value of aggregate_mails, because collect_events is set to False."
+                    )
+            except KeyError:
+                pass
 
             if "passwd_from_secrets" in self.cfg["smtp"]:
                 login_name = self.cfg["smtp"]["login"]
