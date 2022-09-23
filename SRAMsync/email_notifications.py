@@ -193,13 +193,11 @@ class EmailNotifications(EventHandler):
 
             self.cfg = cfg["event_handler_config"]
 
-            try:
-                if not self.cfg["collect_events"] and self.cfg["aggregate_mails"]:
-                    logger.warning(
-                        "Ignoring value of aggregate_mails, because collect_events is set to False."
-                    )
-            except KeyError:
-                pass
+            self.collect_events = self.cfg.get("collect_events", True)
+            self.aggregate_mails = self.cfg.get("aggregate_mails", True)
+
+            if not self.collect_events and self.aggregate_mails:
+                logger.warning("Ignoring value of aggregate_mails, because collect_events is set to False.")
 
             if "passwd_from_secrets" in self.cfg["smtp"]:
                 login_name = self.cfg["smtp"]["login"]
@@ -209,7 +207,6 @@ class EmailNotifications(EventHandler):
             self.service = service
             self._messages = {}
             self.finalize_message = ""
-            self.aggregate_mails = self.cfg.get("aggregate_mails", True)
 
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
