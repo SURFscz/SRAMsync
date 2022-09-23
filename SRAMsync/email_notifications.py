@@ -238,6 +238,16 @@ class EmailNotifications(EventHandler):
         # Using set() automatically filters out double messages.
         self._messages[co][event]["messages"].add(event_message)
 
+        if not self.collect_events:
+            self.send_queued_messages()
+            #  Cleanup all message except for start-co-processing
+            self._messages = {
+                ok: {ik: iv}
+                for ok, ov in self._messages.items()
+                for ik, iv in ov.items()
+                if ik == "start-co-processing"
+            }
+
     def send_queued_messages(self) -> None:
         """Send all queued message."""
         message = ""
