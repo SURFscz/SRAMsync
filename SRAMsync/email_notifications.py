@@ -3,12 +3,12 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
-
 from email.message import EmailMessage
 from email.utils import formatdate
 import smtplib
 import ssl
 
+import click
 from jsonschema import ValidationError, validate
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
@@ -52,6 +52,8 @@ class SMTPclient:
                 got_credentials = False
             if got_credentials:
                 self.login(cfg["login"], cfg["passwd"])
+
+        self.mail_to_stdout = False
 
     def __del__(self):
         if hasattr(self, "server"):
@@ -105,11 +107,24 @@ class SMTPclient:
             msg["Date"] = formatdate(localtime=True)
             content = render_templated_string(self.mail_message, service=service, message=message)
             msg.set_content(content)
-            self.server.send_message(msg)
+
+            if not self.mail_to_stdout:
+                self.server.send_message(msg)
+            else:
+                logger.info(click.style("Want to sent message:", bold=True, fg="yellow"))
+                logger.info(msg)
+                logger.info(click.style("end-of-message", bold=True, fg="yellow"))
 
             logger.debug("Message sent")
         except smtplib.SMTPServerDisconnected:
             logger.error("Sending e-mail notifications for has failed. SMTP server has disconnected.")
+
+    def set_output_to_stdout(self):
+        """
+        Print the mail message to stdout instead of sending it through the
+        SMTP server.
+        """
+        self.mail_to_stdout = True
 
 
 class EmailNotifications(EventHandler):
@@ -191,6 +206,8 @@ class EmailNotifications(EventHandler):
         try:
             validate(schema=self._schema, instance=cfg["event_handler_config"])
 
+            self.mail_to_stdout = True if "mail-to-stdout" in args else False
+
             self.cfg = cfg["event_handler_config"]
 
             self.collect_events = self.cfg.get("collect_events", True)
@@ -261,6 +278,9 @@ class EmailNotifications(EventHandler):
                 mail_subject=self.cfg["mail-subject"],
                 mail_message=self.cfg["mail-message"],
             )
+
+            if self.mail_to_stdout:
+                smtp_client.set_output_to_stdout()
 
             for co_messages in self._messages.values():
                 message = message + self.render_message(co_messages)
