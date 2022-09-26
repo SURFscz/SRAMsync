@@ -12,9 +12,9 @@ class DummyEventHandler(EventHandler):
 
     def __init__(self, service, cfg, state, cfg_path, **args):
         super().__init__(service, cfg, state, cfg_path, args)
-        logger.info(click.style("service: ", fg="magenta") + click.style(service, fg="bright_white"))
-        logger.info(click.style("config: ", fg="magenta") + str(cfg))
-        logger.info(click.style("config path: ", fg="magenta") + str(cfg_path))
+        logger.debug(click.style("service: ", fg="magenta") + click.style(service, fg="bright_white"))
+        logger.debug(click.style("config: ", fg="magenta") + str(cfg))
+        logger.debug(click.style("config path: ", fg="magenta") + str(cfg_path))
 
     def start_of_co_processing(self, co):
         """Log the start_of_co_processing event."""
