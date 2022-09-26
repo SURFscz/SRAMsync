@@ -8,7 +8,6 @@ the CUA.
 """
 
 from datetime import datetime
-import logging
 import os
 import stat
 import subprocess
