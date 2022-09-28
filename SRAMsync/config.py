@@ -135,7 +135,20 @@ class Config:
                     "users": {
                         "type": "object",
                         "properties": {
-                            "rename_user": {"type": "string"},
+                            "rename_user": {
+                                "oneOf": [
+                                    {"type": "string"},
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "default": {"type": "string"},
+                                            "co-specific": {"type": "object"},
+                                        },
+                                        "required": ["co-specific"],
+                                        "additionalProperties": False,
+                                    },
+                                ],
+                            },
                             "aup_enforcement": {"type": "boolean"},
                         },
                         "required": ["rename_user"],

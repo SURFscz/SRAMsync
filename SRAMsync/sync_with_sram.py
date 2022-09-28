@@ -187,6 +187,37 @@ def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
     return True
 
 
+def render_user_name(cfg: Config, org: str, co: str, uid: str) -> str:
+    """
+    Render the new user name base on the template as defined by the configuration file.
+    """
+    service = cfg["service"]
+    template = ""
+
+    if isinstance(cfg["sync"]["users"]["rename_user"], str):
+        template = cfg["sync"]["users"]["rename_user"]
+    else:
+        try:
+            template = cfg["sync"]["users"]["rename_user"]["co-specific"][co]
+        except KeyError:
+            try:
+                template = cfg["sync"]["users"]["rename_user"]["default"]
+            except KeyError:
+                logger.error(
+                    "Renaming for co %s failed, because there is not specific rule that co, "
+                    "nor is there a default defined.",
+                    co,
+                )
+                exit(-1)
+
+    if "{uid}" not in template:
+        raise MissingUidInRenameUser("'{uid}' is missing from the 'rename_user' template.")
+
+    user_name = render_templated_string(template, service=service, org=org, co=co, uid=uid)
+
+    return user_name
+
+
 def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     """
     Check if there is at least one and not more than one group that controls
@@ -283,14 +314,11 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             "(objectClass=person)",
         )
 
-        template = cfg["sync"]["users"]["rename_user"]
-        if "{uid}" not in template:
-            raise MissingUidInRenameUser("'{uid}' is missing from the 'rename_user' template.")
-
         for _, entry in dns:  # type: ignore
             if is_user_eligible(cfg, login_users, entry):
                 uid = get_attribute_from_entry(entry, "uid")
-                user = render_templated_string(template, service=cfg["service"], org=org, co=co, uid=uid)
+                # user = render_templated_string(template, service=cfg["service"], org=org, co=co, uid=uid)
+                user = render_user_name(cfg, org=org, co=co, uid=uid)
 
                 cfg.state.add_user(user, co)
                 if not cfg.state.is_known_user(user):
@@ -357,7 +385,8 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                 members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
                 for member in members:
                     m_uid = dn_to_rdns(member)["uid"][0]
-                    user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
+                    # user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
+                    user = render_user_name(cfg, org=org, co=co, uid=m_uid)
                     try:
                         if not cfg.state.is_user_member_of_group(dest_group_name, user):
                             event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
