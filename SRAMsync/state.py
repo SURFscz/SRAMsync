@@ -55,6 +55,10 @@ class State(ABC):
         """Dump the current state."""
 
     @abstractmethod
+    def get_last_known_state(self) -> dict:
+        """Return the last known state."""
+
+    @abstractmethod
     def is_known_user(self, user: str) -> bool:
         """Check if the user is known from the last state."""
 

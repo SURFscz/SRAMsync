@@ -82,6 +82,9 @@ class JsonFile(State):
         except FileNotFoundError:
             pass
 
+    def get_last_known_state(self) -> dict:
+        return self._last_known_state
+
     def is_known_user(self, user: str) -> bool:
         return user in self._last_known_state["users"]
 
