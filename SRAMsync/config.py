@@ -15,6 +15,7 @@ from ldap import ldapobject
 from SRAMsync.common import deduct_event_handler_class
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
+from SRAMsync.state import NoGracePeriodForGroupError
 from SRAMsync.state import State
 
 
@@ -259,9 +260,10 @@ class Config:
         """Get the defined grace period for group in seconds."""
         re_grace_period = "grace_period=[0-9]+"
 
-        for attribute in self.config["sync"]["groups"][group]["attributes"]:
+        last_known_state = self.state.get_last_known_state()
+        for attribute in last_known_state["groups"][group]["attributes"]:
             if re.search(re_grace_period, attribute):
                 _, seconds = attribute.split("=")
                 return seconds
 
-        return -1
+        raise NoGracePeriodForGroupError
