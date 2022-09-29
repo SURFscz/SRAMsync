@@ -143,9 +143,9 @@ class Config:
                                         "type": "object",
                                         "properties": {
                                             "default": {"type": "string"},
-                                            "co-specific": {"type": "object"},
+                                            "groups": {"type": "object"},
                                         },
-                                        "required": ["co-specific"],
+                                        "required": ["groups"],
                                         "additionalProperties": False,
                                     },
                                 ],

@@ -198,7 +198,7 @@ def render_user_name(cfg: Config, org: str, co: str, uid: str) -> str:
         template = cfg["sync"]["users"]["rename_user"]
     else:
         try:
-            template = cfg["sync"]["users"]["rename_user"]["co-specific"][co]
+            template = cfg["sync"]["users"]["rename_user"]["groups"][co]
         except KeyError:
             try:
                 template = cfg["sync"]["users"]["rename_user"]["default"]
