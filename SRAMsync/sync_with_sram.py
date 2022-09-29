@@ -187,7 +187,7 @@ def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
     return True
 
 
-def render_user_name(cfg: Config, org: str, co: str, uid: str) -> str:
+def render_user_name(cfg: Config, org: str, co: str, group: str, uid: str) -> str:
     """
     Render the new user name base on the template as defined by the configuration file.
     """
@@ -198,7 +198,7 @@ def render_user_name(cfg: Config, org: str, co: str, uid: str) -> str:
         template = cfg["sync"]["users"]["rename_user"]
     else:
         try:
-            template = cfg["sync"]["users"]["rename_user"]["groups"][co]
+            template = cfg["sync"]["users"]["rename_user"]["groups"][group]
         except KeyError:
             try:
                 template = cfg["sync"]["users"]["rename_user"]["default"]
@@ -318,7 +318,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             if is_user_eligible(cfg, login_users, entry):
                 uid = get_attribute_from_entry(entry, "uid")
                 # user = render_templated_string(template, service=cfg["service"], org=org, co=co, uid=uid)
-                user = render_user_name(cfg, org=org, co=co, uid=uid)
+                user = render_user_name(cfg, org=org, co=co, group=group, uid=uid)
 
                 cfg.state.add_user(user, co)
                 if not cfg.state.is_known_user(user):
@@ -385,8 +385,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                 members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
                 for member in members:
                     m_uid = dn_to_rdns(member)["uid"][0]
-                    # user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
-                    user = render_user_name(cfg, org=org, co=co, uid=m_uid)
+                    user = render_user_name(cfg, org=org, co=co, group=sram_group, uid=m_uid)
                     try:
                         if not cfg.state.is_user_member_of_group(dest_group_name, user):
                             event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
