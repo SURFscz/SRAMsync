@@ -210,8 +210,8 @@ class EmailNotifications(EventHandler):
 
             self.cfg = cfg["event_handler_config"]
 
-            self.collect_events = self.cfg.get("collect_events", True)
-            self.aggregate_mails = self.cfg.get("aggregate_mails", True)
+            self.collect_events = cfg["event_handler_config"].get("collect_events", True)
+            self.aggregate_mails = cfg["event_handler_config"].get("aggregate_mails", True)
 
             if not self.collect_events and self.aggregate_mails:
                 logger.warning("Ignoring value of aggregate_mails, because collect_events is set to False.")
