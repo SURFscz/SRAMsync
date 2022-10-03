@@ -19,7 +19,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import List, Tuple
 
 import click
 import click_logging
@@ -218,7 +218,7 @@ def render_user_name(cfg: Config, org: str, co: str, group: str, uid: str) -> st
     return user_name
 
 
-def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
+def get_login_groups_and_users(cfg: Config, service: str, co: str) -> Tuple[List[str], List[str]]:
     """
     Check if there is at least one and not more than one group that controls
     which users are allowed to login. If there are none, it's okay to use all
@@ -234,8 +234,8 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     login_users = []
     number_of_groups = len(login_groups)
 
-    if number_of_groups > 1:
-        raise MultipleLoginGroups()
+    # if number_of_groups > 1:
+    #     raise MultipleLoginGroups()
 
     if number_of_groups == 0:
         login_groups = ["@all"]
@@ -255,7 +255,7 @@ def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
 
-    return login_users
+    return login_groups, login_users
 
 
 def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict) -> None:
@@ -303,9 +303,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     """
 
     ldap_conn = cfg.get_ldap_connector()
-    group = f"{cfg['service']}_login"
-
-    login_users = get_login_users(cfg, fq_co, co)
+    login_groups, login_users = get_login_groups_and_users(cfg, fq_co, co)
 
     try:
         dns = ldap_conn.search_s(
@@ -315,18 +313,28 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
         )
 
         for _, entry in dns:  # type: ignore
-            if is_user_eligible(cfg, login_users, entry):
-                uid = get_attribute_from_entry(entry, "uid")
-                # user = render_templated_string(template, service=cfg["service"], org=org, co=co, uid=uid)
-                user = render_user_name(cfg, org=org, co=co, group=group, uid=uid)
+            for login_group in login_groups:
+                try:
+                    login_group_name = render_templated_string(
+                        cfg["sync"]["groups"][login_group]["destination"],
+                        service=cfg["service"],
+                        org=org,
+                        co=co,
+                    )
+                except KeyError:
+                    login_group_name = ""
 
-                cfg.state.add_user(user, co)
-                if not cfg.state.is_known_user(user):
-                    logger.debug("  Found new user: %s", user)
-                    event_handler = cfg.event_handler_proxy
-                    event_handler.add_new_user(co, group, user, entry)
+                if is_user_eligible(cfg, login_users, entry):
+                    uid = get_attribute_from_entry(entry, "uid")
+                    user = render_user_name(cfg, org=org, co=co, group=login_group_name, uid=uid)
 
-                handle_public_ssh_keys(cfg, co, user, entry)
+                    cfg.state.add_user(user, co)
+                    if not cfg.state.is_known_user(user):
+                        logger.debug("  Found new user: %s", user)
+                        event_handler = cfg.event_handler_proxy
+                        event_handler.add_new_user(co, login_group_name, user, entry)
+
+                    handle_public_ssh_keys(cfg, co, user, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
