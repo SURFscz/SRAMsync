@@ -206,15 +206,18 @@ class EmailNotifications(EventHandler):
         try:
             validate(schema=self._schema, instance=cfg["event_handler_config"])
 
-            self.mail_to_stdout = True if "mail-to-stdout" in args else False
-
+            self.mail_to_stdout = "mail-to-stdout" in args
             self.cfg = cfg["event_handler_config"]
-
             self.collect_events = cfg["event_handler_config"].get("collect_events", True)
-            self.aggregate_mails = cfg["event_handler_config"].get("aggregate_mails", True)
 
-            if not self.collect_events and self.aggregate_mails:
-                logger.warning("Ignoring value of aggregate_mails, because collect_events is set to False.")
+            if "aggregate_mails" in cfg["event_handler_config"]:
+                self.aggregate_mails = cfg["event_handler_config"]["aggregate_mails"]
+                if not self.collect_events and self.aggregate_mails:
+                    logger.warning(
+                        "Ignoring value of aggregate_mails, because collect_events is set to False."
+                    )
+            else:
+                self.aggregate_mails = True
 
             if "passwd_from_secrets" in self.cfg["smtp"]:
                 login_name = self.cfg["smtp"]["login"]

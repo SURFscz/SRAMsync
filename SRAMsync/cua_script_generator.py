@@ -58,7 +58,7 @@ class CuaScriptGenerator(EventHandler):
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg["event_handler_config"])
 
-            self.run = bool("run" in args)
+            self.run = "run" in args
 
             self.cfg = cfg["event_handler_config"]
             self.state = state
