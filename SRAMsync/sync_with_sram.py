@@ -234,9 +234,6 @@ def get_login_groups_and_users(cfg: Config, service: str, co: str) -> Tuple[List
     login_users = []
     number_of_groups = len(login_groups)
 
-    # if number_of_groups > 1:
-    #     raise MultipleLoginGroups()
-
     if number_of_groups == 0:
         login_groups = ["@all"]
 
