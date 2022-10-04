@@ -364,9 +364,6 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
         group_attributes = value["attributes"]
         dest_group_name = value["destination"]
 
-        if "ignore" in group_attributes:
-            continue
-
         try:
             basedn = cfg.get_sram_basedn()
             dns = ldap_conn.search_s(
