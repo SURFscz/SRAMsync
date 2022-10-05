@@ -28,7 +28,7 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from SRAMsync.common import get_attribute_from_entry, render_templated_string
+from SRAMsync.common import get_attribute_from_entry, render_templated_string, render_templated_string_list
 from SRAMsync.config import Config
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
@@ -232,25 +232,24 @@ def get_login_groups_and_users(cfg: Config, service: str, co: str) -> Tuple[List
             group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]
         ]
     login_users = []
-    number_of_groups = len(login_groups)
 
-    if number_of_groups == 0:
+    if not login_groups:
         login_groups = ["@all"]
 
-    group = login_groups[0]
-    try:
-        dns = ldap_conn.search_s(
-            f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
-            ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
-            f"(cn={group})",
-        )
-        for _, entry in dns:  # type: ignore
-            if "member" in entry:
-                for member in entry["member"]:
-                    uid = dn_to_rdns(member)["uid"][0]
-                    login_users.append(uid)
-    except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
-        logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
+    for group in login_groups:
+        try:
+            dns = ldap_conn.search_s(
+                f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
+                ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
+                f"(cn={group})",
+            )
+            for _, entry in dns:  # type: ignore
+                if "member" in entry:
+                    for member in entry["member"]:
+                        uid = dn_to_rdns(member)["uid"][0]
+                        login_users.append(uid)
+        except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
+            logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
 
     return login_groups, login_users
 
@@ -311,25 +310,27 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
         for _, entry in dns:  # type: ignore
             for login_group in login_groups:
-                try:
-                    login_group_name = render_templated_string(
-                        cfg["sync"]["groups"][login_group]["destination"],
-                        service=cfg["service"],
-                        org=org,
-                        co=co,
-                    )
-                except KeyError:
-                    login_group_name = ""
+                destination = cfg["sync"]["groups"][login_group]["destination"]
+
+                if isinstance(destination, str):
+                    destination = [destination]
+
+                login_group_names = render_templated_string_list(
+                    destination,
+                    service=cfg["service"],
+                    org=org,
+                    co=co,
+                )
 
                 if is_user_eligible(cfg, login_users, entry):
                     uid = get_attribute_from_entry(entry, "uid")
-                    user = render_user_name(cfg, org=org, co=co, group=login_group_name, uid=uid)
+                    user = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
 
                     cfg.state.add_user(user, co)
                     if not cfg.state.is_known_user(user):
                         logger.debug("  Found new user: %s", user)
                         event_handler = cfg.event_handler_proxy
-                        event_handler.add_new_user(co, login_group_name, user, entry)
+                        event_handler.add_new_user(co, login_group_names, user, entry)
 
                     handle_public_ssh_keys(cfg, co, user, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101

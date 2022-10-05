@@ -1,5 +1,7 @@
 """Write a simple log message for each received event."""
 
+from typing import List, Union
+
 import click
 
 from SRAMsync.common import get_attribute_from_entry
@@ -20,7 +22,7 @@ class DummyEventHandler(EventHandler):
         """Log the start_of_co_processing event."""
         logger.info(click.style(f"  start_of_co_processing({co})", fg="yellow", bold=True))
 
-    def add_new_user(self, co, group, user, entry):
+    def add_new_user(self, co: str, group: Union[str, List[str]], user: str, entry: dict):
         """Log the add_new_user event."""
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")

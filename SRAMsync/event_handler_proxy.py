@@ -5,6 +5,7 @@ Calling one of the events loops over all known instances and calls the
 same function of each instance.
 """
 
+from typing import List
 from SRAMsync.event_handler import EventHandler
 
 
@@ -20,10 +21,10 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
-    def add_new_user(self, co, group, user, entry):
+    def add_new_user(self, co: str, groups: List[str], user: str, entry: dict):
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
-            event_handler.add_new_user(co, group, user, entry)
+            event_handler.add_new_user(co, groups, user, entry)
 
     def add_public_ssh_key(self, co, user, key):
         """Call add_public_ssh_key event for all EventHandlers."""

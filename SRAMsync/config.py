@@ -162,7 +162,12 @@ class Config:
                                 "type": "object",
                                 "properties": {
                                     "attributes": {"type": "array"},
-                                    "destination": {"type": "string"},
+                                    "destination": {
+                                        "oneOf": [
+                                            {"type": "string"},
+                                            {"type": "array", "items": {"type": "string"}},
+                                        ]
+                                    },
                                 },
                                 "required": ["attributes", "destination"],
                             },
