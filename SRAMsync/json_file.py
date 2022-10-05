@@ -69,6 +69,8 @@ class JsonFile(State):
         if "provisional_status_filename" in self.cfg:
             return self.provisional_status_filename
 
+        return None
+
     def dump_state(self) -> None:
         try:
             if "provisional_status_filename" in self.cfg:
