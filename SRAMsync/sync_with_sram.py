@@ -208,7 +208,7 @@ def render_user_name(cfg: Config, org: str, co: str, group: str, uid: str) -> st
                     "nor is there a default defined.",
                     co,
                 )
-                exit(-1)
+                sys.exit(-1)
 
     if "{uid}" not in template:
         raise MissingUidInRenameUser("'{uid}' is missing from the 'rename_user' template.")
