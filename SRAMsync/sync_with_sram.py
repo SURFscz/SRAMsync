@@ -310,29 +310,32 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
         for _, entry in dns:  # type: ignore
             for login_group in login_groups:
-                destination = cfg["sync"]["groups"][login_group]["destination"]
-
-                if isinstance(destination, str):
-                    destination = [destination]
-
-                login_group_names = render_templated_string_list(
-                    destination,
-                    service=cfg["service"],
-                    org=org,
-                    co=co,
-                )
+                login_dest_group_names = []
+                for dest_group in cfg["sync"]["groups"][login_group]["destination"]:
+                    rendered_group_name = render_templated_string(
+                        dest_group,
+                        service=cfg["service"],
+                        org=org,
+                        co=co,
+                    )
+                    login_dest_group_names.append(rendered_group_name)
 
                 if is_user_eligible(cfg, login_users, entry):
                     uid = get_attribute_from_entry(entry, "uid")
-                    user = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
 
-                    cfg.state.add_user(user, co)
-                    if not cfg.state.is_known_user(user):
-                        logger.debug("  Found new user: %s", user)
+                    group = ""
+                    if login_groups:
+                        group = login_groups[0]
+
+                    dest_user_name = render_user_name(cfg, org=org, co=co, group=group, uid=uid)
+
+                    cfg.state.add_user(dest_user_name, co)
+                    if not cfg.state.is_known_user(dest_user_name):
+                        logger.debug("  Found new user: %s", dest_user_name)
                         event_handler = cfg.event_handler_proxy
-                        event_handler.add_new_user(co, login_group_names, user, entry)
+                        event_handler.add_new_user(co, login_dest_group_names, dest_user_name, entry)
 
-                    handle_public_ssh_keys(cfg, co, user, entry)
+                        handle_public_ssh_keys(cfg, co, dest_user_name, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 

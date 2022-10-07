@@ -21,7 +21,7 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
-    def add_new_user(self, co: str, groups: List[str], user: str, entry: dict):
+    def add_new_user(self, co: str, group: List[str], user: str, entry: str):
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.add_new_user(co, groups, user, entry)

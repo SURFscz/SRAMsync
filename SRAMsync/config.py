@@ -162,12 +162,7 @@ class Config:
                                 "type": "object",
                                 "properties": {
                                     "attributes": {"type": "array"},
-                                    "destination": {
-                                        "oneOf": [
-                                            {"type": "string"},
-                                            {"type": "array", "items": {"type": "string"}},
-                                        ]
-                                    },
+                                    "destination": {"type": "array", "items": {"type": "string"}},
                                 },
                                 "required": ["attributes", "destination"],
                             },
@@ -210,6 +205,10 @@ class Config:
         validate(schema=self._schema, instance=config)
 
         _normalize_grace_periods(config)
+
+        # The '@all' group cannot be configured in the configuration file, but does
+        # exits in the SRAM LDAP. Therefore it is added as a valid group.
+        config["sync"]["groups"]["@all"] = {"attributes": [], "destination": ""}
 
         self.config = config
         self._ldap_connector = None

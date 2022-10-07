@@ -129,6 +129,7 @@ class CuaScriptGenerator(EventHandler):
         adding new users. Call the auxiliary event class.
         """
 
+        group = ",".join(groups)
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
         mail = get_attribute_from_entry(entry, "mail")
