@@ -1,7 +1,7 @@
 """Common functionalities."""
 import importlib
 import re
-from typing import Type, List
+from typing import List, Type
 
 
 def get_attribute_from_entry(entry: dict, attribute: str) -> str:
@@ -24,14 +24,15 @@ def render_templated_string(template_string: str, **kw: str) -> str:
 
 def render_templated_string_list(template_strings: List[str], **kw: str) -> List[str]:
     """
-    Render a list om strings based on a set of keywords. **lw contains defined
-    keywords that can bve expanded.
+    Render a string based on a set of keywords. **kw contains defined keywords
+    than can be expanded.
     """
-    template_list = []
-    for tempplate_string in template_strings:
-        template_list.append(tempplate_string.format(**kw))
 
-    return template_list
+    j = []
+    for i in template_strings:
+        j.append(render_templated_string(i, **kw))
+
+    return j
 
 
 def pascal_case_to_snake_case(string: str) -> str:

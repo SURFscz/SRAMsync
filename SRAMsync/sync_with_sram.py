@@ -310,15 +310,9 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
         for _, entry in dns:  # type: ignore
             for login_group in login_groups:
-                login_dest_group_names = []
-                for dest_group in cfg["sync"]["groups"][login_group]["destination"]:
-                    rendered_group_name = render_templated_string(
-                        dest_group,
-                        service=cfg["service"],
-                        org=org,
-                        co=co,
-                    )
-                    login_dest_group_names.append(rendered_group_name)
+                login_dest_group_names = render_templated_string_list(
+                    cfg["sync"]["groups"][login_group]["destination"], service=cfg["service"], org=org, co=co
+                )
 
                 if is_user_eligible(cfg, login_users, entry):
                     uid = get_attribute_from_entry(entry, "uid")
@@ -376,14 +370,14 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                 "(objectClass=groupOfMembers)",
             )
             # The dest_group_name could contain an org reference
-            dest_group_name = render_templated_string(dest_group_name, service=service, org=org, co=co)
+            dest_group_name = render_templated_string_list(dest_group_name, service=service, org=org, co=co)
 
             # Create groups
             if not cfg.state.is_known_group(dest_group_name):
                 logger.debug("  Adding group: %s", dest_group_name)
                 event_handler.add_new_group(co, dest_group_name, group_attributes)
 
-            cfg.state.add_group(dest_group_name, co, sram_group, group_attributes)
+            cfg.state.add_groups(dest_group_name, co, sram_group, group_attributes)
 
             # Find members
             for _, entry in dns:  # type: ignore
@@ -402,7 +396,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                             dest_group_name,
                             co,
                         )
-                    cfg.state.add_member(dest_group_name, user)
+                    cfg.state.add_group_member(dest_group_name, user)
 
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning("service '%s' does not contain group '%s'", fq_co, sram_group)
