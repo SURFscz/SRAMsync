@@ -11,7 +11,7 @@ from datetime import datetime
 import os
 import stat
 import subprocess
-from typing import List
+from typing import Dict, List
 
 from jsonschema import ValidationError, validate
 
@@ -123,7 +123,7 @@ class CuaScriptGenerator(EventHandler):
 
         self._print(f"\n# service: {self.service_name}/{co}")
 
-    def add_new_user(self, co: str, groups: List[str], user: str, entry: dict) -> None:
+    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]) -> None:
         """
         Write the appropriate sara_usertools commands to the bash script for
         adding new users. Call the auxiliary event class.

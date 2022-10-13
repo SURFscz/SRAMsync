@@ -5,7 +5,7 @@ Calling one of the events loops over all known instances and calls the
 same function of each instance.
 """
 
-from typing import Dict, List
+from typing import List
 from SRAMsync.event_handler import EventHandler
 
 
@@ -21,7 +21,11 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
-    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]):
+<<<<<<< HEAD
+    def add_new_user(self, co: str, groups: List[str], user: str, entry: dict):
+=======
+    def add_new_user(self, co: str, group: List[str], user: str, entry: str):
+>>>>>>> 18c22d2 (Add multiple destinations for login_users)
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.add_new_user(co, groups, user, entry)
