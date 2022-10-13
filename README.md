@@ -13,48 +13,49 @@
 * [Invocation](#invocation)
 * [Structure of sync-with-sram](#structure-of-sync-with-sram)
 * [Configuration details](#configuration-details)
-    * [Multiple configurations](#multiple-configurations)
-    * [SRAM connection details](#sram-connection-details)
-        * [Password file format](#password-file-format)
-            * [SRAM LDAP passwords](#sram-ldap-passwords)
-            * [SMTP password](#smtp-password)
-        * [Environment variable](#environment-variable)
-    * [Synchronization details](#synchronization-details)
-        * [aup_enforcement](#aup_enforcement)
-        * [users](#users)
-        * [groups](#groups)
-        * [Predefined attributes](#predefined-attributes)
-        * [event_handler](#event_handler)
+  * [Multiple configurations](#multiple-configurations)
+  * [SRAM connection details](#sram-connection-details)
+    * [Password file format](#password-file-format)
+      * [SRAM LDAP passwords](#sram-ldap-passwords)
+      * [SMTP password](#smtp-password)
+    * [Environment variable](#environment-variable)
+  * [Synchronization details](#synchronization-details)
+    * [aup_enforcement](#aup_enforcement)
+    * [users](#users)
+      * [Multiple conversions](#multiple-conversions)
+    * [groups](#groups)
+    * [Mapping a group to multiple destinations](#mapping-a-group-to-multiple-destinations)
+    * [Predefined attributes](#predefined-attributes)
+    * [event_handler](#event_handler)
 * [Keeping track of the current state](#keeping-track-of-the-current-state)
 * [Putting it together](#putting-it-together)
-* [Tag substitution](#tag-substitution)
-    * [Available tags](#available-tags)
+  * [Notes for the above example](#notes-for-the-above-example)
+* [Variable substitution](#variable-substitution)
+  * [Available variables](#available-variables)
 * [Removal of the status file](#removal-of-the-status-file)
 * [Logging](#logging)
 * [EventHandler Classes](#eventhandler-classes)
-    * [DummyEventandler](#dummyeventandler)
-    * [CuaScriptGenerator](#cuascriptgenerator)
-        * [CuaScriptGenerator configuration](#cuascriptgenerator-configuration)
-    * [CbaScriptGenerator](#cbascriptgenerator)
-        * [CbaScriptGenerator configuration](#cbascriptgenerator-configuration)
-    * [EmailNotifications](#emailnotifications)
-        * [EmailNotifications configuration](#emailnotifications-configuration)
-            * [SMTP passwords](#smtp-passwords)
-    * [Creating a custom EventHandler](#creating-a-custom-eventhandler)
+  * [DummyEventandler](#dummyeventandler)
+  * [CuaScriptGenerator](#cuascriptgenerator)
+    * [CuaScriptGenerator configuration](#cuascriptgenerator-configuration)
+  * [EmailNotifications](#emailnotifications)
+    * [EmailNotifications configuration](#emailnotifications-configuration)
+    * [Supported command line options](#supported-command-line-options)
+  * [Creating a custom EventHandler](#creating-a-custom-eventhandler)
 * [Events](#events)
-    * [When are events emitted](#when-are-events-emitted)
-        * [start-co-processing](#start-co-processing)
-        * [add-new-user](#add-new-user)
-        * [add-public-ssh-key](#add-public-ssh-key)
-        * [delete-public-ssh-key](#delete-public-ssh-key)
-        * [add-new-group](#add-new-group)
-        * [remove-group](#remove-group)
-        * [add-user-to-group](#add-user-to-group)
-        * [start-grace-period-for-user](#start-grace-period-for-user)
-        * [remove-graced-user-from-group](#remove-graced-user-from-group)
-        * [remove-user-from-group](#remove-user-from-group)
-        * [finalize](#finalize)
-  * [Acknowledgment](#acknowledgment)
+  * [When are events emitted](#when-are-events-emitted)
+    * [start-co-processing](#start-co-processing)
+    * [add-new-user](#add-new-user)
+    * [add-public-ssh-key](#add-public-ssh-key)
+    * [delete-public-ssh-key](#delete-public-ssh-key)
+    * [add-new-group](#add-new-group)
+    * [remove-group](#remove-group)
+    * [add-user-to-group](#add-user-to-group)
+    * [start-grace-period-for-user](#start-grace-period-for-user)
+    * [remove-graced-user-from-group](#remove-graced-user-from-group)
+    * [remove-user-from-group](#remove-user-from-group)
+    * [finalize](#finalize)
+* [Acknowledgment](#acknowledgment)
 
 <!-- vim-markdown-toc -->
 ## Purpose of SRAMsync
@@ -144,7 +145,7 @@ As can be noticed from the above, five parts can be identified:
 
 The `secrets` part is optional. However, if omitted, one does need to put any
 passwords in the configuration file itself. The exception to this is for the
-passwd of SRAM LDAP. In case this, one could use the environment variable
+passwd of SRAM LDAP. In this case, one could use the environment variable
 `SRAM_LDAP_PASSWD`. Note however that for any other passwords in the
 configuration file the use of environment variables in unavailable. For those
 cases, either use the `secrets` file, or put passwords in plain text into the
@@ -273,10 +274,10 @@ receiving end will be notified when the synchronization is run.
 
 #### users
 
-The nameing convention is configurable and a template can be users to customize
-the conversion. It is used to create non conflicting users names at the
+The naming convention is configurable and a template can be used to customize
+the conversion. Its purpose is to create non conflicting users names at the
 destination. The `uid` from SRAM is unique within SRAM, but that does not
-guarentee that it will be unique at the destination. The following templates
+guarantee that it will be unique at the destination. The following variables
 can be used to better tailor what is needed:
 
 * `{service}`
@@ -292,8 +293,31 @@ users:
   rename_user: "sram-{co}-{uid}"
 ```
 
-The `{uid}` must be included to ensure uniqueness. If it is missing an error
+The `{uid}` *must* be included to ensure uniqueness. If it is missing an error
 is displayed and the sync will be aborted.
+
+##### Multiple conversions
+
+In case you need to differentiate in naming conventions between groups, the
+configuration supports multiple conversions. Instead of using the simple key
+value pair in the above example, you need the following structure:
+
+```yaml
+rename_user:
+  default: <template>
+  groups:
+    group_A: <template>
+    group_B: <template>
+```
+
+In this example, the `default` key is optional. It is used as fallback in case
+there are more that the defined groups in SRAM then are specified in the
+configuration file, i.e. `group_A` and `group_B` in the example. If there would
+a group `group_C`, the default values will be used instead. An error will be
+issued when the template for a group can not be determined from the
+configuration file.
+
+The same variables are accepted as in the single line declaration from above.
 
 #### groups
 
@@ -321,21 +345,59 @@ sync:
        destination: sram_experiment_a
 ```
 
-The number of groups is unlimited.
+The number of groups is unlimited. The following variables are supported in
+the template:
+
+| variable    | description                                     |
+|-------------|-------------------------------------------------|
+| `{service}` | Service name defined in the configuration file. |
+| `{org}`     | Organisation name in SRAM.                      |
+| `{co}`      | CO name in SRAM.                                |
+
+For example:
+
+```yaml
+sync:
+  groups:
+    expermiment_A:
+       attributes: ["attibute_1", "attibute_2", "attibute_3"]
+       destination: sram-{org}-{co}-experiment_a
+```
+
+#### Mapping a group to multiple destinations
+
+If you need to map a single group in SRAM to multiple groups at your service,
+then you can use a list of names, instead of a string. The following demonstrates
+a configuration example:
+
+```yaml
+sync:
+  groups:
+    expermiment_A:
+       attributes:
+         - "attibute_1"
+         - "attibute_2"
+         - "attibute_3"
+       destination:
+         - "sram-{org}-{co}-experiment_a"
+         - "sram-{org}-{co}-extra-group"
+```
+
+Also note in the above example, that the attributes are still listed as a YAML
+list. This is no different from the previous two examples. Just a different
+notation within YAML. Use which ever you prefer.
 
 #### Predefined attributes
 
 The previous sub section stated that the attributes are meaningless to the main
-loop. There are, however, three exceptions: `login_users`, `grace_period` and
-`ignore`. All users within a CO are also available in the `@all` entry. A
-service might wish for a more fine grained control on what users are allowed
-access. For this purpose a group can be marked `login_users` through the
-attributes. This tells `sync-with-sram` that it should not use the `@all`
-group, but rather the group with this attribute. This means that
-`sync-with-sram` will only use this group for adding users. In case there is
-not group with such an attribute, the main loop will use the `@all` instead.
-Only one group is allowed to have the `login_users` attribute. When a second
-group carries this attribute, `sync-with-sram` will issue an error.
+loop. There are, however, two exceptions: `login_users`, `grace_period`. All
+users within a CO are also available in the `@all` entry. A service might wish
+for a more fine grained control on what users are allowed access. For this
+purpose any group can be marked `login_users` through the attributes. This tells
+`sync-with-sram` that it should not use the implicit `@all` group, but rather
+the groups with this attribute. This means that `sync-with-sram` will only use
+those groups for adding users. In case there are no groups with such an
+attribute, the main loop will use the `@all` instead.
 
 The `grace_period` attribute tells `sync-with-sram` that for this particular
 group a grace period must be applied. Normally `sync-with-sram` would emit a
@@ -436,12 +498,21 @@ sram:
   binddn: cn=admin,dc=<service short name>,dc=services,dc=sram,dc=surf,dc=nl
   passwd_from_secrets: true
 sync:
+  users:
+    aup_enforcement: true
+    rename_user:
+      default: "sram-{co}-{uid}"
+      groups:
+        expermiment_A: "{service}-{uid}"
   groups:
     expermiment_A:
-       attributes: ["grace_period", "attibute_1", "attibute_2"]
+       attributes: ["login_users", "grace_period=90d", "attibute_1", "attibute_2"]
        destination: sram_experiment_a
     expermiment_B:
-       attributes: ["attibute_3"]
+       attributes: ["login_users", "attibute_3"]
+       destination: sram_experiment_b
+    expermiment_C:
+       attributes: ["attibute_1"]
        destination: sram_experiment_b
   event_handler:
     name: DummyEventHandler
@@ -458,7 +529,11 @@ events from the main loop. In case of the DummyEventHandler nothing is done
 except printing info messages to stdout. It does not take any additional
 configuration and therefor the `config:` key is omitted.
 
-Note that in the above `sram` block,
+### Notes for the above example
+
+**Note 1**
+
+In the above `sram` block,
 
 ```yaml
 passwd_from_secrets: true
@@ -470,18 +545,31 @@ can be substituted by:
 passwd: <password>
 ```
 
-Also note the even though either keyword `passwd_from_secrets` or `passwd`
+**Note 2**
+
+Even though either keyword `passwd_from_secrets` or `passwd`
 can be specified, if the environment variable `SRAM_LDAP_PASSWD` is
 defined, it takes precedence over either key word.
 
-## Tag substitution
+**Note 3**
 
-The configuration has support for tag substitution. This means that certain
-keywords between curly brackets are substituted by their value. For example,
-the configuration allows for defining the service name with the `service:` key.
-When defining destination names for groups, the `{service}` tag can be used and
-is replaced by the key value at run time. Given the following configuration
-snippet:
+If for all users the same conversion applies, the `rename_user` block can be
+written as:
+
+```yaml
+sync:
+  users:
+    rename_user: "sram-{co}-{uid}"
+```
+
+## Variable substitution
+
+The configuration has support for variable substitution. This means that
+certain keywords between curly brackets are substituted by their value. For
+example, the configuration allows for defining the service name with the
+`service:` key. When defining destination names for groups, the `{service}`
+variable can be used and is replaced by the key value at run time. Given the
+following configuration snippet:
 
 ```yaml
 service: compute
@@ -491,7 +579,7 @@ sync:
       destination: "{service}-login_users"
 ```
 
-The `{service}` tag is replace by `compute` and the following snippet is
+The `{service}` variable is replace by `compute` and the following snippet is
 equal to the previous one:
 
 ```yaml
@@ -503,12 +591,12 @@ sync:
 ```
 
 In case you need to sync multiple services, you could also use the `{service}`
-tag for the `status_filename` and `provisional_status_filename` to easily
+variable for the `status_filename` and `provisional_status_filename` to easily
 distinguish status files for different services.
 
-### Available tags
+### Available variables
 
-The following tags are available:
+The following variables are available:
 
 | Config Item                       | Tags                         |
 |-----------------------------------|------------------------------|
@@ -621,18 +709,14 @@ The following is the configuration for the `CuaScriptGenerator` class:
 ```yaml
 sync:
   event_handler:
-    name: CuaScriptGenerator
-    config:
-      filename: <filename>
-      add_cmd: sudo sara_adduser --no-usermail
-      modify_cmd: sudo sara_modifyuser --no-usermail
-      check_cmd: sudo sara_modifyuser --no-usermail --check
-      sshkey_cmd: sudo sara_modifyuser --no-usermail --ssh-public-key
-      auxiliary_event_handler:
-        name: EmailNotifications
-        config:
-          <EmailNotifications configuration>
-```
+    - name: CuaScriptGenerator
+      config:
+        filename: <filename>
+        add_cmd: sudo sara_adduser --no-usermail
+        modify_cmd: sudo sara_modifyuser --no-usermail
+        check_cmd: sudo sara_modifyuser --no-usermail --check
+        sshkey_cmd: sudo sara_modifyuser --no-usermail --ssh-public-key
+  ```
 
 ### CbaScriptGenerator
 
@@ -654,15 +738,13 @@ The CbaScriptGenerator class introduced the following configuration:
 ```yaml
 sync:
   event_handler:
-    name: CbaScriptGenerator
-    config:
-      cba_add_cmd: <CBA command for adding a user>
-      cba_del_cmd: <CBA command for deleting a user>
-      cba_machine: <CBA machine name>
-      cba_budget_account: <CBA budget account>
-      cua_config:
-        ...
-```
+    - name: CbaScriptGenerator
+      config:
+        cba_add_cmd: <CBA command for adding a user>
+        cba_del_cmd: <CBA command for deleting a user>
+        cba_machine: <CBA machine name>
+        cba_budget_account: <CBA budget account>
+  ```
 
 When using the CbaScriptGenerator class, four required configuration
 fields must be present: `cba_add_cmd`, `cba_del_cmd`, `cba_machine` and
@@ -677,20 +759,23 @@ CbaScriptGenerator configuration.
 
 If you want to be informed by email about any of the emitted events during the
 execution of the main loop, the `EmailNotifications` class does that. It
-connects to an SMTP server and sends customizable email through it. Events are
-conveniently grouped so you don't receive a separate email for each emitted
-event. That would add up real quickly. Instead all events for a CO are
-collected first and once the main loop has finished processing the CO, all
-queued messages are collected in a single email. In the configuration of the
-`EmailNotifications` class you can specify for which events you would like to
-be notified. For each notification you can configure the line that needs to be
-generated and optionally a header that is used for that event. In other words,
-each event takes the form of:
+connects to an SMTP server and sends customizable emails through it. Events can
+be grouped, so you don't have tp receive a separate email for each emitted
+event. However, this event handler can be setup in such a way that you can receive
+an email for each event. In case you want to collect email on a per CO basis, that
+is also possible.
+
+In the configuration of the `EmailNotifications` class you can specify for
+which events you would like to be notified. For each notification you can
+configure the line that needs to be generated and optionally a header that is
+used for that event. The header is optional. In other words, each event takes
+the form of:
 
 ```yaml
-<event>:
-  header: <header line>
-  line: <event line>
+report_events:
+  <event>:
+    header: <header line>
+    line: <event line>
 ```
 
 In order to connect to an SMTP server, the following configuration keys are
@@ -701,8 +786,11 @@ smtp:
   host: <SMTP host>
   port: <SMTP port number>
   login: <SMTP login name>
-  passwd: <SMTP password>
+  passwd_from_secrets: <boolean>
 ```
+
+In case you don't use the secrets files, you must use `passwd: <secret>`
+instead and expose your SMTP password in the configuration file.
 
 For composing email messages, the configuration supports the following keys:
 
@@ -713,88 +801,102 @@ For composing email messages, the configuration supports the following keys:
   mail-message: <mail message body>
 ```
 
-The `mail-message:` should contain at a minimum the following text `{message}`,
-if you want the headers and lines from the event to appear in mail. This tag is
-replaced by the headers and lines of the events.
+The `mail-message:` in your configuration should contain `{message}` at a
+minimum.  If it is missing no text will appear in your message. This variable
+is replaced by the headers and lines of the events. The `{message}` text can
+be part of a more descriptive text.
 
 #### EmailNotifications configuration
+
+Below is an example of the configuration part for the `EmailNotifications`
+event handler.
 
 ```yaml
 sync:
   event_handler:
-  name: EmailNotifications
-  config:
-    aggregate_mails: <boolean>
-    report_events:
-      start-co-processing:
-        header: <start header>
-        line: <start line>
-      add-new-user:
-        header: <add-new-user header>
-        line: <add-new-user line>
-      add-ssh-key:
-        header: <add-ssh-key header>
-        line: <add-ssh-key line>
-      delete-ssh-key:
-        header: <delete-ssh-key header>
-        line: <delete-ssh-key line>
-      add-group:
-        header: <add-group header>
-        line: <add-group line>
-      remove-group:
-        header: <remove-group header>
-        line: <remove-group line>
-      add-user-to-group:
-        header: <add-user-to-group header>
-        line: <add-user-to-group line>
-      remove-user-from-group:
-        header: <remove-user-from-group header>
-        line: <remove-user-from-group line>
-      remove-graced-user-from-group:
-        header: <remove-graced-user-from-group header>
-        line: <remove-graced-user-from-group line>
-      finalize:
-        header: <finalize header>
-        line: <finalize line>
-      smtp:
-        host: <SMTP host>
-        port: <SMTP port number>
-        login: <SMTP login name>
-        passwd: <SMTP password>
-      mail-to: <mail recipiant>
-      mail-from: <who is sending the email>
-      mail-subject: <mail subject>
-      mail-message: <mail message body>
+  - name: EmailNotifications
+    config:
+      collect_events: <boolean>
+      aggregate_mails: <boolean>
+      report_events:
+        start-co-processing:
+          header: <start header>
+          line: <start line>
+        add-new-user:
+          header: <add-new-user header>
+          line: <add-new-user line>
+        add-ssh-key:
+          header: <add-ssh-key header>
+          line: <add-ssh-key line>
+        delete-ssh-key:
+          header: <delete-ssh-key header>
+          line: <delete-ssh-key line>
+        add-group:
+          header: <add-group header>
+          line: <add-group line>
+        remove-group:
+          header: <remove-group header>
+          line: <remove-group line>
+        add-user-to-group:
+          header: <add-user-to-group header>
+          line: <add-user-to-group line>
+        remove-user-from-group:
+          header: <remove-user-from-group header>
+          line: <remove-user-from-group line>
+        remove-graced-user-from-group:
+          header: <remove-graced-user-from-group header>
+          line: <remove-graced-user-from-group line>
+        finalize:
+          header: <finalize header>
+          line: <finalize line>
+        smtp:
+          host: <SMTP host>
+          port: <SMTP port number>
+          login: <SMTP login name>
+          passwd: <SMTP password>
+        mail-to: <mail recipiant>
+        mail-from: <who is sending the email>
+        mail-subject: <mail subject>
+        mail-message: <mail message body>
 ```
 
-For available tags in formatting headers and lines, please also refer to
-[Tag substitution](#tag-substitution) and [Events](#events). The italic
-keywords in the Event section are available as tags for both `header:` and
+For available variables in formatting headers and lines, please also refer to
+[Variable substitution](#variable-substitution) and [Events](#events). The italic
+keywords in the Event section are available as variables for both `header:` and
 `line:` keys.
 
 ```yaml
 event_handler:
   name: EmailNotifications
     config:
+      collect_events: true
+      aggregate_mails: true
       report_events:
         add-new-user:
           header: "Adding the following users:"
           line: "Add new user {user}"
 ```
 
-The `aggregate_mails` is optional and when left out defaults to `true`, in
-which case a single mail will be sent for the enitre synchronization run. In
-this e-mail all events are grouped per CO. If `aggregate_mails` is set to
-`false`, a mail for each CO is generated. If there are no important events to
-be reported, i.e. events other that `start-co-processing` and `finalize` the
-e-mail sending is repressed.
+Bother the `collect_events` and `aggregate_mails` are optional and when left
+out defaults to `true`, in which case a single mail will be sent for the entire
+synchronization run. In this e-mail all events are grouped per CO. If
+`aggregate_mails` is set to `false` and `collect_events` is set to `true`, a
+mail for each CO is generated. In case you want to get an email for each event,
+set `collect_events` to `false` and don't include `aggregate_mails`. When mails
+are aggregated and there are no important events to be reported, i.e. events
+other that `start-co-processing` and `finalize` the e-mail sending is
+repressed.
 
-##### SMTP passwords
+#### Supported command line options
 
-The above example shows plain text passwords in the configuration file. Instead
-of using the `passwd` in the `smtp` block, one could also use `passwd_from_secrets`.
-This only works if you have opted to use the `secrets` block in the configuration.
-See [Password file format](#password-file-format) for more information.
+The `EmailNotifications` supports sending mails to the `stdout` instead of
+using the SMTP server. In order to use this feature, the `EmailNotifications`
+supports the `--eventhandler_args` with at least `mail-to-stdout` specified.
+Call `sync-with-sram` like this for example:
+
+```bash
+sync-with-sram --log-level=info --eventhandler-args mail-to-stdout <config file>
+```
 
 ### Creating a custom EventHandler
 
@@ -817,9 +919,9 @@ Then the `event_handler` property needs to be set to:
 sync:
   <other sync parameters ...>
   event_handler:
-    name: my_package.my_event_handler.MyEventHandler
-    config:
-      <MyEventHandlerConfig (optional)>
+    - name: my_package.my_event_handler.MyEventHandler
+      config:
+        <MyEventHandlerConfig (optional)>
 ```
 
 The sources only need to be visible via `PYTHONPATH`:
