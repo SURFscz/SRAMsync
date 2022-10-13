@@ -129,6 +129,7 @@ class Config:
                 },
                 "required": ["uri", "basedn", "binddn"],
                 "not": {"required": ["passwd", "passwd_from_secrets"]},
+                "additionalProperties": False,
             },
             "sync": {
                 "type": "object",
