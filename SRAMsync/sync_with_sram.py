@@ -439,27 +439,34 @@ def remove_deleted_users_from_groups(cfg: Config) -> None:
     Determine based on the (old) status and new_status which users are to be removed.
     """
 
+    for group in cfg.state.get_known_groups():
+        co = cfg.state.get_co_of_known_group(group)
+        removed_users = cfg.state.get_removed_users(group)
+
+        remove_deleted_users_from_group(cfg, co, group, removed_users)
+
+
+def remove_deleted_users_from_group(cfg: Config, co: str, group: str, users: List[str]) -> None:
+    """Remove the given users from the group."""
+
     event_handler = cfg.event_handler_proxy
 
-    for group in cfg.state.get_known_groups():
-        removed_users = cfg.state.get_removed_users(group)
-        co = cfg.state.get_co_of_known_group(group)
-        for user in removed_users:
-            group_attributes = cfg.state.get_known_group_attributes(group)
-            try:
-                seconds = cfg.get_grace_period(group)
-                grace_until = datetime.now(timezone.utc) + timedelta(seconds=float(seconds))
-                remaining_time = grace_until - datetime.now(timezone.utc)
-                logger.info(
-                    "User '%s' has been removed but not deleted due to grace time. Remaining time: %s",
-                    user,
-                    remaining_time,
-                )
-                event_handler.start_grace_period_for_user(co, group, group_attributes, user, remaining_time)
-                cfg.state.set_graced_period_for_user(group, user, grace_until)
+    for user in users:
+        group_attributes = cfg.state.get_known_group_attributes(group)
+        try:
+            seconds = cfg.get_grace_period(group)
+            grace_until = datetime.now(timezone.utc) + timedelta(seconds=float(seconds))
+            remaining_time = grace_until - datetime.now(timezone.utc)
+            logger.info(
+                "User '%s' has been removed but not deleted due to grace time. Remaining time: %s",
+                user,
+                remaining_time,
+            )
+            event_handler.start_grace_period_for_user(co, group, group_attributes, user, remaining_time)
+            cfg.state.set_graced_period_for_user(group, user, grace_until)
 
-            except NoGracePeriodForGroupError:
-                event_handler.remove_user_from_group(co, group, group_attributes, user)
+        except NoGracePeriodForGroupError:
+            event_handler.remove_user_from_group(co, group, group_attributes, user)
 
 
 def remove_deleted_groups(cfg: Config) -> None:
@@ -477,10 +484,12 @@ def remove_deleted_groups(cfg: Config) -> None:
 
     for group in removed_groups:
         co = cfg.state.get_co_of_known_group(group)
-        new_group_status = {"groups": cfg.state.get_added_group(group)}
-        new_group_status["groups"][group]["members"] = {}
+        # new_group_status = {"groups": cfg.state.get_known_group(group)}
+        # new_group_status["groups"]["members"] = {}
 
-        remove_deleted_users_from_groups(cfg)
+        users = cfg.state.get_all_known_users_from_group(group)
+        remove_deleted_users_from_group(cfg, co, group, users)
+        cfg.state.invalidate_all_group_members(group)
 
         logger.debug("Removing group: '%s'", group)
         event_handler.remove_group(co, group, cfg.state.get_known_group_attributes(group))

@@ -87,6 +87,10 @@ class State(ABC):
         """Add member to a group."""
 
     @abstractmethod
+    def get_all_known_users_from_group(self, group) -> List[str]:
+        """Get all users from the known group."""
+
+    @abstractmethod
     def get_added_group(self, group: str) -> dict:
         """Get added group."""
 
@@ -129,3 +133,7 @@ class State(ABC):
     @abstractmethod
     def set_graced_period_for_user(self, group: str, user: str, grace_period: datetime) -> None:
         """Set the grace period for the user in group group."""
+
+    @abstractmethod
+    def invalidate_all_group_members(self, group: str):
+        """If necessay, invalidate all group members."""
