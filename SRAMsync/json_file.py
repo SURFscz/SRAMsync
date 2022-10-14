@@ -139,6 +139,9 @@ class JsonFile(State):
             ):
                 self._new_state["groups"][dest_group_name]["members"].append(user)
 
+    def get_all_known_users_from_group(self, group) -> List[str]:
+        return self._last_known_state["groups"][group]["members"]
+
     def get_added_group(self, group: str) -> dict:
         return self._new_state["groups"][group]
 
@@ -161,6 +164,9 @@ class JsonFile(State):
         return self._last_known_state["groups"]
 
     def get_removed_users(self, group: str) -> list:
+        if group not in self._new_state["groups"]:
+            return self._last_known_state["groups"][group]["members"]
+
         removed_users = [
             user
             for user in self._last_known_state["groups"][group]["members"]
@@ -188,3 +194,6 @@ class JsonFile(State):
             self._new_state["groups"][group]["graced_users"] = {
                 user: datetime.strftime(grace_period, "%Y-%m-%d %H:%M:%S%z")
             }
+
+    def invalidate_all_group_members(self, group: str) -> None:
+        self._last_known_state["groups"][group]["members"] = []
