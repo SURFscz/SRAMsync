@@ -5,7 +5,7 @@ the State class based on a JSON file.
 
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from jsonschema import validate
 

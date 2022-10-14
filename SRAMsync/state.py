@@ -4,7 +4,7 @@ of the SRAMsync process.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, List
 
 from abc import ABC, abstractmethod
 
