@@ -129,7 +129,6 @@ class CuaScriptGenerator(EventHandler):
         adding new users. Call the auxiliary event class.
         """
 
-        group = ",".join(groups)
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
         mail = get_attribute_from_entry(entry, "mail")
@@ -240,6 +239,8 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         updating users in a graced group. Call the auxiliary event class.
         """
+
+        group = ",".join(group)
         attr = set(group_attributes)
         number_of_attributes = len(attr)
         length2 = len(attr - self.cua_group_types)
