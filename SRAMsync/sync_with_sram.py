@@ -370,8 +370,6 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
     # for sram_group, value in non_login_groups.items():
     for sram_group, value in cfg["sync"]["groups"].items():
-        if sram_group == "delena_cpu":
-            continue
         group_attributes = value["attributes"]
         dest_group_names = value["destination"]
 
