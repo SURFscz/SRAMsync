@@ -75,10 +75,6 @@ class State(ABC):
         """Check if the group is in the encounterd groups."""
 
     @abstractmethod
-    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]) -> None:
-        """Add new user."""
-
-    @abstractmethod
     def add_user(self, user: str, co: str) -> None:
         """Add user."""
 
