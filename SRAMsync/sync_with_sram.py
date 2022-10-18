@@ -309,7 +309,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             "(objectClass=person)",
         )
 
-        for _, entry in dns:  # type: ignore
+        for _, entry in dns:  # type: ignore [reportGeneralTypeIssue]
             for login_group, login_users in login_groups.items():
                 for user in login_users:
                     if is_user_eligible(cfg, entry, user):
