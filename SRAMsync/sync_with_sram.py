@@ -370,6 +370,8 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
     # for sram_group, value in non_login_groups.items():
     for sram_group, value in cfg["sync"]["groups"].items():
+        if sram_group == "delena_cpu":
+            continue
         group_attributes = value["attributes"]
         dest_group_names = value["destination"]
 
@@ -453,20 +455,23 @@ def remove_graced_users(cfg: Config) -> None:
 
     event_handler = cfg.event_handler_proxy
 
-    for group, group_attributes in cfg.state.get_known_groups_and_attributes().items():
-        if "graced_users" in group_attributes:
+    for group, group_values in cfg.state.get_known_groups_and_attributes().items():
+        if "graced_users" in group_values:
             logger.debug("Checking graced users for group: %s", group)
-            for user, grace_until_str in group_attributes["graced_users"].items():
+
+            sram_group = group_values["sram"]["sram-group"]
+            group_attributes = cfg["sync"]["groups"][sram_group]["attributes"]
+            co = cfg.state.get_co_of_known_group(group)
+
+            for user, grace_until_str in group_values["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
-                co = cfg.state.get_co_of_known_group(group)
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
                     # so automatically disregards this information automatically and
                     # it is the intended behaviour
                     logger.info("Grace time ended for user %s in %s", user, group)
-                    group_attributes = cfg["sync"]["groups"][group]["attributes"]
                     event_handler.remove_graced_user_from_group(co, group, group_attributes, user)
                 else:
                     cfg.state.set_graced_period_for_user(group, user, grace_until)

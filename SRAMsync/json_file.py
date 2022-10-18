@@ -188,12 +188,19 @@ class JsonFile(State):
                 pass
 
     def set_graced_period_for_user(self, group: str, user: str, grace_period: datetime) -> None:
+        if group not in self._new_state["groups"]:
+            self._new_state["groups"][group] = self._last_known_state["groups"][group]
+
+        if user in self._new_state["groups"][group]["members"]:
+            self._new_state["groups"][group]["members"].remove(user)
+
         if "graced_users" not in self._new_state["groups"][group]:
             self._new_state["groups"][group]["graced_users"] = {}
+
         if user not in self._new_state["groups"][group]["graced_users"]:
-            self._new_state["groups"][group]["graced_users"] = {
-                user: datetime.strftime(grace_period, "%Y-%m-%d %H:%M:%S%z")
-            }
+            self._new_state["groups"][group]["graced_users"][user] = datetime.strftime(
+                grace_period, "%Y-%m-%d %H:%M:%S%z"
+            )
 
     def invalidate_all_group_members(self, group: str) -> None:
         self._last_known_state["groups"][group]["members"] = []
