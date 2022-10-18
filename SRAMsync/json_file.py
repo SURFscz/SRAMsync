@@ -107,7 +107,7 @@ class JsonFile(State):
                 if user not in self._last_known_state["groups"][dest_group_name]["members"]:
                     return False
         except KeyError as e:
-            raise UnkownGroup(dest_group_name) from e
+            raise UnkownGroup(dest_group_name) from e  # pyright: ignore [reportUnboundVariable]
 
         return True
 
