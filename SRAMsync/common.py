@@ -28,11 +28,11 @@ def render_templated_string_list(template_strings: List[str], **kw: str) -> List
     than can be expanded.
     """
 
-    j = []
+    template_list = []
     for i in template_strings:
-        j.append(render_templated_string(i, **kw))
+        template_list.append(render_templated_string(i, **kw))
 
-    return j
+    return template_list
 
 
 def pascal_case_to_snake_case(string: str) -> str:
