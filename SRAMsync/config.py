@@ -217,9 +217,9 @@ class Config:
             groups[group_name]["destination"] = [groups[group_name]["destination"]]
 
         _normalize_grace_periods(config)
-        # The '@all' group cannot be configured in the configuration file, but does
-        # exits in the SRAM LDAP. Therefore it is added as a valid group.
-        config["sync"]["groups"]["@all"] = {"attributes": [], "destination": ""}
+
+        if "@all" not in config["sync"]["groups"]:
+            config["sync"]["groups"]["@all"] = {"attributes": [], "destination": ""}
 
         self.config = config
         self._ldap_connector = None
