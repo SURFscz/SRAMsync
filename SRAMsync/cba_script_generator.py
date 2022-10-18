@@ -4,6 +4,7 @@ class is derived from CuaScriptGenerator, because of its strong relation. By
 doing so, the functionallity of CuaScriptGenerator can be resused here.
 """
 
+from typing import Dict, List
 from jsonschema import ValidationError, validate
 
 from SRAMsync.cua_script_generator import CuaScriptGenerator
@@ -48,9 +49,9 @@ class CbaScriptGenerator(CuaScriptGenerator):
             f"--account {self.cfg['cba_budget_account']} --user {user}\n"
         )
 
-    def add_new_user(self, co: str, group: str, givenname: str, sn: str, user: str, mail: str) -> None:
+    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]) -> None:
         """add_new_user event."""
-        super().add_new_user(co, group, givenname, sn, user, mail)
+        super().add_new_user(co, groups, user, entry)
         self._print("# Adding user CBA account.")
         self._insert_cba_command(self.cfg["cba_add_cmd"], user)
 

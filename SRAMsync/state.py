@@ -4,7 +4,7 @@ of the SRAMsync process.
 """
 
 from datetime import datetime
-from typing import Any, List
+from typing import Any, Dict, List
 
 from abc import ABC, abstractmethod
 
@@ -73,6 +73,10 @@ class State(ABC):
     @abstractmethod
     def is_found_group(self, group: str) -> bool:
         """Check if the group is in the encounterd groups."""
+
+    @abstractmethod
+    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]) -> None:
+        """Add new user."""
 
     @abstractmethod
     def add_user(self, user: str, co: str) -> None:
