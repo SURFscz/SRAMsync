@@ -19,7 +19,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import click
 import click_logging
@@ -336,10 +336,9 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                             logger.debug("  Found new user: %s", dest_user_name)
                             event_handler = cfg.event_handler_proxy
                             event_handler.add_new_user(co, login_dest_group_names, dest_user_name, entry)
-
-                            handle_public_ssh_keys(cfg, co, dest_user_name, entry)
-
                             new_users.append(dest_user_name)
+
+                        handle_public_ssh_keys(cfg, co, dest_user_name, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
