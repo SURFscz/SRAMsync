@@ -63,11 +63,11 @@ class State(ABC):
         """Check if the user is known from the last state."""
 
     @abstractmethod
-    def is_known_group(self, group) -> bool:
+    def is_known_group(self, groups: List[str]) -> bool:
         """Check if the group is known from the last state."""
 
     @abstractmethod
-    def is_user_member_of_group(self, dest_group_name, user) -> bool:
+    def is_user_member_of_group(self, dest_group_names: List[str], user: str) -> bool:
         """Check is the user is member of the destination group."""
 
     @abstractmethod
@@ -79,11 +79,13 @@ class State(ABC):
         """Add user."""
 
     @abstractmethod
-    def add_group(self, dest_group_name: str, co: str, sram_group: str, group_attributes: list) -> None:
+    def add_groups(
+        self, dest_group_names: List[str], co: str, sram_group: str, group_attributes: list
+    ) -> None:
         """Add a new group."""
 
     @abstractmethod
-    def add_member(self, dest_group_name: str, user: str) -> None:
+    def add_group_member(self, dest_group_names: List[str], user: str) -> None:
         """Add member to a group."""
 
     @abstractmethod

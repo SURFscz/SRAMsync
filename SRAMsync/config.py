@@ -8,9 +8,9 @@ from datetime import timedelta
 import re
 from typing import Any, List
 
-import yaml
 from jsonschema import validate
 from ldap import ldapobject
+import yaml
 
 from SRAMsync.common import deduct_event_handler_class
 from SRAMsync.event_handler import EventHandler
@@ -129,6 +129,7 @@ class Config:
                 },
                 "required": ["uri", "basedn", "binddn"],
                 "not": {"required": ["passwd", "passwd_from_secrets"]},
+                "additionalProperties": False,
             },
             "sync": {
                 "type": "object",
@@ -136,7 +137,20 @@ class Config:
                     "users": {
                         "type": "object",
                         "properties": {
-                            "rename_user": {"type": "string"},
+                            "rename_user": {
+                                "oneOf": [
+                                    {"type": "string"},
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "default": {"type": "string"},
+                                            "groups": {"type": "object"},
+                                        },
+                                        "required": ["groups"],
+                                        "additionalProperties": False,
+                                    },
+                                ],
+                            },
                             "aup_enforcement": {"type": "boolean"},
                         },
                         "required": ["rename_user"],
@@ -148,8 +162,13 @@ class Config:
                             ".*": {
                                 "type": "object",
                                 "properties": {
-                                    "attributes": {"type": "array"},
-                                    "destination": {"type": "string"},
+                                    "attributes": {"type": "array", "items": {"type": "string"}},
+                                    "destination": {
+                                        "oneOf": [
+                                            {"type": "string"},
+                                            {"type": "array", "items": {"type": "string"}},
+                                        ]
+                                    },
                                 },
                                 "required": ["attributes", "destination"],
                             },
@@ -191,7 +210,16 @@ class Config:
 
         validate(schema=self._schema, instance=config)
 
+        groups = config["sync"]["groups"]
+        dest_as_string = [k for k in groups if isinstance(groups[k]["destination"], str)]
+
+        for group_name in dest_as_string:
+            groups[group_name]["destination"] = [groups[group_name]["destination"]]
+
         _normalize_grace_periods(config)
+
+        if "@all" not in config["sync"]["groups"]:
+            config["sync"]["groups"]["@all"] = {"attributes": [], "destination": ""}
 
         self.config = config
         self._ldap_connector = None

@@ -69,6 +69,8 @@ class JsonFile(State):
         if "provisional_status_filename" in self.cfg:
             return self.provisional_status_filename
 
+        return None
+
     def dump_state(self) -> None:
         try:
             if "provisional_status_filename" in self.cfg:
@@ -88,17 +90,26 @@ class JsonFile(State):
     def is_known_user(self, user: str) -> bool:
         return user in self._last_known_state["users"]
 
-    def is_known_group(self, group) -> bool:
-        return group in self._last_known_state["groups"]
+    def is_known_group(self, groups: List[str]) -> bool:
+        known = True
 
-    def is_user_member_of_group(self, dest_group_name, user) -> bool:
+        for group in groups:
+            known &= group in self._last_known_state["groups"]
+
+        return known
+
+    def is_user_member_of_group(self, dest_group_names: List[str], user: str) -> bool:
         try:
-            if dest_group_name not in self._last_known_state["groups"]:
-                return False
+            for dest_group_name in dest_group_names:
+                if dest_group_name not in self._last_known_state["groups"]:
+                    return False
 
-            return user in self._last_known_state["groups"][dest_group_name]["members"]
+                if user not in self._last_known_state["groups"][dest_group_name]["members"]:
+                    return False
         except KeyError as e:
-            raise UnkownGroup(dest_group_name) from e
+            raise UnkownGroup(dest_group_name) from e  # pyright: ignore [reportUnboundVariable]
+
+        return True
 
     def is_found_group(self, group: str) -> bool:
         return group in self._new_state["groups"]
@@ -106,23 +117,30 @@ class JsonFile(State):
     def add_user(self, user: str, co: str) -> None:
         self._new_state["users"][user] = {"CO": co}
 
-    def add_group(self, dest_group_name: str, co: str, sram_group: str, group_attributes: list) -> None:
-        if dest_group_name not in self._new_state["groups"]:
-            self._new_state["groups"][dest_group_name] = {
-                "members": [],
-                "attributes": group_attributes,
-                "sram": {
-                    "CO": co,
-                    "sram-group": sram_group,
-                },
-            }
+    def add_groups(
+        self, dest_group_names: List[str], co: str, sram_group: str, group_attributes: list
+    ) -> None:
+        for dest_group_name in dest_group_names:
+            if dest_group_name not in self._new_state["groups"]:
+                self._new_state["groups"][dest_group_name] = {
+                    "members": [],
+                    "attributes": group_attributes,
+                    "sram": {
+                        "CO": co,
+                        "sram-group": sram_group,
+                    },
+                }
 
-    def add_member(self, dest_group_name: str, user: str) -> None:
-        if (
-            dest_group_name in self._new_state["groups"]
-            and "members" in self._new_state["groups"][dest_group_name]
-        ):
-            self._new_state["groups"][dest_group_name]["members"].append(user)
+    def add_group_member(self, dest_group_names: List[str], user: str) -> None:
+        for dest_group_name in dest_group_names:
+            if (
+                dest_group_name in self._new_state["groups"]
+                and "members" in self._new_state["groups"][dest_group_name]
+            ):
+                self._new_state["groups"][dest_group_name]["members"].append(user)
+
+    def get_all_known_users_from_group(self, group) -> List[str]:
+        return self._last_known_state["groups"][group]["members"]
 
     def get_all_known_users_from_group(self, group) -> List[str]:
         return self._last_known_state["groups"][group]["members"]
@@ -173,8 +191,15 @@ class JsonFile(State):
                 pass
 
     def set_graced_period_for_user(self, group: str, user: str, grace_period: datetime) -> None:
+        if group not in self._new_state["groups"]:
+            self._new_state["groups"][group] = self._last_known_state["groups"][group]
+
+        if user in self._new_state["groups"][group]["members"]:
+            self._new_state["groups"][group]["members"].remove(user)
+
         if "graced_users" not in self._new_state["groups"][group]:
             self._new_state["groups"][group]["graced_users"] = {}
+
         if user not in self._new_state["groups"][group]["graced_users"]:
             self._new_state["groups"][group]["graced_users"] = {
                 user: datetime.strftime(grace_period, "%Y-%m-%d %H:%M:%S%z")

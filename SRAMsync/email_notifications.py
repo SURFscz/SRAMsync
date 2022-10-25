@@ -3,12 +3,12 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
-
 from email.message import EmailMessage
 from email.utils import formatdate
 import smtplib
 import ssl
 
+import click
 from jsonschema import ValidationError, validate
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
@@ -52,6 +52,8 @@ class SMTPclient:
                 got_credentials = False
             if got_credentials:
                 self.login(cfg["login"], cfg["passwd"])
+
+        self.mail_to_stdout = False
 
     def __del__(self):
         if hasattr(self, "server"):
@@ -105,11 +107,24 @@ class SMTPclient:
             msg["Date"] = formatdate(localtime=True)
             content = render_templated_string(self.mail_message, service=service, message=message)
             msg.set_content(content)
-            self.server.send_message(msg)
+
+            if not self.mail_to_stdout:
+                self.server.send_message(msg)
+            else:
+                logger.info(click.style("Want to sent message:", bold=True, fg="yellow"))
+                logger.info(msg)
+                logger.info(click.style("end-of-message", bold=True, fg="yellow"))
 
             logger.debug("Message sent")
         except smtplib.SMTPServerDisconnected:
             logger.error("Sending e-mail notifications for has failed. SMTP server has disconnected.")
+
+    def set_output_to_stdout(self):
+        """
+        Print the mail message to stdout instead of sending it through the
+        SMTP server.
+        """
+        self.mail_to_stdout = True
 
 
 class EmailNotifications(EventHandler):
@@ -123,6 +138,7 @@ class EmailNotifications(EventHandler):
         "$schema": "http://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+            "collect_events": {"type": "boolean"},
             "aggregate_mails": {"type": "boolean"},
             "report_events": {
                 "type": "object",
@@ -176,7 +192,7 @@ class EmailNotifications(EventHandler):
             "mail-message": {"type": "string"},
         },
         "required": ["report_events", "smtp", "mail-from", "mail-to", "mail-subject", "mail-message"],
-        "optional": ["aggregate_mails"],
+        "optional": ["collect_events", "aggregate_mails"],
     }
 
     _DEFAULT_CIPHERS = (
@@ -190,7 +206,18 @@ class EmailNotifications(EventHandler):
         try:
             validate(schema=self._schema, instance=cfg["event_handler_config"])
 
+            self.mail_to_stdout = "mail-to-stdout" in args
             self.cfg = cfg["event_handler_config"]
+            self.collect_events = cfg["event_handler_config"].get("collect_events", True)
+
+            if "aggregate_mails" in cfg["event_handler_config"]:
+                self.aggregate_mails = cfg["event_handler_config"]["aggregate_mails"]
+                if not self.collect_events and self.aggregate_mails:
+                    logger.warning(
+                        "Ignoring value of aggregate_mails, because collect_events is set to False."
+                    )
+            else:
+                self.aggregate_mails = True
 
             if "passwd_from_secrets" in self.cfg["smtp"]:
                 login_name = self.cfg["smtp"]["login"]
@@ -200,7 +227,6 @@ class EmailNotifications(EventHandler):
             self.service = service
             self._messages = {}
             self.finalize_message = ""
-            self.aggregate_mails = self.cfg.get("aggregate_mails", True)
 
         except ValidationError as e:
             raise ConfigValidationError(e, config_path) from e
@@ -232,6 +258,16 @@ class EmailNotifications(EventHandler):
         # Using set() automatically filters out double messages.
         self._messages[co][event]["messages"].add(event_message)
 
+        if not self.collect_events:
+            self.send_queued_messages()
+            #  Cleanup all message except for start-co-processing
+            self._messages = {
+                ok: {ik: iv}
+                for ok, ov in self._messages.items()
+                for ik, iv in ov.items()
+                if ik == "start-co-processing"
+            }
+
     def send_queued_messages(self) -> None:
         """Send all queued message."""
         message = ""
@@ -245,6 +281,9 @@ class EmailNotifications(EventHandler):
                 mail_subject=self.cfg["mail-subject"],
                 mail_message=self.cfg["mail-message"],
             )
+
+            if self.mail_to_stdout:
+                smtp_client.set_output_to_stdout()
 
             for co_messages in self._messages.values():
                 message = message + self.render_message(co_messages)
@@ -283,7 +322,7 @@ class EmailNotifications(EventHandler):
         return final_message
 
     def add_event_message(self, co: str, event: str, important: bool = True, **args) -> None:
-        """Add a event message and apply formatting to it."""
+        """Add an event message and apply formatting to it."""
         if event in self.report_events:
             event_message = f"{self.report_events[event]['line']}".format(co=co, **args)
             self.add_message_to_current_co_group(co, event, event_message, important)

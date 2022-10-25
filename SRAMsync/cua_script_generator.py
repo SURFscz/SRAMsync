@@ -8,10 +8,10 @@ the CUA.
 """
 
 from datetime import datetime
-import logging
 import os
 import stat
 import subprocess
+from typing import Dict, List
 
 from jsonschema import ValidationError, validate
 
@@ -59,7 +59,7 @@ class CuaScriptGenerator(EventHandler):
         try:
             validate(schema=CuaScriptGenerator._schema, instance=cfg["event_handler_config"])
 
-            self.run = bool("run" in args)
+            self.run = "run" in args
 
             self.cfg = cfg["event_handler_config"]
             self.state = state
@@ -123,7 +123,7 @@ class CuaScriptGenerator(EventHandler):
 
         self._print(f"\n# service: {self.service_name}/{co}")
 
-    def add_new_user(self, co: str, group: str, user: str, entry: dict) -> None:
+    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]) -> None:
         """
         Write the appropriate sara_usertools commands to the bash script for
         adding new users. Call the auxiliary event class.
@@ -132,6 +132,8 @@ class CuaScriptGenerator(EventHandler):
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
         mail = get_attribute_from_entry(entry, "mail")
+        group = ",".join(groups)
+
         line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
 
         self._print(f"## Adding user: {user}")
@@ -237,6 +239,8 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         updating users in a graced group. Call the auxiliary event class.
         """
+
+        group = ",".join(group)
         attr = set(group_attributes)
         number_of_attributes = len(attr)
         length2 = len(attr - self.cua_group_types)

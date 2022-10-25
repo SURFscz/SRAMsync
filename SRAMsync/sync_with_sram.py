@@ -19,7 +19,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import Dict, List
 
 import click
 import click_logging
@@ -28,7 +28,7 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from SRAMsync.common import get_attribute_from_entry, render_templated_string
+from SRAMsync.common import get_attribute_from_entry, render_templated_string, render_templated_string_list
 from SRAMsync.config import Config
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
@@ -153,7 +153,7 @@ def get_previous_status(cfg: Config) -> dict:
     return status
 
 
-def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
+def is_user_eligible(cfg: Config, entry: dict, user: str) -> bool:
     """
     Check if the user (uid) is eligible for using the service. There are two
     ways to determine this. i) if the users is found to be part of the
@@ -167,6 +167,9 @@ def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
 
     uid = get_attribute_from_entry(entry, "uid")
 
+    if uid != user:
+        return False
+
     if "aup_enforcement" in cfg["sync"]["users"] and cfg["sync"]["users"]["aup_enforcement"]:
         if "voPersonPolicyAgreement" not in entry:
             logger.debug("AUP attribute (voPersonPolicyAgreement) missing for user: %s", uid)
@@ -176,9 +179,6 @@ def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
         for date in vo_person_policy_agreement:
             logger.debug("policies accepted on: %s", date)
 
-    if uid not in login_users:
-        return False
-
     if "voPersonStatus" in entry:
         vo_person_status = get_attribute_from_entry(entry, "voPersonStatus")
         if vo_person_status != "active":
@@ -187,44 +187,71 @@ def is_user_eligible(cfg: Config, login_users: List[str], entry: dict) -> bool:
     return True
 
 
-def get_login_users(cfg: Config, service: str, co: str) -> List[str]:
+def render_user_name(cfg: Config, org: str, co: str, group: str, uid: str) -> str:
+    """
+    Render the new user name base on the template as defined by the configuration file.
+    """
+    service = cfg["service"]
+    template = ""
+
+    if isinstance(cfg["sync"]["users"]["rename_user"], str):
+        template = cfg["sync"]["users"]["rename_user"]
+    else:
+        try:
+            template = cfg["sync"]["users"]["rename_user"]["groups"][group]
+        except KeyError:
+            try:
+                template = cfg["sync"]["users"]["rename_user"]["default"]
+            except KeyError:
+                logger.error(
+                    "Renaming for co %s failed, because there is not specific rule that co, "
+                    "nor is there a default defined.",
+                    co,
+                )
+                sys.exit(-1)
+
+    if "{uid}" not in template:
+        raise MissingUidInRenameUser("'{uid}' is missing from the 'rename_user' template.")
+
+    user_name = render_templated_string(template, service=service, org=org, co=co, uid=uid)
+
+    return user_name
+
+
+def get_login_groups_and_users(cfg: Config, service: str, co: str) -> Dict[str, List[str]]:
     """
     Check if there is at least one and not more than one group that controls
     which users are allowed to login. If there are none, it's okay to use all
     known users from the reserved '@all` group.
     """
+
     ldap_conn = cfg.get_ldap_connector()
 
-    login_groups = []
+    login_groups_and_users = {}
     if "groups" in cfg["sync"]:
-        login_groups = [
-            group for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]
-        ]
-    login_users = []
-    number_of_groups = len(login_groups)
+        login_groups_and_users = {
+            group: [] for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]
+        }
 
-    if number_of_groups > 1:
-        raise MultipleLoginGroups()
+    if not login_groups_and_users:
+        login_groups_and_users = {"@all": []}
 
-    if number_of_groups == 0:
-        login_groups = ["@all"]
+    for group in login_groups_and_users:
+        try:
+            dns = ldap_conn.search_s(
+                f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
+                ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
+                f"(cn={group})",
+            )
+            for _, entry in dns:  # type: ignore
+                if "member" in entry:
+                    for member in entry["member"]:
+                        uid = dn_to_rdns(member)["uid"][0]
+                        login_groups_and_users[group].append(uid)
+        except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
+            logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
 
-    group = login_groups[0]
-    try:
-        dns = ldap_conn.search_s(
-            f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
-            ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
-            f"(cn={group})",
-        )
-        for _, entry in dns:  # type: ignore
-            if "member" in entry:
-                for member in entry["member"]:
-                    uid = dn_to_rdns(member)["uid"][0]
-                    login_users.append(uid)
-    except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
-        logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
-
-    return login_users
+    return login_groups_and_users
 
 
 def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict) -> None:
@@ -272,9 +299,8 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     """
 
     ldap_conn = cfg.get_ldap_connector()
-    group = f"{cfg['service']}_login"
-
-    login_users = get_login_users(cfg, fq_co, co)
+    login_groups = get_login_groups_and_users(cfg, fq_co, co)
+    new_users = []
 
     try:
         dns = ldap_conn.search_s(
@@ -283,22 +309,36 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             "(objectClass=person)",
         )
 
-        template = cfg["sync"]["users"]["rename_user"]
-        if "{uid}" not in template:
-            raise MissingUidInRenameUser("'{uid}' is missing from the 'rename_user' template.")
+        for _, entry in dns:  # type: ignore [reportGeneralTypeIssue]
+            for login_group, login_users in login_groups.items():
+                for user in login_users:
+                    if is_user_eligible(cfg, entry, user):
+                        login_dest_group_names = render_templated_string_list(
+                            cfg["sync"]["groups"][login_group]["destination"],
+                            service=cfg["service"],
+                            org=org,
+                            co=co,
+                        )
+                        uid = get_attribute_from_entry(entry, "uid")
 
-        for _, entry in dns:  # type: ignore
-            if is_user_eligible(cfg, login_users, entry):
-                uid = get_attribute_from_entry(entry, "uid")
-                user = render_templated_string(template, service=cfg["service"], org=org, co=co, uid=uid)
+                        dest_user_name = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
 
-                cfg.state.add_user(user, co)
-                if not cfg.state.is_known_user(user):
-                    logger.debug("  Found new user: %s", user)
-                    event_handler = cfg.event_handler_proxy
-                    event_handler.add_new_user(co, group, user, entry)
+                        cfg.state.add_user(dest_user_name, co)
 
-                handle_public_ssh_keys(cfg, co, user, entry)
+                        if dest_user_name in new_users:
+                            logger.error(
+                                "User %s has already been added. Possible error in configuration.",
+                                dest_user_name,
+                            )
+                            sys.exit(1)
+
+                        if not cfg.state.is_known_user(dest_user_name):
+                            logger.debug("  Found new user: %s", dest_user_name)
+                            event_handler = cfg.event_handler_proxy
+                            event_handler.add_new_user(co, login_dest_group_names, dest_user_name, entry)
+                            new_users.append(dest_user_name)
+
+                        handle_public_ssh_keys(cfg, co, dest_user_name, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
@@ -327,12 +367,10 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     ldap_conn = cfg.get_ldap_connector()
     service = cfg["service"]  # service might be accessed indirectly
 
+    # for sram_group, value in non_login_groups.items():
     for sram_group, value in cfg["sync"]["groups"].items():
         group_attributes = value["attributes"]
-        dest_group_name = value["destination"]
-
-        if "ignore" in group_attributes:
-            continue
+        dest_group_names = value["destination"]
 
         try:
             basedn = cfg.get_sram_basedn()
@@ -341,15 +379,15 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                 ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
                 "(objectClass=groupOfMembers)",
             )
-            # The dest_group_name could contain an org reference
-            dest_group_name = render_templated_string(dest_group_name, service=service, org=org, co=co)
+            # The dest_group_names could contain an org reference
+            dest_group_names = render_templated_string_list(dest_group_names, service=service, org=org, co=co)
 
             # Create groups
-            if not cfg.state.is_known_group(dest_group_name):
-                logger.debug("  Adding group: %s", dest_group_name)
-                event_handler.add_new_group(co, dest_group_name, group_attributes)
+            if not cfg.state.is_known_group(dest_group_names):
+                logger.debug("  Adding group: %s", dest_group_names)
+                event_handler.add_new_group(co, dest_group_names, group_attributes)
 
-            cfg.state.add_group(dest_group_name, co, sram_group, group_attributes)
+            cfg.state.add_groups(dest_group_names, co, sram_group, group_attributes)
 
             # Find members
             for _, entry in dns:  # type: ignore
@@ -357,18 +395,20 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                 members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
                 for member in members:
                     m_uid = dn_to_rdns(member)["uid"][0]
-                    user = render_templated_string(cfg["sync"]["users"]["rename_user"], co=co, uid=m_uid)
+                    user = render_user_name(cfg, org=org, co=co, group=sram_group, uid=m_uid)
                     try:
-                        if not cfg.state.is_user_member_of_group(dest_group_name, user):
-                            event_handler.add_user_to_group(co, dest_group_name, group_attributes, user)
+                        if "login_users" not in group_attributes and not cfg.state.is_user_member_of_group(
+                            dest_group_names, user
+                        ):
+                            event_handler.add_user_to_group(co, dest_group_names, group_attributes, user)
                     except UnkownGroup:
                         logger.error(
                             "Error in status detected. User %s was not added to group %s of CO %s.",
                             user,
-                            dest_group_name,
+                            dest_group_names,
                             co,
                         )
-                    cfg.state.add_member(dest_group_name, user)
+                    cfg.state.add_group_member(dest_group_names, user)
 
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning("service '%s' does not contain group '%s'", fq_co, sram_group)
@@ -412,20 +452,23 @@ def remove_graced_users(cfg: Config) -> None:
 
     event_handler = cfg.event_handler_proxy
 
-    for group, group_attributes in cfg.state.get_known_groups_and_attributes().items():
-        if "graced_users" in group_attributes:
+    for group, group_values in cfg.state.get_known_groups_and_attributes().items():
+        if "graced_users" in group_values:
             logger.debug("Checking graced users for group: %s", group)
-            for user, grace_until_str in group_attributes["graced_users"].items():
+
+            sram_group = group_values["sram"]["sram-group"]
+            group_attributes = cfg["sync"]["groups"][sram_group]["attributes"]
+            co = cfg.state.get_co_of_known_group(group)
+
+            for user, grace_until_str in group_values["graced_users"].items():
                 grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now = datetime.now(timezone.utc)
-                co = cfg.state.get_co_of_known_group(group)
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
                     # so automatically disregards this information automatically and
                     # it is the intended behaviour
                     logger.info("Grace time ended for user %s in %s", user, group)
-                    group_attributes = cfg["sync"]["groups"][group]["attributes"]
                     event_handler.remove_graced_user_from_group(co, group, group_attributes, user)
                 else:
                     cfg.state.set_graced_period_for_user(group, user, grace_until)
@@ -484,9 +527,7 @@ def remove_deleted_groups(cfg: Config) -> None:
 
     for group in removed_groups:
         co = cfg.state.get_co_of_known_group(group)
-        # new_group_status = {"groups": cfg.state.get_known_group(group)}
-        # new_group_status["groups"]["members"] = {}
-
+        
         users = cfg.state.get_all_known_users_from_group(group)
         remove_deleted_users_from_group(cfg, co, group, users)
         cfg.state.invalidate_all_group_members(group)

@@ -4,6 +4,7 @@ what needs to be done when the sync-with-sram main loop emits events.
 """
 
 from abc import ABC, abstractmethod
+from typing import Dict, List
 
 
 class EventHandler(ABC):
@@ -14,11 +15,11 @@ class EventHandler(ABC):
         pass
 
     @abstractmethod
-    def start_of_co_processing(self, co):
+    def start_of_co_processing(self, co: str):
         """start_of_co_processing event."""
 
     @abstractmethod
-    def add_new_user(self, co, group, user, entry):
+    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]):
         """add_new_user event."""
 
     @abstractmethod
