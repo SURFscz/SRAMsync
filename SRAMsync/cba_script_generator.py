@@ -5,11 +5,13 @@ doing so, the functionallity of CuaScriptGenerator can be resused here.
 """
 
 from typing import Dict, List
+
 from jsonschema import ValidationError, validate
 
+from SRAMsync.common import render_templated_string
 from SRAMsync.cua_script_generator import CuaScriptGenerator
-from SRAMsync.sync_with_sram import ConfigValidationError
 from SRAMsync.state import State
+from SRAMsync.sync_with_sram import ConfigValidationError
 
 
 class CbaScriptGenerator(CuaScriptGenerator):
@@ -46,18 +48,16 @@ class CbaScriptGenerator(CuaScriptGenerator):
         except ValidationError as e:
             raise ConfigValidationError(e, path) from e
 
-    def _insert_cba_command(self, cmd: str, user: str) -> None:
+    def _insert_cba_command(self, cmd: str, co: str, user: str) -> None:
         """Insert the cba command with arguments into the generated bash script."""
-        self._print(
-            f"{cmd} --machine {self.cfg['cba_machine']} "
-            f"--account {self.cfg['cba_budget_account']} --user {user}\n"
-        )
+        account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
+        self._print(f"{cmd} --machine {self.cfg['cba_machine']} " f"--account {account} --user {user}\n")
 
     def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]) -> None:
         """add_new_user event."""
         super().add_new_user(co, groups, user, entry)
         self._print("# Adding user CBA account.")
-        self._insert_cba_command(self.cfg["cba_add_cmd"], user)
+        self._insert_cba_command(self.cfg["cba_add_cmd"], co, user)
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
         """remove_user_from_group event."""
