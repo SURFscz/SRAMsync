@@ -212,9 +212,6 @@ class Config:
             if "ignore" in config["sync"]["groups"][group]["attributes"]:
                 del config["sync"]["groups"][group]
 
-        import pdb
-
-        pdb.set_trace()
         validate(schema=self._schema, instance=config)
 
         groups = config["sync"]["groups"]
