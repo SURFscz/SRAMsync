@@ -172,7 +172,7 @@ class CuaScriptGenerator(EventHandler):
         elif "project_group" in group_attributes:
             self._add_new_project_group(group)
         else:
-            logger.error("Could not determine group type (system_group or project_group) for {group}.")
+            logger.error("Could not determine group type (system_group or project_group) for %s.", group)
 
     @staticmethod
     def _add_new_system_group(group: str) -> None:
@@ -240,23 +240,22 @@ class CuaScriptGenerator(EventHandler):
         updating users in a graced group. Call the auxiliary event class.
         """
 
-        group = ",".join(group)
         attr = set(group_attributes)
         number_of_attributes = len(attr)
-        length2 = len(attr - self.cua_group_types)
+        length = len(attr - self.cua_group_types)
 
         if add:
             remove = " "
         else:
             remove = " --remove "
 
-        if number_of_attributes - length2 == 1:
+        if number_of_attributes - length == 1:
             if "system_group" in attr:
                 self._print(f"{self.modify_cmd}{remove}--access {self.service_name} {group} {user}\n")
 
             if "project_group" in attr:
                 self._print(f"{self.modify_cmd}{remove}--group {group} {user}\n")
-        elif number_of_attributes - length2 == 0:
+        elif number_of_attributes - length == 0:
             error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
             raise ValueError(error)
         else:
