@@ -208,6 +208,13 @@ class Config:
         with open(config_file, encoding="utf8") as fd:
             config = yaml.safe_load(fd)
 
+        for group in list(config["sync"]["groups"].keys()):
+            if "ignore" in config["sync"]["groups"][group]["attributes"]:
+                del config["sync"]["groups"][group]
+
+        import pdb
+
+        pdb.set_trace()
         validate(schema=self._schema, instance=config)
 
         groups = config["sync"]["groups"]
