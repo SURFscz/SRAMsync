@@ -179,10 +179,10 @@ class CuaScriptGenerator(EventHandler):
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA system group. However, the current version of the
-        sara_usertool do not support this and hence a warning message is
-        displayed instead.
+        sara_usertool does not support this. Instead of a warning message, a
+        debug message is displayed, as this is expected behaviour for the CUA.
         """
-        logger.warning("Ignoring adding system group %s. It should be done by the CUA team.", group)
+        logger.debug("Ignoring adding system group %s. It should be done by the CUA team.", group)
 
     def _add_new_project_group(self, group: str) -> None:
         """
