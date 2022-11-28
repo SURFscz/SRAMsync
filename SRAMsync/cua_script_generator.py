@@ -164,11 +164,18 @@ class CuaScriptGenerator(EventHandler):
     def add_new_group(self, co: str, group: str, group_attributes: list) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
-        adding a new group. This is either a CUA system or project group as
-        specified per configuration file. Call the auxiliary event class.
+        adding a new group. This is either a CUA system, project or extra group
+        as specified per configuration file. Call the auxiliary event class.
         """
+
         if "system_group" in group_attributes:
             self._add_new_system_group(group)
+            for attribute in group_attributes:
+                if "extra_groups=" in attribute:
+                    tmp = attribute.split("=")[1]
+                    extra_groups = tmp.split(",")
+                    for extra_group in extra_groups:
+                        self._add_new_project_group(extra_group)
         elif "project_group" in group_attributes:
             self._add_new_project_group(group)
         else:
