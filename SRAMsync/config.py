@@ -100,6 +100,23 @@ def to_seconds(raw_period: str) -> int:
     return int(seconds + 0.5)
 
 
+def _remove_ignored_groups(config) -> None:
+    ignored_groups = [
+        group for group, values in config["sync"]["groups"].items() if "ignore" in values["attributes"]
+    ]
+
+    for group in ignored_groups:
+        del config["sync"]["groups"][group]
+
+
+def _make_destintion_a_list(config) -> None:
+    groups = config["sync"]["groups"]
+    dest_as_string = [group for group in groups if isinstance(groups[group]["destination"], str)]
+
+    for group_name in dest_as_string:
+        groups[group_name]["destination"] = [groups[group_name]["destination"]]
+
+
 class Config:
     """
     Class for defining and handling the configuration for sync-with-sram.
@@ -208,16 +225,10 @@ class Config:
         with open(config_file, encoding="utf8") as fd:
             config = yaml.safe_load(fd)
 
-        self.remove_ignored_groups(config)
-
         validate(schema=self._schema, instance=config)
 
-        groups = config["sync"]["groups"]
-        dest_as_string = [group for group in groups if isinstance(groups[group]["destination"], str)]
-
-        for group_name in dest_as_string:
-            groups[group_name]["destination"] = [groups[group_name]["destination"]]
-
+        _remove_ignored_groups(config)
+        _make_destintion_a_list(config)
         _normalize_grace_periods(config)
 
         if "@all" not in config["sync"]["groups"]:
@@ -241,14 +252,6 @@ class Config:
 
     def __contains__(self, item: str) -> bool:
         return item in self.config
-
-    def remove_ignored_groups(self, config) -> None:
-        ignored_groups = [
-            group for group, values in config["sync"]["groups"].items() if "ignore" in values["attributes"]
-        ]
-
-        for group in ignored_groups:
-            del config["sync"]["groups"][group]
 
     def get_event_handlers(self, state: State, **args: dict) -> List[EventHandler]:
         """
