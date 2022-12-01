@@ -213,7 +213,7 @@ class Config:
         validate(schema=self._schema, instance=config)
 
         groups = config["sync"]["groups"]
-        dest_as_string = [k for k in groups if isinstance(groups[k]["destination"], str)]
+        dest_as_string = [group for group in groups if isinstance(groups[group]["destination"], str)]
 
         for group_name in dest_as_string:
             groups[group_name]["destination"] = [groups[group_name]["destination"]]
