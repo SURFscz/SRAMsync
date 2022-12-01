@@ -101,6 +101,7 @@ def to_seconds(raw_period: str) -> int:
 
 
 def _remove_ignored_groups(config) -> None:
+    """Remove any group when the ignore attributes is defined."""
     ignored_groups = [
         group for group, values in config["sync"]["groups"].items() if "ignore" in values["attributes"]
     ]
@@ -110,6 +111,7 @@ def _remove_ignored_groups(config) -> None:
 
 
 def _make_destintion_a_list(config) -> None:
+    """Make the destination a list in case it is defined as a string."""
     groups = config["sync"]["groups"]
     dest_as_string = [group for group in groups if isinstance(groups[group]["destination"], str)]
 
