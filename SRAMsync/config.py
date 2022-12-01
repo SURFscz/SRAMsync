@@ -208,9 +208,7 @@ class Config:
         with open(config_file, encoding="utf8") as fd:
             config = yaml.safe_load(fd)
 
-        for group in list(config["sync"]["groups"].keys()):
-            if "ignore" in config["sync"]["groups"][group]["attributes"]:
-                del config["sync"]["groups"][group]
+        self.remove_ignored_groups(config)
 
         validate(schema=self._schema, instance=config)
 
@@ -243,6 +241,14 @@ class Config:
 
     def __contains__(self, item: str) -> bool:
         return item in self.config
+
+    def remove_ignored_groups(self, config) -> None:
+        ignored_groups = [
+            group for group, values in config["sync"]["groups"].items() if "ignore" in values["attributes"]
+        ]
+
+        for group in ignored_groups:
+            del config["sync"]["groups"][group]
 
     def get_event_handlers(self, state: State, **args: dict) -> List[EventHandler]:
         """
