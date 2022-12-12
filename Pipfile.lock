@@ -219,11 +219,11 @@
         },
         "deepdiff": {
             "hashes": [
-                "sha256:3fe134dde5b3922ff8c51fc1e95a972e659c853797231b836a5ccf15532fd516",
-                "sha256:8ba27c185f9197b78c316ce7bb0c743d25d14f7cdb8ec3b340437dbc93dcbff2"
+                "sha256:d04d997a68bf8bea01f8a97395877314ef5c2131d8f57bba2295f3adda725282",
+                "sha256:dea62316741f86c1d8e946f47c4c21386788457c898a495a5e6b0ccdcd76d9b6"
             ],
             "index": "pypi",
-            "version": "==6.2.1"
+            "version": "==6.2.2"
         },
         "dill": {
             "hashes": [
