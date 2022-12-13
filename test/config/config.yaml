@@ -10,7 +10,9 @@ sync:
   users:
     rename_user: "middle_earth-{co}-{uid}"
   groups:
-    shirecloud_login: { attributes: ["system_group", "grace_period=5s", "login_users"], destination: "{service}_login" }
+    shirecloud_login:
+      attributes: ["system_group", "grace_period=5s", "login_users"]
+      destination: "{service}_login"
   event_handler:
     - name: DummyEventHandler
 status:

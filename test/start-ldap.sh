@@ -18,7 +18,7 @@ podman run --rm  --detach \
     --env LDAP_CONFIG_PASSWORD=mellon \
     --env DISABLE_CHOWN=true\
     --env LDAP_REMOVE_CONFIG_AFTER_SETUP=false \
+    --volume $PWD/test/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom$SELINUX \
     --name ldap \
     --publish 3389:389 \
-    --volume $PWD/test/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom$SELINUX \
-    docker.io/osixia/openldap --copy-service --loglevel debug \
+    docker.io/osixia/openldap --copy-service --loglevel debug

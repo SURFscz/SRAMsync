@@ -1,9 +1,9 @@
 Feature: Remove frodo from shirecloud_login which has graced enabled
 
     Scenario: Remove frodo from shirecloud_login
-        Given frodo is in the group
-         When frodo is removed from LDAP
-         Then Removal message is displayed on the command line
+        Given Frodo is in the group
+         When Frodo is removed from LDAP
+         Then removal message is displayed on the command line
 
     Scenario: Removing frodo before the grace period has ened
         Given Grace period for frodo has not ended
@@ -12,6 +12,6 @@ Feature: Remove frodo from shirecloud_login which has graced enabled
          Then the status file is unchanged
 
     Scenario: frode is permmanently removed
-        Given frodo has been removed
+        Given Frodo has been removed
          When the grace period has passed
-         Then frodo is permmanently removed from the group
+         Then Frodo is permmanently removed from the group

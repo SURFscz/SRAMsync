@@ -159,3 +159,10 @@ def remove_ssh_key(ldap_conn, org, co, uid, ssh_key):
     mod_list = ldap.modlist.modifyModlist(old_entry, new_entry)
 
     ldap_conn.modify_s(dn, mod_list)
+
+
+def remove_group(ldap_conn, org, co, group):
+    dn = f"ou=Groups,o={org}.{co},dc=ordered,{BASEDN}"
+    group_dn = f"cn={group},{dn}"
+
+    ldap_conn.delete_s(group_dn)

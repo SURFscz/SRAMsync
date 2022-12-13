@@ -1,5 +1,7 @@
 """Behave test"""
 
+# pylint: skip-file
+
 import json
 import time
 from test.ldap_support import add_user, remove_user_from_group
