@@ -29,7 +29,6 @@ def step_remove_group(context):
 
     context._runner.stop_capture()
 
-    __import__("pdb").set_trace()
     remove_group(context.ldap_conn, "Hogwarts", "Gryffindor", "wizardry_owl")
 
     runner = CliRunner()
