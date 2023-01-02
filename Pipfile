@@ -19,6 +19,7 @@ rope = "*"
 behave = "*"
 deepdiff = "*"
 pytest = "*"
+pyright = "*"
 
 [pipenv]
 allow_prereleases = true
