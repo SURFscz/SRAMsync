@@ -3,6 +3,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-ble.svg)](http://perso.crans.org/besson/LICENSE.html)
 [![CI](https://github.com/SURFscz/SRAMsync/actions/workflows/ci.yml/badge.svg)](https://github.com/SURFscz/SRAMsync/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/SURFscz/SRAMsync/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/SURFscz/SRAMsync/actions/workflows/codeql-analysis.yml)
 
 ## Table of Contents
 
