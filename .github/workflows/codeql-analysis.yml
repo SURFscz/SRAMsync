@@ -38,7 +38,7 @@ jobs:
 
     steps:
     - name: Install dependancies
-      run: apt install libsasl2-dev python-dev libldap2-dev libssl-dev
+      run: apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
       
     - name: Checkout repository
       uses: actions/checkout@v3
