@@ -349,7 +349,7 @@ class EmailNotifications(EventHandler):
         """Add delete-ssh-key event message to the message queue."""
         self.add_event_message(co, "delete-ssh-key", user=user, key=key)
 
-    def add_new_group(self, co: str, group: str, group_attributes: list) -> None:
+    def add_new_groups(self, co: str, group: str, group_attributes: list) -> None:
         """Add add-group event message to the message queue."""
         self.add_event_message(co, "add-group", group=group, attributes=group_attributes)
 

@@ -5,7 +5,7 @@ LDAP provides attributes only and that it does not provide posix account and
 groups.
 
 sync-with-sram consists in essence out of two parts: 1) a main loop that
-iterates over the entries and retrieves attrbutes from the SRAM LDAP, 2) an
+iterates over the entries and retrieves attributes from the SRAM LDAP, 2) an
 event like system that acts on detected changes between the current state of
 the SRAM LDAP and the current state of the destination system.
 
@@ -334,9 +334,17 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                             sys.exit(1)
 
                         if not cfg.state.is_known_user(dest_user_name):
+                            group_attributes = render_templated_string_list(
+                                cfg["sync"]["groups"][login_group]["attributes"],
+                                service=cfg["service"],
+                                org=org,
+                                co=co,
+                            )
                             logger.debug("  Found new user: %s", dest_user_name)
                             event_handler = cfg.event_handler_proxy
-                            event_handler.add_new_user(co, login_dest_group_names, dest_user_name, entry)
+                            event_handler.add_new_user(
+                                co, login_dest_group_names, dest_user_name, group_attributes, entry
+                            )
                             new_users.append(dest_user_name)
 
                         handle_public_ssh_keys(cfg, co, dest_user_name, entry)
@@ -370,8 +378,9 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
     # for sram_group, value in non_login_groups.items():
     for sram_group, value in cfg["sync"]["groups"].items():
-        group_attributes = value["attributes"]
-        dest_group_names = value["destination"]
+        service = cfg["service"]
+        group_attributes = render_templated_string_list(value["attributes"], service=service, org=org, co=co)
+        dest_group_names = render_templated_string_list(value["destination"], service=service, org=org, co=co)
 
         try:
             basedn = cfg.get_sram_basedn()
@@ -386,14 +395,14 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             # Create groups
             if not cfg.state.is_known_group(dest_group_names):
                 logger.debug("  Adding group: %s", dest_group_names)
-                event_handler.add_new_group(co, dest_group_names, group_attributes)
+                event_handler.add_new_groups(co, dest_group_names, group_attributes)
 
             cfg.state.add_groups(dest_group_names, co, sram_group, group_attributes)
 
             # Find members
             for _, entry in dns:  # type: ignore
                 # Add members
-                members = [m.decode("UTF-8") for m in entry["member"]] if "member" in entry else []
+                members = [member.decode("UTF-8") for member in entry["member"]] if "member" in entry else []
                 for member in members:
                     m_uid = dn_to_rdns(member)["uid"][0]
                     user = render_user_name(cfg, org=org, co=co, group=sram_group, uid=m_uid)

@@ -19,7 +19,14 @@ class EventHandler(ABC):
         """start_of_co_processing event."""
 
     @abstractmethod
-    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]):
+    def add_new_user(
+        self,
+        co: str,
+        groups: List[str],
+        user: str,
+        group_attributes: List[str],
+        entry: Dict[str, List[bytes]],
+    ):
         """add_new_user event."""
 
     @abstractmethod
@@ -31,7 +38,7 @@ class EventHandler(ABC):
         """delete_public_ssh_key event."""
 
     @abstractmethod
-    def add_new_group(self, co, group, group_attributes):
+    def add_new_groups(self, co, groups, group_attributes):
         """add_new_group event."""
 
     @abstractmethod

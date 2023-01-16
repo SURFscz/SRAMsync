@@ -22,7 +22,9 @@ class DummyEventHandler(EventHandler):
         """Log the start_of_co_processing event."""
         logger.info(click.style(f"  start_of_co_processing({co})", fg="yellow", bold=True))
 
-    def add_new_user(self, co: str, group: Union[str, List[str]], user: str, entry: dict):
+    def add_new_user(
+        self, co: str, group: Union[str, List[str]], user: str, group_attributes: List[str], entry: dict
+    ):
         """Log the add_new_user event."""
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
@@ -50,7 +52,7 @@ class DummyEventHandler(EventHandler):
         """Log the delete_public_ssh_key event."""
         logger.info("    delete_public_ssh_key(%s, %s, %s)", co, user, key)
 
-    def add_new_group(self, co, group, group_attributes):
+    def add_new_groups(self, co, group, group_attributes):
         """Log the add_new_group event."""
         logger.info(
             "  add_new_group(%s, %s, %s)",

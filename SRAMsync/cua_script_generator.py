@@ -124,7 +124,14 @@ class CuaScriptGenerator(EventHandler):
 
         self._print(f"\n# service: {self.service_name}/{co}")
 
-    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]) -> None:
+    def add_new_user(
+        self,
+        co: str,
+        groups: List[str],
+        user: str,
+        group_attributes: List[str],
+        entry: Dict[str, List[bytes]],
+    ) -> None:
         """
         Write the appropriate sara_usertools commands to the bash script for
         adding new users. Call the auxiliary event class.
@@ -162,21 +169,38 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"### Remove SSH Public key: {key}")
         self._print(f'{self.sshkey_cmd} --remove "{key}" {user}\n')
 
-    def add_new_group(self, co: str, group: str, group_attributes: list) -> None:
+    def add_new_groups(self, co: str, groups: List[str], group_attributes: list) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
-        adding a new group. This is either a CUA system or project group as
-        specified per configuration file. Call the auxiliary event class.
+        adding a new group. This is either a CUA system, project or an
+        extra_groups group as specified per configuration file.
         """
         if "system_group" in group_attributes:
-            self._add_new_system_group(group)
+            import pdb
+
+            pdb.set_trace()
+
+            re_extra_groups_attribute = re.compile("^extra_groups *= *[a-zA-Z0-9_-]+ *(, *?[a-z]+)*[, ]*$")
+
+            extra_groups = [
+                item.strip()
+                for attribute in group_attributes
+                if re_extra_groups_attribute.match(attribute)
+                for item in attribute.split("=")[1].split(",")
+            ]
+
+            groups = list(set(groups) - set(extra_groups))
+
+            self._add_new_system_group(groups)
+            self._add_new_project_group(extra_groups)
+
         elif "project_group" in group_attributes:
-            self._add_new_project_group(group)
+            self._add_new_project_group(groups)
         else:
-            logger.error("Could not determine group type (system_group or project_group) for %s.", group)
+            logger.error("Could not determine group type (system_group or project_group) for %s.", groups)
 
     @staticmethod
-    def _add_new_system_group(group: str) -> None:
+    def _add_new_system_group(group: List[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA system group. However, the current version of the
@@ -185,15 +209,17 @@ class CuaScriptGenerator(EventHandler):
         """
         logger.debug("Ignoring adding system group %s. It should be done by the CUA team.", group)
 
-    def _add_new_project_group(self, group: str) -> None:
+    def _add_new_project_group(self, groups: List[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
         """
-        line = f"sram_group:description:dummy:{group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
+        line = f"sram_group:description:dummy:{groups}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
-        self._print(f"## Adding group: {group}")
-        self._print(f"{self.check_cmd} {group} ||")
+        g = ",".join(groups)
+        self._print(f"## Adding group(s): {groups}")
+        # self._print(f"{self.check_cmd} {groups} ||")
+        self._print(f"{self.check_cmd} {g} ||")
         self._print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
@@ -201,7 +227,7 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         removing a new CUA project group. Call the auxiliary event class.
         """
-        self._print(f"# Removing group {group}")
+        self._print(f"# Removing group(s) {group}")
         self._print(f"{self.add_cmd} --remove {group}")
 
     def add_user_to_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
@@ -209,7 +235,7 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         adding a user to a group. Call the auxiliary event class.
         """
-        self._print(f"# Add {user} to group {group}")
+        self._print(f"# Add {user} to group(s) {group}")
         self._update_user_in_group(group, group_attributes, user, add=True)
 
     def start_grace_period_for_user(self, co, group, group_attributes, user, duration):

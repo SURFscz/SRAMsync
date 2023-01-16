@@ -109,7 +109,7 @@ def _remove_ignored_groups(config) -> None:
         del config["sync"]["groups"][group]
 
 
-def _make_destintion_a_list(config) -> None:
+def _group_destintion_to_list(config) -> None:
     """Make the destination a list in case it is defined as a string."""
     groups = config["sync"]["groups"]
     dest_as_string = [group for group in groups if isinstance(groups[group]["destination"], str)]
@@ -229,7 +229,7 @@ class Config:
         validate(schema=self._schema, instance=config)
 
         _remove_ignored_groups(config)
-        _make_destintion_a_list(config)
+        _group_destintion_to_list(config)
         _normalize_grace_periods(config)
 
         if "@all" not in config["sync"]["groups"]:

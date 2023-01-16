@@ -6,6 +6,7 @@ same function of each instance.
 """
 
 from typing import Dict, List
+
 from SRAMsync.event_handler import EventHandler
 
 
@@ -21,10 +22,17 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
-    def add_new_user(self, co: str, groups: List[str], user: str, entry: Dict[str, List[bytes]]):
+    def add_new_user(
+        self,
+        co: str,
+        groups: List[str],
+        user: str,
+        group_attributes: List[str],
+        entry: Dict[str, List[bytes]],
+    ):
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
-            event_handler.add_new_user(co, groups, user, entry)
+            event_handler.add_new_user(co, groups, user, group_attributes, entry)
 
     def add_public_ssh_key(self, co, user, key):
         """Call add_public_ssh_key event for all EventHandlers."""
@@ -36,10 +44,10 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.delete_public_ssh_key(co, user, key)
 
-    def add_new_group(self, co, group, group_attributes):
+    def add_new_groups(self, co, groups, group_attributes):
         """Call add_new_group event for all EventHandlers."""
         for event_handler in self.event_handlers:
-            event_handler.add_new_group(co, group, group_attributes)
+            event_handler.add_new_groups(co, groups, group_attributes)
 
     def remove_group(self, co, group, group_attributes):
         """Call remove_group event for all EventHandlers."""
