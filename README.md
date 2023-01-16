@@ -107,7 +107,7 @@ Events are triggered when for example the main loop detects that a new user is
 added to SRAM. Now it is up to whoever is responsible for dealing with such an
 event and what it really means. In case of a new user this should ultimately
 end with a user being added to some destination LDAP, but it is not the
-responsibility of the main loop. Instead the configuration requires an
+responsibility of the main loop. Instead, the configuration requires an
 `EventHandler` class to be instantiated that takes care of this functionality.
 
 A design choice was to dynamically load derived `EventHandler` classes. Thereby
@@ -164,7 +164,7 @@ files.
 ### SRAM connection details
 
 The script needs to know how it should connect to the SRAM LDAP. As a service
-you are allowed to read, not write, from a sub tree in LDAP that has been
+you are allowed to read, not write, from a subtree in LDAP that has been
 created for your service. You should have been given a base DN and accompanying
 bind DN and passwd. The full specification of the `sram:` key is as follows:
 
@@ -192,7 +192,7 @@ well. See next section.
 #### Password file format
 
 The password file can contain passwords for multiple sources. The file name is
-configured in the `secrets` block. Currently only loading passwords from file
+configured in the `secrets` block. Currently, only loading passwords from file
 is supported. The `secrets` block is defines as follows:
 
 ```yaml
@@ -202,8 +202,8 @@ secrets:
 
 When the above is specified in the configuration file, the secrets in it will
 be loaded regardless of being used in the configuration file. One could have
-the secrets being loaded and still use plain text passwords for for example the
-SRAM LDAP. Currently it can hold passwords for both the SRAM LDAP and for SMTP
+the secrets being loaded and still use plain text passwords for example the
+SRAM LDAP. Currently, it can hold passwords for both the SRAM LDAP and for SMTP
 connections. Each source has its own part in the password file. All SRAM LDAP
 related passwords for example are grouped under `sram-ldap`, while the SMTP
 passwords are bundled under `smtp`. Below is an example of a password file.
@@ -390,10 +390,10 @@ notation within YAML. Use which ever you prefer.
 
 #### Predefined attributes
 
-The previous sub section stated that the attributes are meaningless to the main
+The previous subsection stated that the attributes are meaningless to the main
 loop. There are, however, two exceptions: `login_users`, `grace_period`. All
 users within a CO are also available in the `@all` entry. A service might wish
-for a more fine grained control on what users are allowed access. For this
+for a more fine-grained control on what users are allowed access. For this
 purpose any group can be marked `login_users` through the attributes. This tells
 `sync-with-sram` that it should not use the implicit `@all` group, but rather
 the groups with this attribute. This means that `sync-with-sram` will only use
@@ -425,19 +425,19 @@ for which the grace period is in effect. Allowed time specification are:
 
 The rational numbers (ℚ) are limited to positive numbers. One cannot specify
 -1H for example. When using the time format (HH:MM:SS), only the 24h notation
-is suppored, not AM/PM. Always use twi digits for: \<hours\>, \<minutes\> and
+is supported, not AM/PM. Always use two digits for: \<hours\>, \<minutes\> and
 \<seconds\>. If no unit is used (d, m, H, M, or s), d (days) is assumed.
 
 In case you want to ignore a defined group in the configuration file, you could
 use the `ignore` attribute. When `sync-with-sram` encounters this attribute, it
-will completely ignores its existence and continues as though the group was never
+will completely ignore its existence and continues as though the group was never
 defined.
 
 #### event_handler
 
 The `event_handler:` key takes an array of two keys: `name:` and `config:`. The
 `name:` key specifies the class name of which an instance must be created at
-run time, while the `config:` key, which is optional, specifies a YAMLg
+run time, while the `config:` key, which is optional, specifies a YAML
 configuration that needs to be passed on to the instantiated class. The main
 loop is unconcerned with this configuration and ignores its structure. The
 instantiated class however could check for its validity. The specification for
@@ -462,7 +462,7 @@ The `config:` in the above is optional.
 
 The main loop must know the state of the destination in order to determine the
 delta between the destination and SRAM. In order to do so a generic `State`
-class is defined with a predefined API. The SRAMsync provides a simple json
+class is defined with a predefined API. The SRAMsync provides a simple JSON
 back end to keep track of the current state. This is the `JsonFile` class. To
 use this class you need to add the following for the `status:` block:
 
@@ -487,7 +487,7 @@ as the `status_filename` is never updated to the latest sync state.
 ## Putting it together
 
 In order to get a valid configuration, we need to put together all the needed
-elements. Thus a valid configuration should look like this:
+elements. Thus, a valid configuration should look like this:
 
 ```yaml
 service: my_service
@@ -524,8 +524,8 @@ status:
     provisional_status_filename: provisional-status.json
 ```
 
-In the above we see that two groups are synchronized: expermiment_A and
-expermiment_B. A DummyEventHandler class is used to deal with the emitted
+In the above we see that two groups are synchronized: experiment_A and
+experiment_B. A DummyEventHandler class is used to deal with the emitted
 events from the main loop. In case of the DummyEventHandler nothing is done
 except printing info messages to stdout. It does not take any additional
 configuration and therefor the `config:` key is omitted.
@@ -580,7 +580,7 @@ sync:
       destination: "{service}-login_users"
 ```
 
-The `{service}` variable is replace by `compute` and the following snippet is
+The `{service}` variable is replaced by `compute` and the following snippet is
 equal to the previous one:
 
 ```yaml
@@ -616,14 +616,14 @@ Weather this is a problem or not depends on the EventHandler and how it deals
 with wiping graced users. Remember that the status file keeps track of graced
 users and by deleting the status file this information is lost. This means that
 for graced users `sync-with-sram` will never be able to detect when a grace
-user must be removed. Effectively graced users will continue to exits until
+user must be removed. Effectively graced users will continue to exit until
 removed manually.
 
 ## Logging
 
 SRAMsync supports different log levels: CRITICAL, ERROR, WARNING, INFO and
 DEBUG. The default level is set to ERROR and can be changed by the `--loglevel
-<level>` option or its short hand equivalent `-l`. One could also switch on
+<level>` option or its shorthand equivalent `-l`. One could also switch on
 debug logging quickly, by selecting either `--debug` or `-d`. The `--verbose`
 option increase the log level once each time selected and can be used multiple
 times.
@@ -649,7 +649,7 @@ For creating your own custom EventHandler implementation see [below](#creating-a
 ### DummyEventandler
 
 This the most basic implementation of an EventHandler class. All it does is
-print an informative message, which shows up when the loglevel is set to DEBUG.
+print an informative message, which shows up when the log level is set to DEBUG.
 
 A configuration could be passed at creation time and it will be printed out
 for the DEBUG level.
@@ -671,13 +671,13 @@ is, a status file is generated upon each synchronization run. Theoretically
 the execution of the generated bash might fail at any point and the status
 of the CUA might be in some state between the original state at the beginning
 of the synchronization and the desired end goal. In order to guard against
-this situation, the status file is not created immediately. Instead a
+this situation, the status file is not created immediately. Instead, a
 provisional status file is generated. It is up to the generated bash script
 to update the status file with the provisional one once the bash script
 reaches the end of its execution.
 
 If the status file is not replaced by the provisional one, SRAMsync will
-generate the same bash script again. Thus a replay of already executed commands
+generate the same bash script again. Thus, a replay of already executed commands
 cannot be avoided. It is thus relied upon that the `sara_usertools` is robust
 against these kinds of replays.
 
@@ -688,7 +688,7 @@ class for mailing events.
 #### CuaScriptGenerator configuration
 
 The `CuaScriptGenerator` class needs to know a few things in order to be able
-to generate a bash script based on the `sara_usertools`. First of all, there is
+to generate a bash script based on the `sara_usertools`. First, there is
 the name of the generated script. This is specified by: `filename:`. Then there
 are the three commands for adding, modifying and checking groups and users:
 `add_cmd:`, `modify_cmd:`, `check_cmd` and `sshkey_cmd`. All commands can be
@@ -722,7 +722,7 @@ sync:
 ### CbaScriptGenerator
 
 The CbaScriptGenerator is derived from the CuaScriptGenerator class.
-Therefore the CbaScriptGenerator cannot be used independently from the
+Therefore the CbaScriptGenerator cannot be used independently of the
 CuaScriptGenerator. This means that if you use this class, you will need to
 provide a configuration for the CuaScriptGenerator class as well.
 
@@ -730,7 +730,7 @@ The purpose of the CbaScriptGenerator class is to enhance the generated bash
 script of the CuaScriptGenerator class. When a user gets added and CBS
 accounting is needed, this class injects the appropriate command for this. The
 same holds true for removing a user. The resulting bash script needs to be
-executed in order for the generated command to take affect.
+executed in order for the generated command to take effect.
 
 #### CbaScriptGenerator configuration
 
@@ -761,7 +761,7 @@ CbaScriptGenerator configuration.
 If you want to be informed by email about any of the emitted events during the
 execution of the main loop, the `EmailNotifications` class does that. It
 connects to an SMTP server and sends customizable emails through it. Events can
-be grouped, so you don't have tp receive a separate email for each emitted
+be grouped, so you don't have to receive a separate email for each emitted
 event. However, this event handler can be setup in such a way that you can receive
 an email for each event. In case you want to collect email on a per CO basis, that
 is also possible.
@@ -954,7 +954,7 @@ you should derive such class from the `EventHandler` abstract base class.
 
 ### When are events emitted
 
-Event are emitted from the main loop of `sync-with-sram`. Some event are always
+Event are emitted from the main loop of `sync-with-sram`. Some events are always
 emitted at the appropriate moment like: `start-co-processing` and `finalize`.
 The emitting of other events depends on the current state of SRAM LDAP and the
 destination. If there are no differences no events will be emitted.
@@ -988,9 +988,9 @@ which holds all CO members by default. See [group](#groups) for more details on
 
 | Input | Description |
 |:------|:------------|
-| co    | CO name for which the event was emitted.   |
-| user  | User name as it is used on the destination.|
-| key   | Public SSH key of the user.|
+| co    | CO name for which the event was emitted.  |
+| user  | Username as it is used on the destination.|
+| key   | Public SSH key of the user.               |
 
 When a user adds a new public SSH key to its profile in SRAM, this event will
 be emitted. Note that an update of an SSH key will not be detected as a change,
@@ -1000,11 +1000,11 @@ but rather as removal of an old key and adding a new key instead.
 
 | Input | Description |
 |:------|:------------|
-| co    | CO name for which the event was emitted.    |
-| user  | User name as it is used on the destination. |
-| key   | Public SSH key of the user|
+| co    | CO name for which the event was emitted.   |
+| user  | Username as it is used on the destination. |
+| key   | Public SSH key of the user                 |
 
-When a users deletes a public SSH key in its profile in SRAM, this event will
+When a user deletes a public SSH key in its profile in SRAM, this event will
 be emitted. Note that an update of an SSH key will not be detected as a change,
 but rather as removal of an old key and adding a new key instead.
 
@@ -1016,7 +1016,7 @@ but rather as removal of an old key and adding a new key instead.
 | group      | Name of the group that exists in SRAM but not yet at the destination.|
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
-When a new group appears in the SRAM LDAP for for the current CO, this event
+When a new group appears in the SRAM LDAP for the current CO, this event
 will be emitted. The attributes from the configuration file are sent along for
 possible further processing.
 
@@ -1028,7 +1028,7 @@ possible further processing.
 | group      | Name of the group that exists in SRAM but not yet at the destination.|
 | attributes | List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
-When a group is removed in the SRAM LDAP for for the current CO, this event
+When a group is removed in the SRAM LDAP for the current CO, this event
 will be emitted. The attributes from the configuration file are sent along for
 possible further processing.
 
@@ -1038,7 +1038,7 @@ possible further processing.
 |:----------|:------------|
 | co        | CO name for which the event was emitted. |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
-| user      | User name of the user at the destination.|
+| user      | Username of the user at the destination. |
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
 When in SRAM a user is added to a group, this event will be emitted. This is
@@ -1053,8 +1053,8 @@ already provisioned at the destination, but not yet added to the `group`.
 | co        | CO name for which the event was emitted. |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
-| user      | User name of the user at the destination.|
-| duration  | Length of grace period in days. |
+| user      | Username of the user at the destination. |
+| duration  | Length of grace period in days.          |
 
 When a `user` is removed from a `group`, this event will be emitted in case the
 `grace_preriod` was set in the group attributes list. If the `grace_preriod`
@@ -1069,7 +1069,7 @@ signal that the `user` must be removed.
 |:----------|:------------|
 | co        | CO name for which the event was emitted. |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
-| user      | User name of the user at the destination.|
+| user      | Username of the user at the destination. |
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
 When a `user` has been removed from a `group`, for which the `grace_period`
@@ -1083,13 +1083,13 @@ the group.
 |:----------|:------------|
 | co        | CO name for which the event was emitted. |
 | group     | Name of the group that exists in SRAM but not yet at the destination.|
-| user      | User name of the user at the destination.|
+| user      | Username of the user at the destination. |
 | attributes| List of attributes as specified for the group in the `sync-with-sram` configuration file.|
 
 When a `user` is removed from a `group`, this event will be emitted. However,
 if the `group` has the `grace_period` attribute set, the user will not be
-removed until the grace period has ended. This event will be emitted non the
-less that the user has been removed from the group.
+removed until the grace period has ended. This event will be emitted
+nonetheless that the user has been removed from the group.
 
 #### finalize
 
