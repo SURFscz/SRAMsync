@@ -20,6 +20,7 @@ behave = "*"
 deepdiff = "*"
 pytest = "*"
 pyright = "*"
+isort = "*"
 
 [pipenv]
 allow_prereleases = true
