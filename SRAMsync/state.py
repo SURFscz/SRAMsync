@@ -3,10 +3,9 @@ Abstract class definition for keeping track of the last known and current state
 of the SRAMsync process.
 """
 
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List
-
-from abc import ABC, abstractmethod
 
 
 class NoGracePeriodForGroupError(Exception):

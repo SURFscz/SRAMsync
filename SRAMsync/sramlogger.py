@@ -3,6 +3,7 @@ Singleton logging with click.
 """
 
 import logging
+
 import click_logging
 
 #  Adjust some of the colour style of click_logging.

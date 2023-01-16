@@ -3,10 +3,10 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
-from email.message import EmailMessage
-from email.utils import formatdate
 import smtplib
 import ssl
+from email.message import EmailMessage
+from email.utils import formatdate
 
 import click
 from jsonschema import ValidationError, validate

@@ -4,19 +4,18 @@
   configuration.
 """
 
-from datetime import timedelta
 import re
+from datetime import timedelta
 from typing import Any, List
 
+import yaml
 from jsonschema import validate
 from ldap import ldapobject
-import yaml
 
 from SRAMsync.common import deduct_event_handler_class
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
-from SRAMsync.state import NoGracePeriodForGroupError
-from SRAMsync.state import State
+from SRAMsync.state import NoGracePeriodForGroupError, State
 
 
 class ConfigurationError(Exception):

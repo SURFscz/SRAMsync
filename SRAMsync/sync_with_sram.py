@@ -28,7 +28,8 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from SRAMsync.common import get_attribute_from_entry, render_templated_string, render_templated_string_list
+from SRAMsync.common import (get_attribute_from_entry, render_templated_string,
+                             render_templated_string_list)
 from SRAMsync.config import Config
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
