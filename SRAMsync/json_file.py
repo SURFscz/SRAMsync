@@ -3,8 +3,8 @@ Concreet implementation of the State abstract base class. It implements
 the State class based on a JSON file.
 """
 
-import json
 from datetime import datetime
+import json
 from typing import Any, List, Optional
 
 from jsonschema import validate

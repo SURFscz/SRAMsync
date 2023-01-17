@@ -7,11 +7,11 @@ The generated script makes use of the sara_usertool to interact with
 the CUA.
 """
 
+from datetime import datetime
 import os
 import re
 import stat
 import subprocess
-from datetime import datetime
 from typing import Dict, List
 
 from jsonschema import ValidationError, validate

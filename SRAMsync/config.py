@@ -4,13 +4,13 @@
   configuration.
 """
 
-import re
 from datetime import timedelta
+import re
 from typing import Any, List
 
-import yaml
 from jsonschema import validate
 from ldap import ldapobject
+import yaml
 
 from SRAMsync.common import deduct_event_handler_class
 from SRAMsync.event_handler import EventHandler
