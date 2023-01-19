@@ -238,7 +238,7 @@ def get_login_groups_and_users(cfg: Config, service: str, co: str) -> Dict[str, 
         }
 
     if not login_groups_and_users:
-        login_groups_and_users = {"@all": []}
+        login_groups_and_users = cfg["sync"]["groups"]["@all"]
 
     for group in login_groups_and_users:
         try:
@@ -381,6 +381,13 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
     # for sram_group, value in non_login_groups.items():
     for sram_group, value in cfg["sync"]["groups"].items():
+        if sram_group == "@all" and not value["destination"]:
+            # Do not continue in case the `@all` group has been inserted
+            # in the, in memory, config file. In which case the destination
+            # is empty. Had the `@all` group been added to the config file
+            # by the user, the destination would have been set.
+            continue
+
         service = cfg["service"]
         group_attributes = render_templated_string_list(value["attributes"], service=service, org=org, co=co)
         dest_group_names = render_templated_string_list(value["destination"], service=service, org=org, co=co)

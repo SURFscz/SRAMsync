@@ -233,7 +233,7 @@ class Config:
         _normalize_grace_periods(config)
 
         if "@all" not in config["sync"]["groups"]:
-            config["sync"]["groups"]["@all"] = {"attributes": [], "destination": ""}
+            config["sync"]["groups"]["@all"] = {"attributes": [], "destination": []}
 
         self.config = config
         self._ldap_connector = None
