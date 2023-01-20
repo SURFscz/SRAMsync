@@ -34,22 +34,22 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.add_new_user(co, groups, user, group_attributes, entry)
 
-    def add_public_ssh_key(self, co, user, key):
+    def add_public_ssh_key(self, co: str, user: str, key: str):
         """Call add_public_ssh_key event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.add_public_ssh_key(co, user, key)
 
-    def delete_public_ssh_key(self, co, user, key):
+    def delete_public_ssh_key(self, co: str, user: str, key: str):
         """Call delete_public_ssh_key event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.delete_public_ssh_key(co, user, key)
 
-    def add_new_groups(self, co, groups, group_attributes):
+    def add_new_groups(self, co: str, groups: List[str], group_attributes: List[str]):
         """Call add_new_group event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.add_new_groups(co, groups, group_attributes)
 
-    def remove_group(self, co, group, group_attributes):
+    def remove_group(self, co: str, group: str, group_attributes: List[str]):
         """Call remove_group event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.remove_group(co, group, group_attributes)

@@ -176,10 +176,6 @@ class CuaScriptGenerator(EventHandler):
         extra_groups group as specified per configuration file.
         """
         if "system_group" in group_attributes:
-            import pdb
-
-            pdb.set_trace()
-
             re_extra_groups_attribute = re.compile("^extra_groups *= *[a-zA-Z0-9_-]+ *(, *?[a-z]+)*[, ]*$")
 
             extra_groups = [

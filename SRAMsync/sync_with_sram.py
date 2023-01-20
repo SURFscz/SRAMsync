@@ -33,7 +33,7 @@ from SRAMsync.common import (
     render_templated_string,
     render_templated_string_list,
 )
-from SRAMsync.config import Config
+from SRAMsync.config import Config, ConfigurationError
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
 
@@ -390,7 +390,9 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
         service = cfg["service"]
         group_attributes = render_templated_string_list(value["attributes"], service=service, org=org, co=co)
-        dest_group_names = render_templated_string_list(value["destination"], service=service, org=org, co=co)
+        dest_group_names = render_templated_string_list(
+            value["destination"], service=service, org=org, co=co, sram_group=sram_group
+        )
 
         try:
             basedn = cfg.get_sram_basedn()
@@ -692,6 +694,8 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
 
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)
+            cfg.last_minute_config_updates()
+
             add_missing_entries_to_ldap(cfg)
             remove_superfluous_entries_from_ldap(cfg)
 
@@ -702,6 +706,8 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         logger.info("Finished syncing with SRAM")
         clean_exit = True
     except IOError as e:
+        logger.error(e)
+    except ConfigurationError as e:
         logger.error(e)
     except ConfigValidationError as e:
         path = e.path

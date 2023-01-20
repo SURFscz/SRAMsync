@@ -9,10 +9,11 @@ import re
 from typing import Any, List
 
 from jsonschema import validate
+import ldap
 from ldap import ldapobject
 import yaml
 
-from SRAMsync.common import deduct_event_handler_class
+from SRAMsync.common import deduct_event_handler_class, get_attribute_from_entry
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
 from SRAMsync.state import NoGracePeriodForGroupError, State
@@ -24,43 +25,6 @@ class ConfigurationError(Exception):
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
-
-
-def _normalize_grace_periods(cfg: dict) -> None:
-    """
-    Check all defined attributes for all groups in the configuration file
-    for the occurrence of a grace_period attribute. If found, normalize it
-    by taking the right hand side of the '=' sign and create a new grace_period
-    item for that group in the configuration with the grace period in seconds.
-    """
-    re_grace_period = re.compile(
-        r"""
-        ^grace_period=   # Must start with grace_period=
-        (?:
-          (?:[0-9]+(?:\.[0-9]+)?[s|d|H|M|m]?)$      # Interger or float, might end with suffix
-         |                                          # alternative duration notation
-         (?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$  # HH:MM notation
-         """,
-        re.VERBOSE,
-    )
-
-    if "groups" not in cfg["sync"]:
-        return
-
-    groups = cfg["sync"]["groups"]
-
-    for group, values in groups.items():
-        for i, attribute in enumerate(values["attributes"]):
-            if attribute == "grace_period":
-                raise ValueError("grace_period attribute found without a value. Check configuration.")
-
-            if re_grace_period.match(attribute):
-                _, raw_period = attribute.split("=")
-                grace_period = to_seconds(raw_period)
-
-                groups[group]["attributes"][i] = f"grace_period={grace_period}"
-            elif attribute.startswith("grace_period="):
-                raise ValueError("grace_period has wrong value.")
 
 
 def get_status_object(cfg: dict, **kwargs: str) -> State:
@@ -97,25 +61,6 @@ def to_seconds(raw_period: str) -> int:
             ).total_seconds()
 
     return int(seconds + 0.5)
-
-
-def _remove_ignored_groups(config) -> None:
-    """Remove any group when the ignore attributes is defined."""
-    ignored_groups = [
-        group for group, values in config["sync"]["groups"].items() if "ignore" in values["attributes"]
-    ]
-
-    for group in ignored_groups:
-        del config["sync"]["groups"][group]
-
-
-def _group_destintion_to_list(config) -> None:
-    """Make the destination a list in case it is defined as a string."""
-    groups = config["sync"]["groups"]
-    dest_as_string = [group for group in groups if isinstance(groups[group]["destination"], str)]
-
-    for group_name in dest_as_string:
-        groups[group_name]["destination"] = [groups[group_name]["destination"]]
 
 
 class Config:
@@ -228,15 +173,10 @@ class Config:
 
         validate(schema=self._schema, instance=config)
 
-        _remove_ignored_groups(config)
-        _group_destintion_to_list(config)
-        _normalize_grace_periods(config)
-
         if "@all" not in config["sync"]["groups"]:
             config["sync"]["groups"]["@all"] = {"attributes": [], "destination": []}
 
         self.config = config
-        self._ldap_connector = None
 
         self.secrets = {}
         if "secrets" in config:
@@ -253,6 +193,20 @@ class Config:
 
     def __contains__(self, item: str) -> bool:
         return item in self.config
+
+    def last_minute_config_updates(self) -> None:
+        """
+        Depending on what is exactly configured, it might be the case that some
+        parts of the config file need to be expanded. This needs to be done
+        before the config file can be used by the main loop. However, some
+        functionality might require some other initialization, such as an LDAP
+        connection, that the configiration update can only happend at the last
+        minute.
+        """
+        self._remove_ignored_groups()
+        self._expand_groups()
+        self._group_destintion_to_list()
+        self._normalize_grace_periods()
 
     def get_event_handlers(self, state: State, **args: dict) -> List[EventHandler]:
         """
@@ -309,3 +263,133 @@ class Config:
                 return seconds
 
         raise NoGracePeriodForGroupError
+
+    def _normalize_grace_periods(self) -> None:
+        """
+        Check all defined attributes for all groups in the configuration file
+        for the occurrence of a grace_period attribute. If found, normalize it
+        by taking the right hand side of the '=' sign and create a new grace_period
+        item for that group in the configuration with the grace period in seconds.
+        """
+        re_grace_period = re.compile(
+            r"""
+            ^grace_period=   # Must start with grace_period=
+            (?:
+            (?:[0-9]+(?:\.[0-9]+)?[s|d|H|M|m]?)$      # Interger or float, might end with suffix
+            |                                          # alternative duration notation
+            (?:[0-9]+:)?(?:2[0-3]|[01]?[0-9]):(?:[0-5][0-9])(?::[0-5][0-9])?)$  # HH:MM notation
+            """,
+            re.VERBOSE,
+        )
+
+        if "groups" not in self.config["sync"]:
+            return
+
+        groups = self.config["sync"]["groups"]
+
+        for group, values in groups.items():
+            for i, attribute in enumerate(values["attributes"]):
+                if attribute == "grace_period":
+                    raise ValueError("grace_period attribute found without a value. Check configuration.")
+
+                if re_grace_period.match(attribute):
+                    _, raw_period = attribute.split("=")
+                    grace_period = to_seconds(raw_period)
+
+                    groups[group]["attributes"][i] = f"grace_period={grace_period}"
+                elif attribute.startswith("grace_period="):
+                    raise ValueError("grace_period has wrong value.")
+
+    def _remove_ignored_groups(self) -> None:
+        """Remove any group when the ignore attributes is defined."""
+        ignored_groups = [
+            group
+            for group, values in self.config["sync"]["groups"].items()
+            if "ignore" in values["attributes"]
+        ]
+
+        for group in ignored_groups:
+            del self.config["sync"]["groups"][group]
+
+    def _expand_groups(self) -> None:
+        """
+        Some group definition can be a regular expression instead of a constant
+        string. These regular expression need to be exapanded to a new line in
+        the config file. In order to do this, a lookup needs to be done for all
+        known group names in SRAM. When the regural expression matches an SRAM
+        group name, then for this group a new line is added to the
+        configuration file that is in memory.
+        """
+        regex_groups = {
+            re.compile(group): values
+            for group, values in self.config["sync"]["groups"].items()
+            if "regex_groups" in values["attributes"]
+        }
+
+        fq_cos = self._retieve_fully_qualified_cos()
+        basedn = self.get_sram_basedn()
+        groups = set()
+
+        for fq_co in fq_cos:
+            dns = self._ldap_connector.search_s(
+                f"ou=Groups,o={fq_co},dc=ordered,{basedn}",
+                ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
+                "(objectClass=groupOfMembers)",
+            )
+
+            for _, entry in dns:  # type: ignore
+                group_name = get_attribute_from_entry(entry, "cn")
+
+                groups.add(group_name)
+
+        new_groups = {}
+        for regex, value in regex_groups.items():
+            for group in groups:
+                if regex.match(group):
+                    new_groups[group] = value
+
+        if new_groups:
+            all_groups = self.config["sync"]["groups"]
+
+            if all_groups.keys() > new_groups.keys():
+                n = ", ".join(list(new_groups.keys()))
+                if len(new_groups) == 1:
+                    a = "a configured group name: {}".format(n)
+                else:
+                    a = "configured group names: {}".format(n)
+                raise ConfigurationError(
+                    f"A regular expression matches {a}. Please, check your configuration."
+                )
+
+            self.config["sync"]["groups"] = {
+                group: config
+                for group, config in all_groups.items()
+                if "regex_groups" not in config["attributes"]
+            }
+            self.config["sync"]["groups"].update(new_groups)
+
+            validate(schema=self._schema, instance=self.config)
+
+    def _retieve_fully_qualified_cos(self) -> List[str]:
+        """Retrieve all organization.co that are known to the services."""
+        basedn = self.get_sram_basedn()
+
+        dns = self._ldap_connector.search_s(
+            f"dc=ordered,{basedn}",
+            ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
+            "(&(o=*)(ObjectClass=organization))",
+        )
+
+        fully_quallified_cos = []
+        for _, entry in dns:  # type: ignore
+            fully_quallified_cos.append(get_attribute_from_entry(entry, "o"))
+
+        return fully_quallified_cos
+
+    def _group_destintion_to_list(self) -> None:
+        """Make the destination a list in case it is defined as a string."""
+        groups = self.config["sync"]["groups"]
+        dest_as_string = [group for group in groups if isinstance(groups[group]["destination"], str)]
+
+        for group_name in dest_as_string:
+            groups[group_name]["destination"] = [groups[group_name]["destination"]]
