@@ -7,11 +7,12 @@ from email.message import EmailMessage
 from email.utils import formatdate
 import smtplib
 import ssl
+from typing import List
 
 import click
 from jsonschema import ValidationError, validate
 
-from SRAMsync.common import get_attribute_from_entry, render_templated_string
+from SRAMsync.common import get_attribute_from_entry, pascal_case_to_snake_case, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import State
@@ -285,6 +286,8 @@ class EmailNotifications(EventHandler):
             if self.mail_to_stdout:
                 smtp_client.set_output_to_stdout()
 
+            self.cleanup_messages()
+
             for co_messages in self._messages.values():
                 message = message + self.render_message(co_messages)
 
@@ -301,6 +304,22 @@ class EmailNotifications(EventHandler):
                     message = message + self.finalize_message
                 message = message.strip()
                 smtp_client.send_message(message, self.service)
+
+    def cleanup_messages(self) -> None:
+        """Clean up some of the messages to make the resulting e-mail a bit easier to read."""
+        try:
+            self._messages[self.service]["add-group"]["messages"] = sorted(
+                self._messages[self.service]["add-group"]["messages"]
+            )
+        except:
+            pass
+
+        try:
+            self._messages[self.service]["add-user-to-group"]["messages"] = sorted(
+                self._messages[self.service]["add-user-to-group"]["messages"]
+            )
+        except:
+            pass
 
     def render_message(self, messages: dict) -> str:
         """Render a final message for collected event messages."""
@@ -349,17 +368,21 @@ class EmailNotifications(EventHandler):
         """Add delete-ssh-key event message to the message queue."""
         self.add_event_message(co, "delete-ssh-key", user=user, key=key)
 
-    def add_new_groups(self, co: str, group: str, group_attributes: list) -> None:
+    def add_new_groups(self, co: str, groups: List[str], group_attributes: list) -> None:
         """Add add-group event message to the message queue."""
-        self.add_event_message(co, "add-group", group=group, attributes=group_attributes)
+        for group in groups:
+            self.add_event_message(co, "add-group", group=group, attributes=group_attributes)
 
     def remove_group(self, co: str, group: str, group_attributes: list) -> None:
         """Add remove-group event message to the message queue."""
         self.add_event_message(co, "remove-group", group=group, attributes=group_attributes)
 
-    def add_user_to_group(self, co, group: str, group_attributes: list, user: str) -> None:
+    def add_user_to_group(self, co, groups: List[str], group_attributes: list, user: str) -> None:
         """Add add-user-to-group event message to the message queue."""
-        self.add_event_message(co, "add-user-to-group", group=group, user=user, attributes=group_attributes)
+        for group in groups:
+            self.add_event_message(
+                co, "add-user-to-group", group=group, user=user, attributes=group_attributes
+            )
 
     def start_grace_period_for_user(
         self, co: str, group: str, group_attributes: list, user: str, duration: str
