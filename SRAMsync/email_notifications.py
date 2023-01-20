@@ -12,7 +12,7 @@ from typing import List
 import click
 from jsonschema import ValidationError, validate
 
-from SRAMsync.common import get_attribute_from_entry, pascal_case_to_snake_case, render_templated_string
+from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import State
