@@ -217,7 +217,7 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"## Adding group(s): {groups}")
         # self._print(f"{self.check_cmd} {groups} ||")
         self._print(f"{self.check_cmd} {g} ||")
-        self._print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
+        self._print(f"  {{\n    echo '{line}' | {self.modify_cmd} -f-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
