@@ -390,7 +390,9 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             continue
 
         service = cfg["service"]
-        group_attributes = render_templated_string_list(value["attributes"], service=service, org=org, co=co)
+        group_attributes = render_templated_string_list(
+            value["attributes"], service=service, org=org, co=co, sram_group=sram_group
+        )
         dest_group_names = render_templated_string_list(
             value["destination"], service=service, org=org, co=co, sram_group=sram_group
         )
