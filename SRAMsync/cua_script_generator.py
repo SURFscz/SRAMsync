@@ -211,10 +211,10 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
         """
-        line = f"sram_group:description:dummy:{groups}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
 
-        g = ",".join(groups)
-        self._print(f"## Adding group(s): {groups}")
+        g = ",".join(group)
+        line = f"sram_group:description:dummy:{g}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
+        self._print(f"## Adding group(s): {group}")
         # self._print(f"{self.check_cmd} {groups} ||")
         self._print(f"{self.check_cmd} {g} ||")
         self._print(f"  {{\n    echo '{line}' | {self.modify_cmd} -f-\n  }}\n")
