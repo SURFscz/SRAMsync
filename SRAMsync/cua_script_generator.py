@@ -188,7 +188,8 @@ class CuaScriptGenerator(EventHandler):
             groups = list(set(groups) - set(extra_groups))
 
             self._add_new_system_group(groups)
-            self._add_new_project_group(extra_groups)
+            if extra_groups:
+                self._add_new_project_group(extra_groups)
 
         elif "project_group" in group_attributes:
             self._add_new_project_group(groups)
