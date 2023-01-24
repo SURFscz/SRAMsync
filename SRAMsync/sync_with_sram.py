@@ -29,6 +29,7 @@ from ldap import ldapobject
 from ldap.dn import str2dn
 
 from SRAMsync.common import (
+    TemplateError,
     get_attribute_from_entry,
     render_templated_string,
     render_templated_string_list,
@@ -736,7 +737,9 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
     except ValueError as e:
         logger.error(e)
-    except MissingUidInRenameUser:
+    except MissingUidInRenameUser as e:
+        logger.error(e)
+    except TemplateError as e:
         logger.error(e)
 
     if not clean_exit:

@@ -4,6 +4,12 @@ import re
 from typing import List, Type
 
 
+class TemplateError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
 def get_attribute_from_entry(entry: dict, attribute: str) -> str:
     """get the attribute value from entry and convert the value to UTF-8."""
     return entry[attribute][0].decode("UTF-8")
@@ -19,7 +25,10 @@ def render_templated_string(template_string: str, **kw: str) -> str:
     Render a string based on a set of keywords. **kw contains defined keywords
     than can be expanded.
     """
-    return template_string.format(**kw)
+    try:
+        return template_string.format(**kw)
+    except KeyError as e:
+        raise TemplateError("Unknow keyword {} in template: {}".format(e, template_string))
 
 
 def render_templated_string_list(template_strings: List[str], **kw: str) -> List[str]:
