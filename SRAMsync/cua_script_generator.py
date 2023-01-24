@@ -187,17 +187,17 @@ class CuaScriptGenerator(EventHandler):
 
             groups = list(set(groups) - set(extra_groups))
 
-            self._add_new_system_group(groups)
+            self._add_new_system_groups(groups)
             if extra_groups:
-                self._add_new_project_group(extra_groups)
+                self._add_new_project_groups(extra_groups)
 
         elif "project_group" in group_attributes:
-            self._add_new_project_group(groups)
+            self._add_new_project_groups(groups)
         else:
             logger.error("Could not determine group type (system_group or project_group) for %s.", groups)
 
     @staticmethod
-    def _add_new_system_group(group: List[str]) -> None:
+    def _add_new_system_groups(group: List[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA system group. However, the current version of the
@@ -206,7 +206,7 @@ class CuaScriptGenerator(EventHandler):
         """
         logger.debug("Ignoring adding system group %s. It should be done by the CUA team.", group)
 
-    def _add_new_project_group(self, groups: List[str]) -> None:
+    def _add_new_project_groups(self, group: List[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
