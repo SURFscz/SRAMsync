@@ -142,7 +142,7 @@ class CuaScriptGenerator(EventHandler):
         mail = get_attribute_from_entry(entry, "mail")
         group = ",".join(groups)
 
-        line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:{group}"
+        line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:::{group}"
 
         self._print(f"## Adding user: {user}")
         self._print(f"{self.check_cmd} {user} ||")
@@ -213,7 +213,7 @@ class CuaScriptGenerator(EventHandler):
         """
 
         g = ",".join(group)
-        line = f"sram_group:description:dummy:{g}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
+        line = f"sram_group:description:dummy:{g}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
         self._print(f"## Adding group(s): {group}")
         # self._print(f"{self.check_cmd} {groups} ||")
         self._print(f"{self.check_cmd} {g} ||")
