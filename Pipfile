@@ -21,6 +21,8 @@ deepdiff = "*"
 pytest = "*"
 pyright = "*"
 isort = "*"
+coverage = "*"
+exceptiongroup = "*"
 
 [pipenv]
 allow_prereleases = true
