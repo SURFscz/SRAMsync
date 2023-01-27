@@ -351,7 +351,6 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                             co, login_dest_group_names, dest_user_name, group_attributes, entry
                         )
                         new_users.append(dest_user_name)
-                        print(login_group, user, uid, dest_user_name)
 
                     handle_public_ssh_keys(cfg, co, dest_user_name, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
