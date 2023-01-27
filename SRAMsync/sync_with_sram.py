@@ -308,50 +308,52 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     new_users = []
 
     try:
-        dns = ldap_conn.search_s(
-            f"ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}",
-            ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
-            "(objectClass=person)",
-        )
+        for login_group, login_users in login_groups.items():
+            for user in login_users:
+                dns = ldap_conn.search_s(
+                    f"uid={user},ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}",
+                    ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
+                    "(objectClass=person)",
+                )
+                entry = dns[0][1]  # type: ignore
+                if is_user_eligible(cfg, entry, user):
+                    login_dest_group_names = render_templated_string_list(
+                        cfg["sync"]["groups"][login_group]["destination"],
+                        service=cfg["service"],
+                        org=org,
+                        co=co,
+                        sram_group=login_group,
+                    )
+                    uid = get_attribute_from_entry(entry, "uid")
 
-        for _, entry in dns:  # type: ignore [reportGeneralTypeIssue]
-            for login_group, login_users in login_groups.items():
-                for user in login_users:
-                    if is_user_eligible(cfg, entry, user):
-                        login_dest_group_names = render_templated_string_list(
-                            cfg["sync"]["groups"][login_group]["destination"],
+                    dest_user_name = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
+
+                    cfg.state.add_user(dest_user_name, co)
+
+                    if dest_user_name in new_users:
+                        logger.error(
+                            "User %s has already been added. Possible error in configuration.",
+                            dest_user_name,
+                        )
+                        sys.exit(1)
+
+                    if not cfg.state.is_known_user(dest_user_name):
+                        group_attributes = render_templated_string_list(
+                            cfg["sync"]["groups"][login_group]["attributes"],
                             service=cfg["service"],
                             org=org,
                             co=co,
+                            sram_group=login_group,
                         )
-                        uid = get_attribute_from_entry(entry, "uid")
+                        logger.debug("  Found new user: %s", dest_user_name)
+                        event_handler = cfg.event_handler_proxy
+                        event_handler.add_new_user(
+                            co, login_dest_group_names, dest_user_name, group_attributes, entry
+                        )
+                        new_users.append(dest_user_name)
+                        print(login_group, user, uid, dest_user_name)
 
-                        dest_user_name = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
-
-                        cfg.state.add_user(dest_user_name, co)
-
-                        if dest_user_name in new_users:
-                            logger.error(
-                                "User %s has already been added. Possible error in configuration.",
-                                dest_user_name,
-                            )
-                            sys.exit(1)
-
-                        if not cfg.state.is_known_user(dest_user_name):
-                            group_attributes = render_templated_string_list(
-                                cfg["sync"]["groups"][login_group]["attributes"],
-                                service=cfg["service"],
-                                org=org,
-                                co=co,
-                            )
-                            logger.debug("  Found new user: %s", dest_user_name)
-                            event_handler = cfg.event_handler_proxy
-                            event_handler.add_new_user(
-                                co, login_dest_group_names, dest_user_name, group_attributes, entry
-                            )
-                            new_users.append(dest_user_name)
-
-                        handle_public_ssh_keys(cfg, co, dest_user_name, entry)
+                    handle_public_ssh_keys(cfg, co, dest_user_name, entry)
     except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
         logger.error("The basedn does not exists.")
 
