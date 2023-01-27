@@ -350,7 +350,7 @@ class EmailNotifications(EventHandler):
         """Add start event message to the message queue."""
         self.add_event_message(co, "start-co-processing", important=False)
 
-    def add_new_user(self, co: str, group: str, user: str, entry: dict) -> None:
+    def add_new_user(self, co: str, group: str, user: str, group_attributes: List[str], entry: dict) -> None:
         """Add add-new-user event message to the message queue."""
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
