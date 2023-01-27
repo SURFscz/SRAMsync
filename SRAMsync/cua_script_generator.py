@@ -315,8 +315,7 @@ class CuaScriptGenerator(EventHandler):
             extra_groups = [k.strip() for k in extra_groups]
 
             for extra_group in extra_groups:
-                pass
-                # print(extra_group)
+                self._print(f"{self.modify_cmd} --group {extra_group} {user}")
 
     def finalize(self) -> None:
         """
