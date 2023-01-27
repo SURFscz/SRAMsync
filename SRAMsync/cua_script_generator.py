@@ -74,6 +74,8 @@ class CuaScriptGenerator(EventHandler):
             self.modify_cmd = self.cfg["modify_cmd"]
             self.check_cmd = self.cfg["check_cmd"]
             self.sshkey_cmd = self.cfg["sshkey_cmd"]
+            self.extra_groups_re = re.compile("^[ \t]*extra_groups[ \t]*=[ \t]*([a-zA-Z0-9_\\-, \t]*)[ \t]*$")
+
             self._generate_header()
         except ConfigValidationError as e:
             raise e
@@ -153,6 +155,8 @@ class CuaScriptGenerator(EventHandler):
             f"  }}\n"
         )
 
+        self._handle_extra_groups(groups, user, group_attributes)
+
     def add_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
@@ -206,17 +210,19 @@ class CuaScriptGenerator(EventHandler):
         """
         logger.debug("Ignoring adding system group %s. It should be done by the CUA team.", group)
 
-    def _add_new_project_groups(self, group: List[str]) -> None:
+    def _add_new_project_groups(self, groups: List[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
         """
 
-        g = ",".join(group)
-        line = f"sram_group:description:dummy:{g}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
-        self._print(f"## Adding group(s): {group}")
+        comma_separated_groups = ",".join(groups)
+        line = (
+            f"sram_group:description:dummy:{comma_separated_groups}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
+        )
+        self._print(f"## Adding group(s): {comma_separated_groups}")
         # self._print(f"{self.check_cmd} {groups} ||")
-        self._print(f"{self.check_cmd} {g} ||")
+        self._print(f"{self.check_cmd} {comma_separated_groups} ||")
         self._print(f"  {{\n    echo '{line}' | {self.modify_cmd} -f-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
@@ -227,13 +233,13 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"# Removing group(s) {group}")
         self._print(f"{self.add_cmd} --remove {group}")
 
-    def add_user_to_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
+    def add_user_to_group(self, co: str, groups: List[str], group_attributes: List[str], user: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a user to a group. Call the auxiliary event class.
         """
-        self._print(f"# Add {user} to group(s) {group}")
-        self._update_user_in_group(group, group_attributes, user, add=True)
+        self._print(f"# Add {user} to group(s) {groups}")
+        self._update_user_in_groups(groups, group_attributes, user, add=True)
 
     def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
         """
@@ -248,7 +254,7 @@ class CuaScriptGenerator(EventHandler):
         removing a user from a group. Call the auxiliary event class.
         """
         self._print(f"# Remove {user} from group {group}")
-        self._update_user_in_group(group, group_attributes, user, add=False)
+        self._update_user_in_groups([group], group_attributes, user, add=False)
 
     def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
         """
@@ -258,12 +264,15 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"# Grace time has ended for user {user} from group {group}")
         self.remove_user_from_group(co, group, group_attributes, user)
 
-    def _update_user_in_group(self, group: str, group_attributes: list, user: str, add: bool) -> None:
+    def _update_user_in_groups(
+        self, groups: List[str], group_attributes: List[str], user: str, add: bool
+    ) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         updating users in a graced group. Call the auxiliary event class.
         """
 
+        comma_separated_groups = ",".join(groups)
         attr = set(group_attributes)
         number_of_attributes = len(attr)
         length = len(attr - self.cua_group_types)
@@ -275,19 +284,39 @@ class CuaScriptGenerator(EventHandler):
 
         if number_of_attributes - length == 1:
             if "system_group" in attr:
-                self._print(f"{self.modify_cmd}{remove}--access {self.service_name} {group} {user}\n")
+                self._print(
+                    f"{self.modify_cmd}{remove}--access {self.service_name} {comma_separated_groups} {user}\n"
+                )
 
             if "project_group" in attr:
-                self._print(f"{self.modify_cmd}{remove}--group {group} {user}\n")
+                self._print(f"{self.modify_cmd}{remove}--group {comma_separated_groups} {user}\n")
+
+            self._handle_extra_groups(groups, user, group_attributes)
+
         elif number_of_attributes - length == 0:
-            error = f"Expecting one the following attributes {self.cua_group_types} for {group}."
+            error = (
+                f"Expecting one the following attributes {self.cua_group_types} for {comma_separated_groups}."
+            )
             raise ValueError(error)
         else:
             error = (
                 f'\'{", ".join(self.cua_group_types)}\' are mutually exclusive in the attributes '
-                f"of group: {group}."
+                f"of group: {groups}."
             )
             raise ValueError(error)
+
+    def _handle_extra_groups(self, groups: List[str], user: str, group_attributes: List[str]) -> None:
+        """
+        Handle possible extra_groups attributes.
+        """
+        extra_groups = [k.strip() for k in group_attributes if self.extra_groups_re.match(k)]
+        if len(extra_groups) > 0:
+            extra_groups = [k.split("=")[1].split(",") for k in extra_groups][0]
+            extra_groups = [k.strip() for k in extra_groups]
+
+            for extra_group in extra_groups:
+                pass
+                # print(extra_group)
 
     def finalize(self) -> None:
         """
