@@ -173,13 +173,16 @@ def is_user_eligible(cfg: Config, entry: dict, user: str) -> bool:
     uid = get_attribute_from_entry(entry, "uid")
 
     if "aup_enforcement" in cfg["sync"]["users"] and cfg["sync"]["users"]["aup_enforcement"]:
-        if "voPersonPolicyAgreement" not in entry:
+        a = [k for k in entry.keys() if "voPersonPolicyAgreement" in k]
+        if not a:
             logger.debug("AUP attribute (voPersonPolicyAgreement) missing for user: %s", uid)
             return False
 
-        vo_person_policy_agreement = get_attribute_from_entry(entry, "voPersonPolicyAgreement")
-        for date in vo_person_policy_agreement:
-            logger.debug("policies accepted on: %s", date)
+        timestamps = [k.split(";")[1].split("-")[1] for k in a]
+        timestamps.sort(reverse=True)
+
+        for timestamp in timestamps:
+            logger.debug("User %s accepted policies on: %s", user, datetime.fromtimestamp(int(timestamp)))
 
     if "voPersonStatus" in entry:
         vo_person_status = get_attribute_from_entry(entry, "voPersonStatus")
