@@ -172,9 +172,6 @@ def is_user_eligible(cfg: Config, entry: dict, user: str) -> bool:
 
     uid = get_attribute_from_entry(entry, "uid")
 
-    if uid != user:
-        return False
-
     if "aup_enforcement" in cfg["sync"]["users"] and cfg["sync"]["users"]["aup_enforcement"]:
         if "voPersonPolicyAgreement" not in entry:
             logger.debug("AUP attribute (voPersonPolicyAgreement) missing for user: %s", uid)
