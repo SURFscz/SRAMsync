@@ -84,7 +84,7 @@ If you wish to use a specific version you should use the following:
 pip install git+https://github.com/SURFscz/SRAMsync.git@v3.0.0#egg=SRAMsync
 ```
 
-The exact versions, i.e. the  *@v3.0.0* in the above url, can be found the
+The exact versions, i.e. the *@v3.0.0* in the above url, can be found the
 [tags page](https://github.com/venekamp/SRAMsync/tags) at GitHub.
 
 ## Invocation
@@ -224,14 +224,14 @@ you don't have to have the `smtp` block in your password file.
 
 The passwords for the SRAM LDAP are listed as key value pairs. The key is the name
 of the service, i.e. the `service` part in a `sync-with-sram` configuration and the
-value is the password for the SRAM LDAP sub tree.
+value is the password for the SRAM LDAP subtree.
 
 ##### SMTP password
 
-The SMTP passwords take a slightly more complex structure then the key value
+The SMTP passwords take a slightly more complex structure than the key value
 pairs of SRAM LDAP passwords. For SMTP you need the FQDN, i.e. hostname and
 domain name, of the SMTP host and the login account name. Login account names
-and the associated password form a key value pair and are grouped under the
+and the associated password from a key value pair and are grouped under the
 SMTP FQDN.
 
 #### Environment variable
@@ -276,7 +276,7 @@ receiving end will be notified when the synchronization is run.
 #### users
 
 The naming convention is configurable and a template can be used to customize
-the conversion. Its purpose is to create non conflicting users names at the
+the conversion. Its purpose is to create non-conflicting users names at the
 destination. The `uid` from SRAM is unique within SRAM, but that does not
 guarantee that it will be unique at the destination. The following variables
 can be used to better tailor what is needed:
@@ -334,7 +334,7 @@ along to the `EventHandler` object. The values of these strings are
 meant to be interpreted by the EventHandler class and are meaningless to the
 main loop.
 
-Lets assume the short name of the CO group to be synchronized is:
+Let's assume the short name of the CO group to be synchronized is:
 'experiment_A' and that we would like to call it 'sram_experiment_a' at the
 destination. The specification for a group could be as follows:
 
@@ -349,11 +349,12 @@ sync:
 The number of groups is unlimited. The following variables are supported in
 the template:
 
-| variable    | description                                     |
-|-------------|-------------------------------------------------|
-| `{service}` | Service name defined in the configuration file. |
-| `{org}`     | Organisation name in SRAM.                      |
-| `{co}`      | CO name in SRAM.                                |
+| variable       | description                                                  |
+|----------------|--------------------------------------------------------------|
+| `{service}`    | Service name defined in the configuration file.              |
+| `{org}`        | Organisation name in SRAM.                                   |
+| `{co}`         | CO name in SRAM.                                             |
+| `{group_name}` | The SRAM CO group name as defined in the configuration file. |
 
 For example:
 
@@ -362,7 +363,7 @@ sync:
   groups:
     expermiment_A:
        attributes: ["attibute_1", "attibute_2", "attibute_3"]
-       destination: sram-{org}-{co}-experiment_a
+       destination: sram-{org}-{co}-{group_name}
 ```
 
 #### Mapping a group to multiple destinations
@@ -387,6 +388,34 @@ sync:
 Also note in the above example, that the attributes are still listed as a YAML
 list. This is no different from the previous two examples. Just a different
 notation within YAML. Use which ever you prefer.
+
+#### Regular expression
+
+SRAMsync supports specifying group names as a regular expression. This could be
+useful in cases where you need to automatically match SRAM CO groups names, but
+you do not know all the names in advance. For example, new group will be created
+and have a base name followed by a date or number. Instead of adding these future
+groups to the configuration file one at the time, the same can be achieved by
+using a regular expression instead. Of course the defined attributes will be the
+same for all matching groups. To indicate that the group name in the configuration
+file should be interpreted as a regular expression and also to make it really
+clear that a regular expression in indeed meant, you have to add the following
+attribute: `regex_groups`.
+
+```
+groups:
+  expermiment_[ABC]-[0-9]{1,5}:
+    attributes: ["regex_groups"]
+    destination: {group_name}
+```
+
+Please note the usage of `{group_name}` for the `destination:`. When using
+`regex_groups`, you must also use `{group_name}`. This can be pre or post fixed
+with any constant string, including any of the supported tags. At a minimum you
+must define the `{group_name}`m otherwise all matching group will be projected
+on the same destination name and will cause an error. If the `regex_groups`
+attribute is missing where a regular expression is used, the group name is
+taken literal and will most likely not be found in SRAM.
 
 #### Predefined attributes
 
