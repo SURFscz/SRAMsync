@@ -215,15 +215,13 @@ class CuaScriptGenerator(EventHandler):
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
         """
-
-        comma_separated_groups = ",".join(groups)
-        line = (
-            f"sram_group:description:dummy:{comma_separated_groups}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
-        )
-        self._print(f"## Adding group(s): {comma_separated_groups}")
-        # self._print(f"{self.check_cmd} {groups} ||")
-        self._print(f"{self.check_cmd} {comma_separated_groups} ||")
-        self._print(f"  {{\n    echo '{line}' | {self.modify_cmd} -f-\n  }}\n")
+        for group in groups:
+            line = (
+                f"sram_group:sram_group:dummy:{group}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
+            )
+            self._print(f"## Adding group: {group}")
+            self._print(f"{self.check_cmd} {group} ||")
+            self._print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
