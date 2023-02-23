@@ -310,8 +310,9 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     try:
         for login_group, login_users in login_groups.items():
             for user in login_users:
+                dn = f"uid={user},ou=pPeople,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
                 dns = ldap_conn.search_s(
-                    f"uid={user},ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}",
+                    dn,
                     ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
                     "(objectClass=person)",
                 )
@@ -353,8 +354,13 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         new_users.append(dest_user_name)
 
                     handle_public_ssh_keys(cfg, co, dest_user_name, entry)
-    except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
-        logger.error("The basedn does not exists.")
+    except ldap.NO_SUCH_OBJECT as e:  # type: ignore
+        logger.error(
+            "Could not find user '%s'. Only This basedn '%s' exists. Trying to match: %s",
+            user,  # type: ignore
+            e.args[0]["matched"],
+            dn,  # type: ignore
+        )
 
 
 def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
@@ -726,7 +732,7 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         logger.error(e.msg)
     except ldap.NO_SUCH_OBJECT as e:  # type: ignore pylint: disable=E1101
         if "desc" in e.args[0]:
-            logger.error(e.args[0]["desc"])
+            logger.error("%s for basedn '%s'", e.args[0]["desc"], e.args[0]["matched"])
     except ldap.INVALID_CREDENTIALS:  # type: ignore pylint: disable=E1101
         logger.error(
             "Invalid credentials. Please check your configuration file or set SRAM_LDAP_PASSWD correctly."
