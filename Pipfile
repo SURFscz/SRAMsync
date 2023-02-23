@@ -10,9 +10,9 @@ jsonschema = "*"
 pyyaml = "*"
 click-logging = "*"
 sramsync = {editable = true, path = "."}
-pytest = "*"
 
 [dev-packages]
+pytest = "*"
 black = "*"
 yq = "*"
 pylint = "*"
