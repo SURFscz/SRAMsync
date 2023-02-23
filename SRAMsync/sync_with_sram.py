@@ -310,7 +310,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     try:
         for login_group, login_users in login_groups.items():
             for user in login_users:
-                dn = f"uid={user},ou=pPeople,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
+                dn = f"uid={user},ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
                 dns = ldap_conn.search_s(
                     dn,
                     ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
