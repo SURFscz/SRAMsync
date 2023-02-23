@@ -133,14 +133,6 @@
             "markers": "python_version >= '3.7'",
             "version": "==0.19.3"
         },
-        "pytest": {
-            "hashes": [
-                "sha256:c7c6ca206e93355074ae32f7403e8ea12163b1163c976fee7d4d84027c162be5",
-                "sha256:d45e0952f3727241918b8fd0f376f5ff6b301cc0777c6f9a556935c92d8a7d42"
-            ],
-            "index": "pypi",
-            "version": "==7.2.1"
-        },
         "python-ldap": {
             "hashes": [
                 "sha256:ab26c519a0ef2a443a2a10391fa3c5cb52d7871323399db949ebfaa9f25ee2a0"
