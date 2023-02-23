@@ -520,11 +520,11 @@
         },
         "pyright": {
             "hashes": [
-                "sha256:9397fdfcbc684fe5b87abbf9c27f540fe3b8d75999a5f187519cae1d065be38c",
-                "sha256:afc05309e775a9869c864da4e8c0c7a3e3be9d8fe202e780c3bae981bbb13936"
+                "sha256:57d6e66381edd38160342abdaea195fc6af16059eabe7e0816f04d42748b2c36",
+                "sha256:fa8ef1da35071fe351ee214576665857ceafc96418a4550a48b1f577267d9ac0"
             ],
             "index": "pypi",
-            "version": "==1.1.293"
+            "version": "==1.1.295"
         },
         "pytest": {
             "hashes": [
