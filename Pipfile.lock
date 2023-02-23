@@ -730,11 +730,11 @@
         },
         "yq": {
             "hashes": [
-                "sha256:30a84aa22486c749ba269256bd586c0bcd370b7e2a71e76c3924ead4867e74f2",
-                "sha256:a1acffd3257a0b8e460f1a7ec1ae5af4646944e810f7d7099084b3104aa05769"
+                "sha256:853f342b1562ddee979038ec8ecee5405cdd9b6a7cb81ed6cdb8018c9e802633",
+                "sha256:b7d988ff6e84c8012e7d6eedfc80928808a3fedb34d500001ffda69b6ba9f1fc"
             ],
             "index": "pypi",
-            "version": "==3.1.0"
+            "version": "==3.1.1"
         }
     }
 }
