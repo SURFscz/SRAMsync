@@ -67,7 +67,7 @@ class SMTPclient:
         """Connect to an SMTP server."""
         msg = f"SMTP: connecting to: {cfg['host']}"
         host = cfg["host"]
-        port = 0
+        port = 0  # If port not in cfg, then use system default port.
 
         if "port" in cfg:
             msg = msg + f":{cfg['port']}"
