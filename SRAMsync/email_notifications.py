@@ -3,6 +3,7 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
+import sys
 from email.message import EmailMessage
 from email.utils import formatdate
 import smtplib
@@ -73,8 +74,12 @@ class SMTPclient:
             port = cfg["port"]
 
         logger.debug(msg)
-        server = smtplib.SMTP(host, port)
-        logger.debug("SMTP: connected to SMTP host")
+        try:
+            server = smtplib.SMTP(host, port)
+            logger.debug("SMTP: connected to SMTP host")
+        except ConnectionRefusedError:
+            logger.error("Connection to SMTP server %s:%d failed.", host, port)
+            sys.exit(1)
 
         return server
 
