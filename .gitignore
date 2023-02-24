@@ -1,4 +1,5 @@
 build/
+configs/
 __pycache__/
 SRAMsync.egg-info/
 test/status/
