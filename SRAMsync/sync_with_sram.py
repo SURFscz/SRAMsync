@@ -416,7 +416,10 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
             # Create groups
             if not cfg.state.is_known_group(dest_group_names):
-                logger.debug("  Adding group: %s", dest_group_names)
+                group_names = ", ".join(dest_group_names)
+                plural = "s" if len(dest_group_names) > 1 else ""
+                logger.debug("  Adding group%s: %s", plural, group_names)
+
                 event_handler.add_new_groups(co, dest_group_names, group_attributes)
 
             cfg.state.add_groups(dest_group_names, co, sram_group, group_attributes)

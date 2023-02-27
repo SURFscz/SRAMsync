@@ -65,7 +65,7 @@ class CuaScriptGenerator(EventHandler):
             self.cfg = cfg["event_handler_config"]
             self.state = state
             self.script_name = render_templated_string(self.cfg["filename"], service=service)
-            self.script_file_descriptor = open(  # pylint: disable=consider-using-with
+            self.script_file_descriptor = open(  # pylint: disable=consider-using-withcua
                 self.script_name, "w+", encoding="utf8"
             )
             os.chmod(self.script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
@@ -201,14 +201,18 @@ class CuaScriptGenerator(EventHandler):
             logger.error("Could not determine group type (system_group or project_group) for %s.", groups)
 
     @staticmethod
-    def _add_new_system_groups(group: List[str]) -> None:
+    def _add_new_system_groups(groups: List[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA system group. However, the current version of the
         sara_usertool does not support this. Instead of a warning message, a
         debug message is displayed, as this is expected behaviour for the CUA.
         """
-        logger.debug("Ignoring adding system group %s. It should be done by the CUA team.", group)
+        group_names = ", ".join(groups)
+        plural = "s" if len(groups) > 1 else ""
+        logger.debug(
+            "Ignoring adding system group%s %s. It should be done by the CUA team.", plural, group_names
+        )
 
     def _add_new_project_groups(self, groups: List[str]) -> None:
         """
@@ -216,9 +220,7 @@ class CuaScriptGenerator(EventHandler):
         adding a new CUA project group.
         """
         for group in groups:
-            line = (
-                f"sram_group:sram_group:dummy:{group}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
-            )
+            line = f"sram_group:sram_group:dummy:{group}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
             self._print(f"## Adding group: {group}")
             self._print(f"{self.check_cmd} {group} ||")
             self._print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
