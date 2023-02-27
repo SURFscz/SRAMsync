@@ -65,7 +65,7 @@ class CuaScriptGenerator(EventHandler):
             self.cfg = cfg["event_handler_config"]
             self.state = state
             self.script_name = render_templated_string(self.cfg["filename"], service=service)
-            self.script_file_descriptor = open(  # pylint: disable=consider-using-withcua
+            self.script_file_descriptor = open(  # pylint: disable=consider-using-with
                 self.script_name, "w+", encoding="utf8"
             )
             os.chmod(self.script_name, stat.S_IRWXU | stat.S_IMODE(0o0744))
