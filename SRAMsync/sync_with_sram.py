@@ -175,7 +175,7 @@ def is_user_eligible(cfg: Config, entry: dict, user: str) -> bool:
     if "aup_enforcement" in cfg["sync"]["users"] and cfg["sync"]["users"]["aup_enforcement"]:
         a = [k for k in entry.keys() if "voPersonPolicyAgreement" in k]
         if not a:
-            logger.warning("Igoring %s. AUP attribute (voPersonPolicyAgreement) is missing,", uid)
+            logger.warning("Igoring %s. AUP attribute (voPersonPolicyAgreement) is missing.", uid)
             return False
 
         timestamps = [k.split(";")[1].split("-")[1] for k in a]
