@@ -410,8 +410,6 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                 ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
                 "(objectClass=groupOfMembers)",
             )
-            # The dest_group_names could contain an org reference
-            dest_group_names = render_templated_string_list(dest_group_names, service=service, org=org, co=co)
 
             # Create groups
             if not cfg.state.is_known_group(dest_group_names):
