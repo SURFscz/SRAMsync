@@ -385,7 +385,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
     event_handler = cfg.event_handler_proxy
     ldap_conn = cfg.get_ldap_connector()
-    service = cfg["service"]  # service might be accessed indirectly
+    service = cfg["service"]
 
     # for sram_group, value in non_login_groups.items():
     for sram_group, value in cfg["sync"]["groups"].items():
@@ -396,7 +396,6 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             # by the user, the destination would have been set.
             continue
 
-        service = cfg["service"]
         group_attributes = render_templated_string_list(
             value["attributes"], service=service, org=org, co=co, sram_group=sram_group
         )
