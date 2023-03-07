@@ -37,25 +37,26 @@ class SMTPclient:
         mail_from: str,
         mail_subject: str,
         mail_message: str,
+        mail_to_stdout: bool = False,
     ) -> None:
-        self.server = self.conntect_to_smtp_server(cfg)
         self.mail_to = mail_to
         self.mail_from = mail_from
         self.mail_subject = render_templated_string(mail_subject, service=service)
         self.mail_message = mail_message
+        self.mail_to_stdout = mail_to_stdout
 
-        if "login" in cfg or "passwd" in cfg:
-            got_credentials = True
-            if not "login" in cfg:
-                logger.error("Incomplete SMTP credentials. Need login name as well.")
-                got_credentials = False
-            if not "passwd" in cfg:
-                logger.error("Incomplete SMTP credentials. Need passwd as well.")
-                got_credentials = False
-            if got_credentials:
-                self.login(cfg["login"], cfg["passwd"])
-
-        self.mail_to_stdout = False
+        if not mail_to_stdout:
+            self.server = self.conntect_to_smtp_server(cfg)
+            if "login" in cfg or "passwd" in cfg:
+                got_credentials = True
+                if not "login" in cfg:
+                    logger.error("Incomplete SMTP credentials. Need login name as well.")
+                    got_credentials = False
+                if not "passwd" in cfg:
+                    logger.error("Incomplete SMTP credentials. Need passwd as well.")
+                    got_credentials = False
+                if got_credentials:
+                    self.login(cfg["login"], cfg["passwd"])
 
     def __del__(self):
         if hasattr(self, "server"):
@@ -286,6 +287,7 @@ class EmailNotifications(EventHandler):
                 mail_from=self.cfg["mail-from"],
                 mail_subject=self.cfg["mail-subject"],
                 mail_message=self.cfg["mail-message"],
+                mail_to_stdout=self.mail_to_stdout,
             )
 
             if self.mail_to_stdout:
