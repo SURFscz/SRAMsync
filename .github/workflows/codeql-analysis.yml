@@ -37,6 +37,9 @@ jobs:
         # Learn more about CodeQL language support at https://git.io/codeql-language-support
 
     steps:
+    - name: Update packages
+      run: sudo apt-get update
+      
     - name: Install dependancies
       run: sudo apt-get install libsasl2-dev python3-dev libldap2-dev libssl-dev
       
