@@ -16,6 +16,7 @@ import yaml
 from SRAMsync.common import deduct_event_handler_class, get_attribute_from_entry
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
+from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, State
 
 
@@ -343,24 +344,27 @@ class Config:
                 groups.add(group_name)
 
         new_groups = {}
+        all_groups = self.config["sync"]["groups"]
         for regex, value in regex_groups.items():
             for group in groups:
                 if regex.match(group):
                     new_groups[group] = value
+                    logger.debug("Regular expression '%s' matched group: %s", regex.pattern, group)
+
+                    intersection = set(all_groups).intersection(new_groups)
+                    if intersection:
+                        n = ", ".join(list(intersection))
+                        if len(intersection) == 1:
+                            a = "a configured group name: {}".format(n)
+                        else:
+                            a = "configured group names: {}".format(n)
+                        raise ConfigurationError(
+                            "Regular expression '{}' matches {}. Please, check your configuration.".format(
+                                regex.pattern, a
+                            )
+                        )
 
         if new_groups:
-            all_groups = self.config["sync"]["groups"]
-
-            if all_groups.keys() > new_groups.keys():
-                n = ", ".join(list(new_groups.keys()))
-                if len(new_groups) == 1:
-                    a = "a configured group name: {}".format(n)
-                else:
-                    a = "configured group names: {}".format(n)
-                raise ConfigurationError(
-                    f"A regular expression matches {a}. Please, check your configuration."
-                )
-
             self.config["sync"]["groups"] = {
                 group: config
                 for group, config in all_groups.items()
