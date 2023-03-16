@@ -83,7 +83,7 @@ class CuaScriptGenerator(EventHandler):
             raise ConfigValidationError(e, cfg_path) from e
 
     def __del__(self):
-        if self.script_file_descriptor:
+        if hasattr(self, "script_file_descriptor"):
             self.script_file_descriptor.close()
 
     def _generate_header(self) -> None:
