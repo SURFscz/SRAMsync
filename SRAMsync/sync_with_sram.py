@@ -614,16 +614,16 @@ def get_configuration_paths(path: str) -> List[str]:
 
 
 def show_configuration_error(
-    configuration_path: str, path: dict, exception: jsonschema.exceptions.ValidationError
+    configuration_path: str, exception: jsonschema.exceptions.ValidationError
 ) -> None:
     """Display the path in the configuration where the error occured."""
     logger.error("Syntax error in configuration file  at: %s", configuration_path)
 
-    indent = ""
-    for path_element in path:
-        logger.error("%s%s:", indent, path_element)
-        indent = indent + "  "
-    logger.error("%s%s", indent, exception.message)
+    indent = 0
+    for path_element in exception.path:
+        logger.error("%s%s:", " " * indent, path_element)
+        indent = indent + 2
+    logger.error("%s%s", " " * indent, exception.message)
 
 
 @click.command(context_settings=click_ctx_settings)
@@ -720,14 +720,14 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
     except ConfigurationError as e:
         logger.error(e)
     except ConfigValidationError as e:
-        path = e.path
-        path.extend(e.exception.relative_path)
-        show_configuration_error(configuration_path, path, e)
-        logger.debug(e.exception)
+        # path = e.path
+        # path.extend(e.exception.relative_path)
+        show_configuration_error(configuration_path, e)
+        # logger.debug(e.exception)
     except jsonschema.exceptions.ValidationError as e:
-        path = e.relative_path  # type: ignore
-        show_configuration_error(configuration_path, path, e)
-        logger.debug(e)
+        # path = e.relative_path  # type: ignore
+        show_configuration_error(configuration_path, e)
+        # logger.debug(e)
     except PasswordNotFound as e:
         logger.error(e.msg)
     except ldap.NO_SUCH_OBJECT as e:  # type: ignore pylint: disable=E1101
