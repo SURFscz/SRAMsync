@@ -14,7 +14,7 @@ import stat
 import subprocess
 from typing import Dict, List
 
-from jsonschema import ValidationError, validate
+from jsonschema import Draft202012Validator, ValidationError, validate
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
@@ -58,7 +58,11 @@ class CuaScriptGenerator(EventHandler):
         super().__init__(service, cfg, state, cfg_path, args)
 
         try:
-            validate(schema=CuaScriptGenerator._schema, instance=cfg["event_handler_config"])
+            validate(
+                schema=CuaScriptGenerator._schema,
+                instance=cfg["event_handler_config"],
+                format_checker=Draft202012Validator.FORMAT_CHECKER,
+            )
 
             self.run = "run" in args
 

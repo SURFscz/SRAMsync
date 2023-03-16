@@ -6,7 +6,7 @@ doing so, the functionallity of CuaScriptGenerator can be resused here.
 
 from typing import Dict, List
 
-from jsonschema import ValidationError, validate
+from jsonschema import Draft202012Validator, ValidationError, validate
 
 from SRAMsync.common import render_templated_string
 from SRAMsync.cua_script_generator import CuaScriptGenerator
@@ -36,7 +36,11 @@ class CbaScriptGenerator(CuaScriptGenerator):
 
     def __init__(self, service: str, cfg: dict, state: State, path: str, **args) -> None:
         try:
-            validate(schema=CbaScriptGenerator._schema, instance=cfg["event_handler_config"])
+            validate(
+                schema=CbaScriptGenerator._schema,
+                instance=cfg["event_handler_config"],
+                format_checker=Draft202012Validator.FORMAT_CHECKER,
+            )
             cua_config = {
                 "event_handler_config": cfg["event_handler_config"]["cua_config"],
                 "secrets": cfg["secrets"],

@@ -3,15 +3,15 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
-import sys
 from email.message import EmailMessage
 from email.utils import formatdate
 import smtplib
 import ssl
+import sys
 from typing import List
 
 import click
-from jsonschema import ValidationError, validate
+from jsonschema import Draft202012Validator, ValidationError, validate
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
@@ -211,7 +211,11 @@ class EmailNotifications(EventHandler):
     def __init__(self, service: str, cfg: dict, state: State, config_path, **args: dict) -> None:
         super().__init__(service, cfg, state, config_path, args)
         try:
-            validate(schema=self._schema, instance=cfg["event_handler_config"])
+            validate(
+                schema=self._schema,
+                instance=cfg["event_handler_config"],
+                format_checker=Draft202012Validator.FORMAT_CHECKER,
+            )
 
             self.mail_to_stdout = "mail-to-stdout" in args
             self.cfg = cfg["event_handler_config"]

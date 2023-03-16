@@ -8,7 +8,7 @@ from datetime import timedelta
 import re
 from typing import Any, List
 
-from jsonschema import validate
+from jsonschema import Draft202012Validator, validate
 import ldap
 from ldap import ldapobject
 import yaml
@@ -172,7 +172,7 @@ class Config:
         with open(config_file, encoding="utf8") as fd:
             config = yaml.safe_load(fd)
 
-        validate(schema=self._schema, instance=config)
+        validate(schema=self._schema, instance=config, format_checker=Draft202012Validator.FORMAT_CHECKER)
 
         if "@all" not in config["sync"]["groups"]:
             config["sync"]["groups"]["@all"] = {"attributes": [], "destination": []}
