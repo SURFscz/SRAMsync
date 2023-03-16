@@ -38,14 +38,6 @@ class CuaScriptGenerator(EventHandler):
             "modify_cmd": {"type": "string"},
             "check_cmd": {"type": "string"},
             "ssh_cmd": {"type": "string"},
-            "auxiliary_event_handler": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "config": {"type": "object"},
-                },
-                "required": ["name", "config"],
-            },
         },
         "required": ["filename", "add_cmd", "modify_cmd", "check_cmd", "sshkey_cmd"],
     }
