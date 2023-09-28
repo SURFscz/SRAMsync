@@ -227,7 +227,7 @@ class CuaScriptGenerator(EventHandler):
         removing a new CUA project group. Call the auxiliary event class.
         """
         self._print(f"# Removing group(s) {group}")
-        self._print(f"{self.add_cmd} --remove {group}")
+        self._print(f"{self.add_cmd} --remove-group {group}")
 
     def add_user_to_group(self, co: str, groups: List[str], group_attributes: List[str], user: str) -> None:
         """
