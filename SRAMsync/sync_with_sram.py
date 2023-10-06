@@ -14,11 +14,11 @@ what module is configured. It could bea sending a simple email message, or it
 could be interacting with the destination system.
 """
 
-from datetime import datetime, timedelta, timezone
 import json
 import logging
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 import click
@@ -28,12 +28,9 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from SRAMsync.common import (
-    TemplateError,
-    get_attribute_from_entry,
-    render_templated_string,
-    render_templated_string_list,
-)
+from SRAMsync.common import (TemplateError, get_attribute_from_entry,
+                             render_templated_string,
+                             render_templated_string_list)
 from SRAMsync.config import Config, ConfigurationError
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
