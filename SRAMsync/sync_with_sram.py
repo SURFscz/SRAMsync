@@ -28,9 +28,12 @@ import ldap
 from ldap import ldapobject
 from ldap.dn import str2dn
 
-from SRAMsync.common import (TemplateError, get_attribute_from_entry,
-                             render_templated_string,
-                             render_templated_string_list)
+from SRAMsync.common import (
+    TemplateError,
+    get_attribute_from_entry,
+    render_templated_string,
+    render_templated_string_list,
+)
 from SRAMsync.config import Config, ConfigurationError
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
@@ -284,6 +287,35 @@ def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict) -> None
             event_handler.delete_public_ssh_key(co, user, key)
 
 
+def process_co_attributes(cfg: Config, fq_co: str, org: str, co: str) -> None:
+    """
+    Each CO had a number of attributes. Let the event handler deal with
+    them.
+    """
+    ldap_conn = cfg.get_ldap_connector()
+
+    dn = f"o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
+
+    dns = ldap_conn.search_s(
+        dn,
+        ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
+        f"(o={fq_co})",
+    )
+
+    if dns:
+        number_of_matching_dns = len(dns)
+        if number_of_matching_dns != 1:
+            raise ValueError("Expected one element for %s, found %s", dn, number_of_matching_dns)
+        try:
+            attributes = dns[0][1]
+            event_handler = cfg.event_handler_proxy
+            event_handler.process_co_attributes(attributes, org, co)
+        except KeyError:
+            logger.warn("UUID for CO %s of org %s not found.", co, org)
+    else:
+        raise ValueError("Failed getting attributes from: %s", dn)
+
+
 def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     """
     Process the CO user data as found in SRAM for the service.
@@ -472,6 +504,7 @@ def add_missing_entries_to_ldap(cfg: Config) -> None:
         event_handler.start_of_co_processing(co)
         logger.debug("Processing CO: %s", co)
 
+        process_co_attributes(cfg, fq_co, org, co)
         process_user_data(cfg, fq_co, org, co)
         process_group_data(cfg, fq_co, org, co)
 

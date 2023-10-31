@@ -57,6 +57,9 @@ class CbaScriptGenerator(CuaScriptGenerator):
         account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
         self._print(f"{cmd} --facility {self.cfg['cba_machine']} " f"--account {account} --user {user}\n")
 
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        return super().process_co_attributes(attributes, org, co)
+
     def add_new_user(
         self,
         co: str,

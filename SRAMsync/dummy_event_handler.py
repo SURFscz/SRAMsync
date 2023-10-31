@@ -1,6 +1,6 @@
 """Write a simple log message for each received event."""
 
-from typing import List, Union
+from typing import Dict, List, Union
 
 import click
 
@@ -17,6 +17,10 @@ class DummyEventHandler(EventHandler):
         logger.debug(click.style("service: ", fg="magenta") + click.style(service, fg="bright_white"))
         logger.debug(click.style("config: ", fg="magenta") + str(cfg))
         logger.debug(click.style("config path: ", fg="magenta") + str(cfg_path))
+
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        for attribute in attributes:
+            print(f"{attribute[0]} -> {attribute[1]}")
 
     def start_of_co_processing(self, co):
         """Log the start_of_co_processing event."""

@@ -3,12 +3,12 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
-from email.message import EmailMessage
-from email.utils import formatdate
 import smtplib
 import ssl
 import sys
-from typing import List
+from email.message import EmailMessage
+from email.utils import formatdate
+from typing import Dict, List
 
 import click
 from jsonschema import Draft202012Validator, ValidationError, validate
@@ -17,7 +17,7 @@ from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import State
-from SRAMsync.sync_with_sram import ConfigValidationError, PasswordNotFound
+from SRAMsync.sync_with_sram import ConfigValidationError, PasswordNotFound, process_co_attributes
 
 
 class SMTPclient:
@@ -350,6 +350,9 @@ class EmailNotifications(EventHandler):
             final_message = final_message + message_part
 
         return final_message
+
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        return super().process_co_attributes(attributes, org, co)
 
     def add_event_message(self, co: str, event: str, important: bool = True, **args) -> None:
         """Add an event message and apply formatting to it."""

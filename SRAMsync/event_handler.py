@@ -15,6 +15,10 @@ class EventHandler(ABC):
         pass
 
     @abstractmethod
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        """Provide the UUID for the current org and co."""
+
+    @abstractmethod
     def start_of_co_processing(self, co: str):
         """start_of_co_processing event."""
 

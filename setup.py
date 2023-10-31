@@ -2,11 +2,11 @@
 Project setup file.
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="SRAMsync",
-    version="4.2.3",
+    version="4.3.0",
     author="Gerben Venekamp",
     author_email="gerben.venekamp@surf.nl",
     description="Reading entries and attributes from SRAM LDAP and process them",

@@ -7,11 +7,11 @@ The generated script makes use of the sara_usertool to interact with
 the CUA.
 """
 
-from datetime import datetime
 import os
 import re
 import stat
 import subprocess
+from datetime import datetime
 from typing import Dict, List
 
 from jsonschema import Draft202012Validator, ValidationError, validate
@@ -19,7 +19,7 @@ from jsonschema import Draft202012Validator, ValidationError, validate
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
-from SRAMsync.sync_with_sram import ConfigValidationError
+from SRAMsync.sync_with_sram import ConfigValidationError, process_co_attributes, process_user_data
 
 
 class CuaScriptGenerator(EventHandler):
@@ -113,6 +113,12 @@ class CuaScriptGenerator(EventHandler):
     def _print(self, string: str):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
+
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        """Process the CO attributes."""
+        co_uuid = attributes["uniqueIdentifier"][0].decode("utf-8")  # type: ignore
+        print(co_uuid)
+        return super().process_co_attributes(attributes, org, co)
 
     def start_of_co_processing(self, co: str) -> None:
         """

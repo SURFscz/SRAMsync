@@ -22,6 +22,11 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        """Call process_co_attributes event for all EventHandlers."""
+        for event_handler in self.event_handlers:
+            event_handler.process_co_attributes(attributes, org, co)
+
     def add_new_user(
         self,
         co: str,
