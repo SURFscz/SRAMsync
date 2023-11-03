@@ -208,7 +208,7 @@ class EmailNotifications(EventHandler):
         "!eNULL:!MD5"
     )
 
-    def __init__(self, service: str, cfg: dict, state: State, config_path, **args: dict) -> None:
+    def __init__(self, service: str, cfg: dict, state: State, config_path, args) -> None:
         super().__init__(service, cfg, state, config_path, args)
         try:
             validate(

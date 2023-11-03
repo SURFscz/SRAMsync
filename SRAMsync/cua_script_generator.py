@@ -12,7 +12,7 @@ import re
 import stat
 import subprocess
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from jsonschema import Draft202012Validator, ValidationError, validate
 
@@ -42,11 +42,9 @@ class CuaScriptGenerator(EventHandler):
         "required": ["filename", "add_cmd", "modify_cmd", "check_cmd", "sshkey_cmd"],
     }
 
-    # script_file_descriptor = None
-
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service, cfg, state, cfg_path, **args) -> None:
+    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str], args: Tuple[str]):
         super().__init__(service, cfg, state, cfg_path, args)
 
         try:

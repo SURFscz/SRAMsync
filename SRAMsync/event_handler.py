@@ -4,14 +4,16 @@ what needs to be done when the sync-with-sram main loop emits events.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Tuple
+
+from SRAMsync.state import State
 
 
 class EventHandler(ABC):
     """Abstract implementation of the EventHandler class."""
 
     @abstractmethod
-    def __init__(self, service, cfg, state, cfg_path, args):
+    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str], args: Tuple[str]):
         pass
 
     @abstractmethod

@@ -660,7 +660,7 @@ def show_configuration_error(
 @click.option(
     "-e",
     "--eventhandler-args",
-    "raw_eventhandler_args",
+    multiple=True,
     help="Add additional arguments for EventHandler classes.",
 )
 @click.option("-d", "--debug", is_flag=True, default=False, help="Set log level to DEBUG")
@@ -673,7 +673,7 @@ def show_configuration_error(
 @click.version_option()
 @click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
-def cli(configuration, debug, verbose, raw_eventhandler_args):
+def cli(configuration, debug, verbose, eventhandler_args):
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
 
@@ -702,16 +702,6 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
     clean_exit = False
     configuration_path = ""
 
-    eventhandler_args = {}
-    if raw_eventhandler_args:
-        for argument in raw_eventhandler_args.split(","):
-            if "=" in argument:
-                key, value = argument.split("=", 1)
-            else:
-                key = argument
-                value = None
-            eventhandler_args[key] = value
-
     if debug:
         logging.getLogger("SRAMsync").setLevel(logging.DEBUG)
 
@@ -730,7 +720,7 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         for configuration_path in configuration_paths:
             logger.info("Handling configuration: %s", configuration_path)
 
-            cfg = Config(configuration_path, **dict(eventhandler_args))
+            cfg = Config(configuration_path, eventhandler_args)
 
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)

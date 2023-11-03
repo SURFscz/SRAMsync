@@ -34,7 +34,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
         "required": ["cba_add_cmd", "cba_del_cmd", "cba_machine", "cba_budget_account", "cua_config"],
     }
 
-    def __init__(self, service: str, cfg: dict, state: State, path: str, **args) -> None:
+    def __init__(self, service: str, cfg: dict, state: State, path: List[str], args) -> None:
         try:
             validate(
                 schema=CbaScriptGenerator._schema,
