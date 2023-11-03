@@ -7,6 +7,7 @@ The generated script makes use of the sara_usertool to interact with
 the CUA.
 """
 
+import json
 import os
 import re
 import stat
@@ -19,7 +20,8 @@ from jsonschema import Draft202012Validator, ValidationError, validate
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
-from SRAMsync.sync_with_sram import ConfigValidationError, process_co_attributes, process_user_data
+from SRAMsync.state import State
+from SRAMsync.sync_with_sram import ConfigValidationError
 
 
 class CuaScriptGenerator(EventHandler):
@@ -54,7 +56,9 @@ class CuaScriptGenerator(EventHandler):
                 format_checker=Draft202012Validator.FORMAT_CHECKER,
             )
 
-            self.run = "run" in args
+            self.run = False
+            self._cba_co_budget_mapping_filename = ""
+            self.process_arguments(args)
 
             self.cfg = cfg["event_handler_config"]
             self.state = state
@@ -112,10 +116,71 @@ class CuaScriptGenerator(EventHandler):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
+    def process_arguments(self, args):
+        """
+        Process the arguments that are passed on the command line for plugins.
+        Note that not all supplied arguments are necessary supplied for a specific
+        module. All plugins are passed the same list of arguments and thus a module
+        can encounter an argument that is not for this module and thus must be ignored.
+        An unknown argument does not mean that it is an error.
+        """
+        options = {
+            "run": lambda: setattr(self, "run", True),
+            "cba-co-budget-mapping-filename": {
+                "action": self.handle_cba_co_budget_mapping_filename,
+                "type": "path",
+            },
+        }
+
+        for arg in args:
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+                if value:
+                    action = options[key]["action"]
+                    action(value)
+                else:
+                    raise ValueError(
+                        f"CuaScriptGenerator: Wrong value for option '{key}'. Please provide a {options[key]['type']}"
+                    )
+            elif arg in options:
+                action = options[arg]
+                if callable(action):
+                    action()
+                else:
+                    raise ValueError(
+                        f"CuaScriptGenerator: Option '{arg}' is expecting a {options[arg]['type']} value. Use: {arg}=<{options[arg]['type']}> instead."
+                    )
+
+    def handle_cba_co_budget_mapping_filename(self, value):
+        """Assign a value to self._cba_co_budget_mapping_filename"""
+        self._cba_co_budget_mapping_filename = value
+
     def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
         """Process the CO attributes."""
         co_uuid = attributes["uniqueIdentifier"][0].decode("utf-8")  # type: ignore
-        print(co_uuid)
+
+        try:
+            with open(self._cba_co_budget_mapping_filename, "r") as fd:
+                mappings = json.load(fd)
+
+            mapping_updated = False
+            new_mappings = {}
+            for uuid, dict_values in mappings.items():
+                if uuid != co_uuid and mappings[uuid]["org"] == org and mappings[uuid]["co"] == co:
+                    new_mappings[co_uuid] = dict_values
+                    mapping_updated = True
+                else:
+                    new_mappings[uuid] = dict_values
+
+            if mapping_updated:
+                with open(self._cba_co_budget_mapping_filename, "w") as fd:
+                    json.dump(new_mappings, fd)
+        except FileNotFoundError:
+            logger.warn(
+                "CuaScriptGenerator: CBA CO budget mapping per file has been requested, however file '%s' does not exists.",
+                self._cba_co_budget_mapping_filename,
+            )
+
         return super().process_co_attributes(attributes, org, co)
 
     def start_of_co_processing(self, co: str) -> None:
