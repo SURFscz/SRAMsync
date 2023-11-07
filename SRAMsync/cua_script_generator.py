@@ -129,6 +129,7 @@ class CuaScriptGenerator(EventHandler):
             "cba-co-budget-mapping-filename": {
                 "action": self.handle_cba_co_budget_mapping_filename,
                 "type": "path",
+                "deprecated": "CuaScriptGenerator: cba-co-budget-mapping-filename is depricated in v4.3.0 and will be removed in v4.4.0",
             },
         }
 
