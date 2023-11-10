@@ -13,7 +13,7 @@ import re
 import stat
 import subprocess
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from jsonschema import Draft202012Validator, ValidationError, validate
 
@@ -46,8 +46,8 @@ class CuaScriptGenerator(EventHandler):
 
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str], args: Tuple[str]):
-        super().__init__(service, cfg, state, cfg_path, args)
+    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str]):
+        super().__init__(service, cfg, state, cfg_path)
 
         try:
             validate(
@@ -58,7 +58,6 @@ class CuaScriptGenerator(EventHandler):
 
             self.run = False
             self._cba_co_budget_mapping_filename = ""
-            self.process_arguments(args)
 
             self.cfg = cfg["event_handler_config"]
             self.state = state
@@ -116,7 +115,7 @@ class CuaScriptGenerator(EventHandler):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
-    def process_arguments(self, args):
+    def get_supported_arguments(self):
         """
         Process the arguments that are passed on the command line for plugins.
         Note that not all supplied arguments are necessary supplied for a specific
@@ -125,32 +124,15 @@ class CuaScriptGenerator(EventHandler):
         An unknown argument does not mean that it is an error.
         """
         options = {
-            "run": lambda: setattr(self, "run", True),
+            "run": {"action": lambda: setattr(self, "run", True), "type": "bool"},
             "cba-co-budget-mapping-filename": {
                 "action": self.handle_cba_co_budget_mapping_filename,
                 "type": "path",
-                "deprecated": "CuaScriptGenerator: cba-co-budget-mapping-filename is depricated in v4.3.0 and will be removed in v4.4.0",
+                "deprecated": "cba-co-budget-mapping-filename is depricated in v4.3.0 and will be removed in v4.4.0",
             },
         }
 
-        for arg in args:
-            if "=" in arg:
-                key, value = arg.split("=", 1)
-                if value:
-                    action = options[key]["action"]
-                    action(value)
-                else:
-                    raise ValueError(
-                        f"CuaScriptGenerator: Wrong value for option '{key}'. Please provide a {options[key]['type']}"
-                    )
-            elif arg in options:
-                action = options[arg]
-                if callable(action):
-                    action()
-                else:
-                    raise ValueError(
-                        f"CuaScriptGenerator: Option '{arg}' is expecting a {options[arg]['type']} value. Use: {arg}=<{options[arg]['type']}> instead."
-                    )
+        return options
 
     def handle_cba_co_budget_mapping_filename(self, value):
         """Assign a value to self._cba_co_budget_mapping_filename"""

@@ -14,8 +14,10 @@ class EventHandlerProxy(EventHandler):
     """Proxy class to iterate over EventHandlers."""
 
     def __init__(self, event_handlers):
-        super().__init__(None, None, None, None, None)
         self.event_handlers = event_handlers
+
+    def get_supported_arguments(self):
+        return super().get_supported_arguments()
 
     def start_of_co_processing(self, co):
         """Call start_of_co_processing event for all EventHandlers."""

@@ -720,7 +720,15 @@ def cli(configuration, debug, verbose, eventhandler_args):
         for configuration_path in configuration_paths:
             logger.info("Handling configuration: %s", configuration_path)
 
-            cfg = Config(configuration_path, eventhandler_args)
+            new_eventhandler_args = {}
+            for arg in eventhandler_args:
+                if "=" in arg:
+                    key, value = arg.split("=", 1)
+                    new_eventhandler_args[key] = value
+                else:
+                    new_eventhandler_args[arg] = ""
+
+            cfg = Config(configuration_path, new_eventhandler_args)
 
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)

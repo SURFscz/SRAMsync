@@ -13,8 +13,12 @@ class EventHandler(ABC):
     """Abstract implementation of the EventHandler class."""
 
     @abstractmethod
-    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str], args: Tuple[str]):
+    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str]):
         pass
+
+    @abstractmethod
+    def get_supported_arguments(self):
+        """Get the argument the evenethandler supports."""
 
     @abstractmethod
     def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:

@@ -17,7 +17,7 @@ from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import State
-from SRAMsync.sync_with_sram import ConfigValidationError, PasswordNotFound, process_co_attributes
+from SRAMsync.sync_with_sram import ConfigValidationError, PasswordNotFound
 
 
 class SMTPclient:
@@ -208,8 +208,8 @@ class EmailNotifications(EventHandler):
         "!eNULL:!MD5"
     )
 
-    def __init__(self, service: str, cfg: dict, state: State, config_path, args) -> None:
-        super().__init__(service, cfg, state, config_path, args)
+    def __init__(self, service: str, cfg: dict, state: State, config_path) -> None:
+        super().__init__(service, cfg, state, config_path)
         try:
             validate(
                 schema=self._schema,
@@ -217,7 +217,8 @@ class EmailNotifications(EventHandler):
                 format_checker=Draft202012Validator.FORMAT_CHECKER,
             )
 
-            self.mail_to_stdout = "mail-to-stdout" in args
+            # self.mail_to_stdout = "mail-to-stdout" in args
+            self.mail_to_stdout = False
             self.cfg = cfg["event_handler_config"]
             self.collect_events = cfg["event_handler_config"].get("collect_events", True)
 
@@ -252,6 +253,14 @@ class EmailNotifications(EventHandler):
 
     def __del__(self) -> None:
         self.send_queued_messages()
+
+    def get_supported_arguments(self):
+        """ """
+        options = {
+            "mail-to-stdout": {"action": lambda: setattr(self, "mail_to_stdout", True), "type": "bool"},
+        }
+
+        return options
 
     def add_message_to_current_co_group(
         self, co: str, event: str, event_message: str, important: bool = False
