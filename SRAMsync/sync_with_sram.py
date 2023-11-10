@@ -735,21 +735,19 @@ def cli(configuration, debug, verbose, eventhandler_args):
 
         logger.info("Finished syncing with SRAM")
         clean_exit = True
-    except IOError as e:
-        logger.error(e)
-    except ConfigurationError as e:
+    except (
+        IOError,
+        ConfigurationError,
+        PasswordNotFound,
+        ValueError,
+        MissingUidInRenameUser,
+        TemplateError,
+    ) as e:
         logger.error(e)
     except ConfigValidationError as e:
-        # path = e.path
-        # path.extend(e.exception.relative_path)
         show_configuration_error(configuration_path, e)
-        # logger.debug(e.exception)
     except jsonschema.exceptions.ValidationError as e:
-        # path = e.relative_path  # type: ignore
         show_configuration_error(configuration_path, e)
-        # logger.debug(e)
-    except PasswordNotFound as e:
-        logger.error(e.msg)
     except ldap.NO_SUCH_OBJECT as e:  # type: ignore pylint: disable=E1101
         if "desc" in e.args[0]:
             logger.error("%s for basedn '%s'", e.args[0]["desc"], e.args[0]["matched"])
@@ -764,12 +762,6 @@ def cli(configuration, debug, verbose, eventhandler_args):
         logger.error("%s. Please check your config file.", e)
     except MultipleLoginGroups:
         logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
-    except ValueError as e:
-        logger.error(e)
-    except MissingUidInRenameUser as e:
-        logger.error(e)
-    except TemplateError as e:
-        logger.error(e)
 
     if not clean_exit:
         sys.exit(1)
