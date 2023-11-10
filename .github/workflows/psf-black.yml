@@ -8,3 +8,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: psf/black@stable
+        with:
+          black-args: "--line-length 110 -t py38 -t py39 -t py310 -t py311 -py312"
