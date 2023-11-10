@@ -168,7 +168,7 @@ class Config:
         "additionalProperties": False,
     }
 
-    def __init__(self, config_file: str, args: Dict[str, str]) -> None:
+    def __init__(self, config_file: str, args: Dict[str, str] = {}) -> None:
         with open(config_file, encoding="utf8") as fd:
             config = yaml.safe_load(fd)
 
