@@ -10,5 +10,5 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "--check --diff --line-length 110 -t py38 -t py39 -t py310 -t py311 -t py312"
-          src: "SRAMsync/*.py"
+          src: "./SRAMsync/*.py"
           version: "23.10.1"
