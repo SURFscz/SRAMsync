@@ -1,6 +1,7 @@
 """Behave test"""
 
-from test.ldap_support import add_user, uid_exists, is_member_of
+import re
+from test.ldap_support import add_user, is_member_of, uid_exists
 
 # from behave import *
 from click.testing import CliRunner
