@@ -1,9 +1,8 @@
 """Behave test"""
 
-import re
 from test.ldap_support import add_user, is_member_of, uid_exists
 
-# from behave import *
+from behave import *
 from click.testing import CliRunner
 
 from SRAMsync.config import Config
