@@ -21,8 +21,13 @@ class DummyEventHandler(EventHandler):
         logger.debug(click.style("config path: ", fg="magenta") + str(cfg_path))
 
     def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        logger.debug("Got attributes for %s/%s:", org, co)
         for attribute, attribute_value in attributes.items():
-            print(f"{attribute} -> {attribute_value}")
+            logger.debug(
+                click.style(attribute, fg="yellow")
+                + " -> "
+                + click.style(attribute_value, fg="red", bold=True)
+            )
 
     def start_of_co_processing(self, co):
         """Log the start_of_co_processing event."""
