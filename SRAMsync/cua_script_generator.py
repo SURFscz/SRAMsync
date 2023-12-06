@@ -224,10 +224,16 @@ class CuaScriptGenerator(EventHandler):
         adding a new CUA project group.
         """
         for group in groups:
-            line = f"sram_group:sram_group:dummy:{group}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
+            d = dict()
+            d[group] = dict()
+            d[group]['template'] = 'sram_group'
+            d[group]['firstname'] = 'sram_group'
+
+            json_str = json.dumps(d)
+
             self._print(f"## Adding group: {group}")
             self._print(f"{self.check_cmd} {group} ||")
-            self._print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
+            self._print(f"  {{\n    echo '{json_str}' | {self.add_cmd} --format=json --file=-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
