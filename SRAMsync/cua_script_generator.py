@@ -192,14 +192,21 @@ class CuaScriptGenerator(EventHandler):
         mail = get_attribute_from_entry(entry, "mail")
         group = ",".join(groups)
 
-        line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:::{group}"
+        d = dict()
+        d[user] = dict()
+        d[user]['template'] = 'sram'
+        d[user]['firstname'] = givenname
+        d[user]['lastname'] = sn
+        d[user]['email'] = mail
+        d[user]['sgroups'] = group
+
+        json_str = json.dumps(d)
 
         self._print(f"## Adding user: {user}")
         self._print(f"{self.check_cmd} {user} ||")
         self._print(
             f"  {{\n"
-            f'    echo "{line}" | {self.add_cmd} -f-\n'
-            f"    {self.modify_cmd} --service sram:{self.service_name} {user}\n"
+            f"    echo '{json_str}' | {self.add_cmd} --file=- --format=json\n"
             f"  }}\n"
         )
 
