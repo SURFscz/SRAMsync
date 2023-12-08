@@ -190,6 +190,7 @@ class CuaScriptGenerator(EventHandler):
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
         mail = get_attribute_from_entry(entry, "mail")
+        uniqueid = get_attribute_from_entry(entry, "eduPersonUniqueId")
         group = ",".join(groups)
 
         d = dict()
@@ -199,6 +200,8 @@ class CuaScriptGenerator(EventHandler):
         d[user]['lastname'] = sn
         d[user]['email'] = mail
         d[user]['sgroups'] = group
+        d[user]['sram_co'] = co
+        d[user]['sram_id'] = uniqueid
 
         json_str = json.dumps(d)
 
