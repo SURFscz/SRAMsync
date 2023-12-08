@@ -14,11 +14,11 @@ what module is configured. It could bea sending a simple email message, or it
 could be interacting with the destination system.
 """
 
-from datetime import datetime, timedelta, timezone
 import json
 import logging
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 import click
@@ -287,6 +287,35 @@ def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict) -> None
             event_handler.delete_public_ssh_key(co, user, key)
 
 
+def process_co_attributes(cfg: Config, fq_co: str, org: str, co: str) -> None:
+    """
+    Each CO had a number of attributes. Let the event handler deal with
+    them.
+    """
+    ldap_conn = cfg.get_ldap_connector()
+
+    dn = f"o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
+
+    dns = ldap_conn.search_s(
+        dn,
+        ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
+        f"(o={fq_co})",
+    )
+
+    if dns:
+        number_of_matching_dns = len(dns)
+        if number_of_matching_dns != 1:
+            raise ValueError("Expected one element for %s, found %s", dn, number_of_matching_dns)
+        try:
+            attributes = dns[0][1]
+            event_handler = cfg.event_handler_proxy
+            event_handler.process_co_attributes(attributes, org, co)
+        except KeyError:
+            logger.warn("UUID for CO %s of org %s not found.", co, org)
+    else:
+        raise ValueError("Failed getting attributes from: %s", dn)
+
+
 def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     """
     Process the CO user data as found in SRAM for the service.
@@ -475,6 +504,7 @@ def add_missing_entries_to_ldap(cfg: Config) -> None:
         event_handler.start_of_co_processing(co)
         logger.debug("Processing CO: %s", co)
 
+        process_co_attributes(cfg, fq_co, org, co)
         process_user_data(cfg, fq_co, org, co)
         process_group_data(cfg, fq_co, org, co)
 
@@ -630,7 +660,7 @@ def show_configuration_error(
 @click.option(
     "-e",
     "--eventhandler-args",
-    "raw_eventhandler_args",
+    multiple=True,
     help="Add additional arguments for EventHandler classes.",
 )
 @click.option("-d", "--debug", is_flag=True, default=False, help="Set log level to DEBUG")
@@ -643,7 +673,7 @@ def show_configuration_error(
 @click.version_option()
 @click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
-def cli(configuration, debug, verbose, raw_eventhandler_args):
+def cli(configuration, debug, verbose, eventhandler_args):
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
 
@@ -672,16 +702,6 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
     clean_exit = False
     configuration_path = ""
 
-    eventhandler_args = {}
-    if raw_eventhandler_args:
-        for argument in raw_eventhandler_args.split(","):
-            if "=" in argument:
-                key, value = argument.split("=", 1)
-            else:
-                key = argument
-                value = None
-            eventhandler_args[key] = value
-
     if debug:
         logging.getLogger("SRAMsync").setLevel(logging.DEBUG)
 
@@ -700,7 +720,15 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         for configuration_path in configuration_paths:
             logger.info("Handling configuration: %s", configuration_path)
 
-            cfg = Config(configuration_path, **dict(eventhandler_args))
+            new_eventhandler_args = {}
+            for arg in eventhandler_args:
+                if "=" in arg:
+                    key, value = arg.split("=", 1)
+                    new_eventhandler_args[key] = value
+                else:
+                    new_eventhandler_args[arg] = ""
+
+            cfg = Config(configuration_path, new_eventhandler_args)
 
             ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
             cfg.set_set_ldap_connector(ldap_conn)
@@ -715,21 +743,19 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
 
         logger.info("Finished syncing with SRAM")
         clean_exit = True
-    except IOError as e:
-        logger.error(e)
-    except ConfigurationError as e:
+    except (
+        IOError,
+        ConfigurationError,
+        PasswordNotFound,
+        ValueError,
+        MissingUidInRenameUser,
+        TemplateError,
+    ) as e:
         logger.error(e)
     except ConfigValidationError as e:
-        # path = e.path
-        # path.extend(e.exception.relative_path)
         show_configuration_error(configuration_path, e)
-        # logger.debug(e.exception)
     except jsonschema.exceptions.ValidationError as e:
-        # path = e.relative_path  # type: ignore
         show_configuration_error(configuration_path, e)
-        # logger.debug(e)
-    except PasswordNotFound as e:
-        logger.error(e.msg)
     except ldap.NO_SUCH_OBJECT as e:  # type: ignore pylint: disable=E1101
         if "desc" in e.args[0]:
             logger.error("%s for basedn '%s'", e.args[0]["desc"], e.args[0]["matched"])
@@ -744,12 +770,6 @@ def cli(configuration, debug, verbose, raw_eventhandler_args):
         logger.error("%s. Please check your config file.", e)
     except MultipleLoginGroups:
         logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
-    except ValueError as e:
-        logger.error(e)
-    except MissingUidInRenameUser as e:
-        logger.error(e)
-    except TemplateError as e:
-        logger.error(e)
 
     if not clean_exit:
         sys.exit(1)

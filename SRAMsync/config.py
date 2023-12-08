@@ -4,14 +4,14 @@
   configuration.
 """
 
-from datetime import timedelta
 import re
-from typing import Any, List
+from datetime import timedelta
+from typing import Any, Dict, List
 
-from jsonschema import Draft202012Validator, validate
 import ldap
-from ldap import ldapobject
 import yaml
+from jsonschema import Draft202012Validator, validate
+from ldap import ldapobject
 
 from SRAMsync.common import deduct_event_handler_class, get_attribute_from_entry
 from SRAMsync.event_handler import EventHandler
@@ -168,7 +168,7 @@ class Config:
         "additionalProperties": False,
     }
 
-    def __init__(self, config_file: str, **args) -> None:
+    def __init__(self, config_file: str, args: Dict[str, str] = {}) -> None:
         with open(config_file, encoding="utf8") as fd:
             config = yaml.safe_load(fd)
 
@@ -186,7 +186,7 @@ class Config:
 
         self.state = get_status_object(config["status"], service=config["service"])
 
-        event_handlers = self.get_event_handlers(self.state, **args)
+        event_handlers = self.get_event_handlers(self.state, args)
         self.event_handler_proxy = EventHandlerProxy(event_handlers)
 
     def __getitem__(self, item: str) -> Any:
@@ -209,7 +209,7 @@ class Config:
         self._group_destintion_to_list()
         self._normalize_grace_periods()
 
-    def get_event_handlers(self, state: State, **args: dict) -> List[EventHandler]:
+    def get_event_handlers(self, state: State, args: Dict[str, str]) -> List[EventHandler]:
         """
         Dynamically load the configured class from the configuration. If the class
         expects a configuration extract that from the configuration and pass it
@@ -231,8 +231,20 @@ class Config:
                 event_handler_cfg["secrets"] = self.secrets
 
             event_handler_instance = event_handler_class(
-                self.config["service"], event_handler_cfg, state, ["sync", "event_handler", "config"], **args
+                self.config["service"], event_handler_cfg, state, ["sync", "event_handler", "config"]
             )
+            supported_arguments = event_handler_instance.get_supported_arguments()
+            argss = [k for k in supported_arguments if k in args]
+            for arg in argss:
+                if "deprecated" in supported_arguments[arg]:
+                    logger.warning("%s: %s", event["name"], supported_arguments[arg]["deprecated"])
+
+                action = supported_arguments[arg]["action"]
+                action_argument = args[arg]
+                if action_argument:
+                    action(action_argument)
+                else:
+                    action()
 
             event_handler_instances.append(event_handler_instance)
 

@@ -1,6 +1,6 @@
 """Write a simple log message for each received event."""
 
-from typing import List, Union
+from typing import Dict, List, Union
 
 import click
 
@@ -12,11 +12,15 @@ from SRAMsync.sramlogger import logger
 class DummyEventHandler(EventHandler):
     """Write a simple log message for each received event."""
 
-    def __init__(self, service, cfg, state, cfg_path, **args):
-        super().__init__(service, cfg, state, cfg_path, args)
+    def __init__(self, service, cfg, state, cfg_path):
+        super().__init__(service, cfg, state, cfg_path)
         logger.debug(click.style("service: ", fg="magenta") + click.style(service, fg="bright_white"))
         logger.debug(click.style("config: ", fg="magenta") + str(cfg))
         logger.debug(click.style("config path: ", fg="magenta") + str(cfg_path))
+
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        for attribute, attribute_value in attributes.items():
+            print(f"{attribute} -> {attribute_value}")
 
     def start_of_co_processing(self, co):
         """Log the start_of_co_processing event."""
@@ -38,6 +42,9 @@ class DummyEventHandler(EventHandler):
             click.style(user, fg="cyan"),
             mail,
         )
+
+    def get_supported_arguments(self):
+        return {}
 
     def add_public_ssh_key(self, co, user, key):
         """Log the add_public_ssh_key event."""

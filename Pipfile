@@ -17,13 +17,14 @@ black = "*"
 yq = "*"
 pylint = "*"
 rope = "*"
-behave = "*"
 deepdiff = "*"
 pytest = ">=7.2.1"
 pyright = "*"
 isort = "*"
 coverage = "*"
 exceptiongroup = "*"
+behave = "*"
+ipdb = "*"
 
 [pipenv]
 allow_prereleases = true

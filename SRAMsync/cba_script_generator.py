@@ -34,7 +34,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
         "required": ["cba_add_cmd", "cba_del_cmd", "cba_machine", "cba_budget_account", "cua_config"],
     }
 
-    def __init__(self, service: str, cfg: dict, state: State, path: str, **args) -> None:
+    def __init__(self, service: str, cfg: dict, state: State, path: List[str], args) -> None:
         try:
             validate(
                 schema=CbaScriptGenerator._schema,
@@ -56,6 +56,9 @@ class CbaScriptGenerator(CuaScriptGenerator):
         """Insert the cba command with arguments into the generated bash script."""
         account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
         self._print(f"{cmd} --facility {self.cfg['cba_machine']} " f"--account {account} --user {user}\n")
+
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        return super().process_co_attributes(attributes, org, co)
 
     def add_new_user(
         self,

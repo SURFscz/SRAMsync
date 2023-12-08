@@ -7,12 +7,12 @@ The generated script makes use of the sara_usertool to interact with
 the CUA.
 """
 
-from datetime import datetime
 import json
 import os
 import re
 import stat
 import subprocess
+from datetime import datetime
 from typing import Dict, List
 
 from jsonschema import Draft202012Validator, ValidationError, validate
@@ -20,6 +20,7 @@ from jsonschema import Draft202012Validator, ValidationError, validate
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
+from SRAMsync.state import State
 from SRAMsync.sync_with_sram import ConfigValidationError
 
 
@@ -43,12 +44,10 @@ class CuaScriptGenerator(EventHandler):
         "required": ["filename", "add_cmd", "modify_cmd", "check_cmd", "sshkey_cmd"],
     }
 
-    # script_file_descriptor = None
-
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service, cfg, state, cfg_path, **args) -> None:
-        super().__init__(service, cfg, state, cfg_path, args)
+    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str]):
+        super().__init__(service, cfg, state, cfg_path)
 
         try:
             validate(
@@ -57,7 +56,8 @@ class CuaScriptGenerator(EventHandler):
                 format_checker=Draft202012Validator.FORMAT_CHECKER,
             )
 
-            self.run = "run" in args
+            self.run = False
+            self._cba_co_budget_mapping_filename = ""
 
             self.cfg = cfg["event_handler_config"]
             self.state = state
@@ -114,6 +114,57 @@ class CuaScriptGenerator(EventHandler):
     def _print(self, string: str):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
+
+    def get_supported_arguments(self):
+        """
+        Process the arguments that are passed on the command line for plugins.
+        Note that not all supplied arguments are necessary supplied for a specific
+        module. All plugins are passed the same list of arguments and thus a module
+        can encounter an argument that is not for this module and thus must be ignored.
+        An unknown argument does not mean that it is an error.
+        """
+        options = {
+            "run": {"action": lambda: setattr(self, "run", True), "type": "bool"},
+            "cba-co-budget-mapping-filename": {
+                "action": self.handle_cba_co_budget_mapping_filename,
+                "type": "path",
+                "deprecated": "cba-co-budget-mapping-filename is depricated in v4.3.0 and will be removed in v4.4.0",
+            },
+        }
+
+        return options
+
+    def handle_cba_co_budget_mapping_filename(self, value):
+        """Assign a value to self._cba_co_budget_mapping_filename"""
+        self._cba_co_budget_mapping_filename = value
+
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        """Process the CO attributes."""
+        co_uuid = attributes["uniqueIdentifier"][0].decode("utf-8")  # type: ignore
+
+        try:
+            with open(self._cba_co_budget_mapping_filename, "r") as fd:
+                mappings = json.load(fd)
+
+            mapping_updated = False
+            new_mappings = {}
+            for uuid, dict_values in mappings.items():
+                if uuid != co_uuid and mappings[uuid]["org"] == org and mappings[uuid]["co"] == co:
+                    new_mappings[co_uuid] = dict_values
+                    mapping_updated = True
+                else:
+                    new_mappings[uuid] = dict_values
+
+            if mapping_updated:
+                with open(self._cba_co_budget_mapping_filename, "w") as fd:
+                    json.dump(new_mappings, fd)
+        except FileNotFoundError:
+            logger.warn(
+                "CuaScriptGenerator: CBA CO budget mapping per file has been requested, however file '%s' does not exists.",
+                self._cba_co_budget_mapping_filename,
+            )
+
+        return super().process_co_attributes(attributes, org, co)
 
     def start_of_co_processing(self, co: str) -> None:
         """
@@ -244,7 +295,7 @@ class CuaScriptGenerator(EventHandler):
         removing a new CUA project group. Call the auxiliary event class.
         """
         self._print(f"# Removing group(s) {group}")
-        self._print(f"{self.add_cmd} --remove {group}")
+        self._print(f"{self.add_cmd} --remove-group {group}")
 
     def add_user_to_group(self, co: str, groups: List[str], group_attributes: List[str], user: str) -> None:
         """

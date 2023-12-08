@@ -3,12 +3,12 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
-from email.message import EmailMessage
-from email.utils import formatdate
 import smtplib
 import ssl
 import sys
-from typing import List
+from email.message import EmailMessage
+from email.utils import formatdate
+from typing import Dict, List
 
 import click
 from jsonschema import Draft202012Validator, ValidationError, validate
@@ -208,8 +208,8 @@ class EmailNotifications(EventHandler):
         "!eNULL:!MD5"
     )
 
-    def __init__(self, service: str, cfg: dict, state: State, config_path, **args: dict) -> None:
-        super().__init__(service, cfg, state, config_path, args)
+    def __init__(self, service: str, cfg: dict, state: State, config_path) -> None:
+        super().__init__(service, cfg, state, config_path)
         try:
             validate(
                 schema=self._schema,
@@ -217,7 +217,8 @@ class EmailNotifications(EventHandler):
                 format_checker=Draft202012Validator.FORMAT_CHECKER,
             )
 
-            self.mail_to_stdout = "mail-to-stdout" in args
+            # self.mail_to_stdout = "mail-to-stdout" in args
+            self.mail_to_stdout = False
             self.cfg = cfg["event_handler_config"]
             self.collect_events = cfg["event_handler_config"].get("collect_events", True)
 
@@ -252,6 +253,14 @@ class EmailNotifications(EventHandler):
 
     def __del__(self) -> None:
         self.send_queued_messages()
+
+    def get_supported_arguments(self):
+        """ """
+        options = {
+            "mail-to-stdout": {"action": lambda: setattr(self, "mail_to_stdout", True), "type": "bool"},
+        }
+
+        return options
 
     def add_message_to_current_co_group(
         self, co: str, event: str, event_message: str, important: bool = False
@@ -350,6 +359,9 @@ class EmailNotifications(EventHandler):
             final_message = final_message + message_part
 
         return final_message
+
+    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+        return super().process_co_attributes(attributes, org, co)
 
     def add_event_message(self, co: str, event: str, important: bool = True, **args) -> None:
         """Add an event message and apply formatting to it."""
