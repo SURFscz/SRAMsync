@@ -190,16 +190,26 @@ class CuaScriptGenerator(EventHandler):
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
         mail = get_attribute_from_entry(entry, "mail")
+        uniqueid = get_attribute_from_entry(entry, "eduPersonUniqueId")
         group = ",".join(groups)
 
-        line = f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:::{group}"
+        d = dict()
+        d[user] = dict()
+        d[user]['template'] = 'sram'
+        d[user]['firstname'] = givenname
+        d[user]['lastname'] = sn
+        d[user]['email'] = mail
+        d[user]['sgroups'] = group
+        d[user]['sram_co'] = co
+        d[user]['sram_id'] = uniqueid
+
+        json_str = json.dumps(d)
 
         self._print(f"## Adding user: {user}")
         self._print(f"{self.check_cmd} {user} ||")
         self._print(
             f"  {{\n"
-            f'    echo "{line}" | {self.add_cmd} -f-\n'
-            f"    {self.modify_cmd} --service sram:{self.service_name} {user}\n"
+            f"    echo '{json_str}' | {self.add_cmd} --file=- --format=json\n"
             f"  }}\n"
         )
 
@@ -268,10 +278,16 @@ class CuaScriptGenerator(EventHandler):
         adding a new CUA project group.
         """
         for group in groups:
-            line = f"sram_group:sram_group:dummy:{group}:0:0:0:/bin/bash:0:0:no-reply@surf.nl:::"
+            d = dict()
+            d[group] = dict()
+            d[group]['template'] = 'sram_group'
+            d[group]['firstname'] = 'sram_group'
+
+            json_str = json.dumps(d)
+
             self._print(f"## Adding group: {group}")
             self._print(f"{self.check_cmd} {group} ||")
-            self._print(f"  {{\n    echo '{line}' | {self.add_cmd} -f-\n  }}\n")
+            self._print(f"  {{\n    echo '{json_str}' | {self.add_cmd} --format=json --file=-\n  }}\n")
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
