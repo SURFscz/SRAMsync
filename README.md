@@ -749,10 +749,24 @@ sync:
         sshkey_cmd: sudo sara_modifyuser --no-usermail --ssh-public-key
   ```
 
+#### CuaScriptGenerator event handler argument
+The CuaScriptGenerator accepts the following event handler argument through the
+`--eventhandler-args`. Multiple occurrences are supported.
+
+##### run
+The `run` argument tells the CuaScriptGenerator to execute the generated bash script.
+
+##### cba-co-budget-mapping-filename=<file name>
+This is a temporary workaround for CUA and CBA. It's specif to the
+CuaScriptGenerator. The file contains a JSON document that maps SRAM CO UUIDs
+to CBA account names.
+
+NOTE: It is a temporary workaround and will be removed in a future version.
+
 ### CbaScriptGenerator
 
 The CbaScriptGenerator is derived from the CuaScriptGenerator class.
-Therefore the CbaScriptGenerator cannot be used independently of the
+Therefore, the CbaScriptGenerator cannot be used independently of the
 CuaScriptGenerator. This means that if you use this class, you will need to
 provide a configuration for the CuaScriptGenerator class as well.
 
