@@ -74,8 +74,8 @@ def removing_frodo_before_the_grace_period_has_ened(context):
 
     runner = CliRunner()
     result = runner.invoke(cli, ["--log-level=info", CONFIG_FILENAME])
-    assert result.exit_code == 0
     print(result.stdout)
+    assert result.exit_code == 0
     assert "middle_earth-Fellowship-frodo from shirecloud_login has" in result.stdout
     assert "left of its grace time" in result.stdout
 

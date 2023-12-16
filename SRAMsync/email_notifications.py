@@ -8,7 +8,7 @@ import ssl
 import sys
 from email.message import EmailMessage
 from email.utils import formatdate
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import click
 from jsonschema import Draft202012Validator, ValidationError, validate
@@ -254,7 +254,7 @@ class EmailNotifications(EventHandler):
     def __del__(self) -> None:
         self.send_queued_messages()
 
-    def get_supported_arguments(self):
+    def get_supported_arguments(self) -> Dict[str, Any]:
         """ """
         options = {
             "mail-to-stdout": {"action": lambda: setattr(self, "mail_to_stdout", True), "type": "bool"},
@@ -373,8 +373,16 @@ class EmailNotifications(EventHandler):
         """Add start event message to the message queue."""
         self.add_event_message(co, "start-co-processing", important=False)
 
-    def add_new_user(self, co: str, group: str, user: str, group_attributes: List[str], entry: dict) -> None:
+    def add_new_user(self, entry: dict, **kwargs) -> None:
         """Add add-new-user event message to the message queue."""
+        try:
+            co = kwargs["co"]
+            group = kwargs["group"]
+            user = kwargs["user"]
+        except KeyError as e:
+            logger.error("Missing argument: %s", e)
+            sys.exit(1)
+
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
         mail = get_attribute_from_entry(entry, "mail")
@@ -400,7 +408,16 @@ class EmailNotifications(EventHandler):
         """Add remove-group event message to the message queue."""
         self.add_event_message(co, "remove-group", group=group, attributes=group_attributes)
 
-    def add_user_to_group(self, co, groups: List[str], group_attributes: list, user: str) -> None:
+    def add_user_to_group(self, **kwargs) -> None:
+        try:
+            co = kwargs["co"]
+            groups = kwargs["groups"]
+            group_attributes = kwargs["group_attributes"]
+            user = kwargs["user"]
+        except KeyError as e:
+            logger.error("Missing argument: %s", e)
+            sys.exit(1)
+
         """Add add-user-to-group event message to the message queue."""
         for group in groups:
             self.add_event_message(

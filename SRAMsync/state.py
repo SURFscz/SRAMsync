@@ -5,7 +5,7 @@ of the SRAMsync process.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, List
 
 
 class NoGracePeriodForGroupError(Exception):
@@ -98,6 +98,10 @@ class State(ABC):
     @abstractmethod
     def get_added_groups(self) -> list:
         """Get added groups."""
+
+    @abstractmethod
+    def get_org_of_known_group(self, group) -> str:
+        """Get the CO name of the known group."""
 
     @abstractmethod
     def get_co_of_known_group(self, group) -> str:

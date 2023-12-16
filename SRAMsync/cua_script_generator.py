@@ -13,14 +13,15 @@ import re
 import stat
 import subprocess
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 
+from click_logging.core import sys
 from jsonschema import Draft202012Validator, ValidationError, validate
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
+from SRAMsync.json_file import JsonFile
 from SRAMsync.sramlogger import logger
-from SRAMsync.state import State
 from SRAMsync.sync_with_sram import ConfigValidationError
 
 
@@ -46,7 +47,7 @@ class CuaScriptGenerator(EventHandler):
 
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service: str, cfg: Dict, state: State, cfg_path: List[str]):
+    def __init__(self, service: str, cfg: Dict, state: JsonFile, cfg_path: List[str]):
         super().__init__(service, cfg, state, cfg_path)
 
         try:
@@ -111,11 +112,11 @@ class CuaScriptGenerator(EventHandler):
         self._print("}")
         self._print("")
 
-    def _print(self, string: str):
+    def _print(self, string: str) -> None:
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
-    def get_supported_arguments(self):
+    def get_supported_arguments(self) -> Dict[str, Any]:
         """
         Process the arguments that are passed on the command line for plugins.
         Note that not all supplied arguments are necessary supplied for a specific
@@ -134,7 +135,7 @@ class CuaScriptGenerator(EventHandler):
 
         return options
 
-    def handle_cba_co_budget_mapping_filename(self, value):
+    def handle_cba_co_budget_mapping_filename(self, value) -> None:
         """Assign a value to self._cba_co_budget_mapping_filename"""
         self._cba_co_budget_mapping_filename = value
 
@@ -174,18 +175,21 @@ class CuaScriptGenerator(EventHandler):
 
         self._print(f"\n# service: {self.service_name}/{co}")
 
-    def add_new_user(
-        self,
-        co: str,
-        groups: List[str],
-        user: str,
-        group_attributes: List[str],
-        entry: Dict[str, List[bytes]],
-    ) -> None:
+    def add_new_user(self, entry: Dict[str, List[bytes]], **kwargs) -> None:
         """
         Write the appropriate sara_usertools commands to the bash script for
         adding new users. Call the auxiliary event class.
         """
+
+        try:
+            # org = kwargs["org"]
+            co = kwargs["co"]
+            groups = kwargs["groups"]
+            group_attributes = kwargs["group_attributes"]
+            user = kwargs["user"]
+        except KeyError as e:
+            logger.error("Missing argument: %s", e)
+            sys.exit(1)
 
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
@@ -193,24 +197,22 @@ class CuaScriptGenerator(EventHandler):
         uniqueid = get_attribute_from_entry(entry, "eduPersonUniqueId")
         group = ",".join(groups)
 
-        d = dict()
-        d[user] = dict()
-        d[user]['template'] = 'sram'
-        d[user]['firstname'] = givenname
-        d[user]['lastname'] = sn
-        d[user]['email'] = mail
-        d[user]['sgroups'] = group
-        d[user]['sram_co'] = co
-        d[user]['sram_id'] = uniqueid
+        command_args = dict()
+        command_args[user] = dict()
+        command_args[user]["template"] = "sram"
+        command_args[user]["firstname"] = givenname
+        command_args[user]["lastname"] = sn
+        command_args[user]["email"] = mail
+        command_args[user]["sgroups"] = group
+        command_args[user]["sram_co"] = co
+        command_args[user]["sram_id"] = uniqueid
 
-        json_str = json.dumps(d)
+        command_json = json.dumps(command_args)
 
         self._print(f"## Adding user: {user}")
         self._print(f"{self.check_cmd} {user} ||")
         self._print(
-            f"  {{\n"
-            f"    echo '{json_str}' | {self.add_cmd} --file=- --format=json\n"
-            f"  }}\n"
+            f"  {{\n" f"    echo '{command_json}' | {self.add_cmd} --file=- --format=json\n" f"  }}\n"
         )
 
         self._handle_extra_groups(groups, user, group_attributes)
@@ -278,16 +280,18 @@ class CuaScriptGenerator(EventHandler):
         adding a new CUA project group.
         """
         for group in groups:
-            d = dict()
-            d[group] = dict()
-            d[group]['template'] = 'sram_group'
-            d[group]['firstname'] = 'sram_group'
+            command_args = dict()
+            command_args[group] = dict()
+            command_args[group]["template"] = "sram_group"
+            command_args[group]["firstname"] = "sram_group"
 
-            json_str = json.dumps(d)
+            command_args_json = json.dumps(command_args)
 
             self._print(f"## Adding group: {group}")
             self._print(f"{self.check_cmd} {group} ||")
-            self._print(f"  {{\n    echo '{json_str}' | {self.add_cmd} --format=json --file=-\n  }}\n")
+            self._print(
+                f"  {{\n    echo '{command_args_json}' | {self.add_cmd} --format=json --file=-\n  }}\n"
+            )
 
     def remove_group(self, co: str, group: str, group_attributes: list):
         """
@@ -297,11 +301,20 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"# Removing group(s) {group}")
         self._print(f"{self.add_cmd} --remove-group {group}")
 
-    def add_user_to_group(self, co: str, groups: List[str], group_attributes: List[str], user: str) -> None:
+    def add_user_to_group(self, **kwargs) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a user to a group. Call the auxiliary event class.
         """
+        try:
+            # co = kwargs["co"]
+            groups = kwargs["groups"]
+            group_attributes = kwargs["group_attributes"]
+            user = kwargs["user"]
+        except KeyError as e:
+            logger.error("Missing argument: %s", e)
+            sys.exit(1)
+
         self._print(f"# Add {user} to group(s) {groups}")
         self._update_user_in_groups(groups, group_attributes, user, add=True)
 

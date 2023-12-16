@@ -377,8 +377,14 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         )
                         logger.debug("  Found new user: %s", dest_user_name)
                         event_handler = cfg.event_handler_proxy
+
                         event_handler.add_new_user(
-                            co, login_dest_group_names, dest_user_name, group_attributes, entry
+                            entry,
+                            org=org,
+                            co=co,
+                            groups=login_dest_group_names,
+                            group_attributes=group_attributes,
+                            user=user,
                         )
                         new_users.append(dest_user_name)
 
@@ -461,7 +467,13 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         if "login_users" not in group_attributes and not cfg.state.is_user_member_of_group(
                             dest_group_names, user
                         ):
-                            event_handler.add_user_to_group(co, dest_group_names, group_attributes, user)
+                            event_handler.add_user_to_group(
+                                org=org,
+                                co=co,
+                                groups=dest_group_names,
+                                group_attributes=group_attributes,
+                                user=user,
+                            )
                     except UnkownGroup:
                         logger.error(
                             "Error in status detected. User %s was not added to group %s of CO %s.",
@@ -520,6 +532,7 @@ def remove_graced_users(cfg: Config) -> None:
 
             sram_group = group_values["sram"]["sram-group"]
             group_attributes = cfg["sync"]["groups"][sram_group]["attributes"]
+            # org = cfg.state.get_org_of_known_group(group)
             co = cfg.state.get_co_of_known_group(group)
 
             for user, grace_until_str in group_values["graced_users"].items():
@@ -531,7 +544,9 @@ def remove_graced_users(cfg: Config) -> None:
                     # so automatically disregards this information automatically and
                     # it is the intended behaviour
                     logger.info("Grace time ended for user %s in %s", user, group)
-                    event_handler.remove_graced_user_from_group(co, group, group_attributes, user)
+                    event_handler.remove_graced_user_from_group(
+                        co=co, group=group, group_attributes=group_attributes, user=user
+                    )
                 else:
                     cfg.state.set_graced_period_for_user(group, user, grace_until)
 

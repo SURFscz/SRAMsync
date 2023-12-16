@@ -5,7 +5,7 @@ Calling one of the events loops over all known instances and calls the
 same function of each instance.
 """
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from SRAMsync.event_handler import EventHandler
 
@@ -16,7 +16,7 @@ class EventHandlerProxy(EventHandler):
     def __init__(self, event_handlers):
         self.event_handlers = event_handlers
 
-    def get_supported_arguments(self):
+    def get_supported_arguments(self) -> Dict[str, Any]:
         return super().get_supported_arguments()
 
     def start_of_co_processing(self, co):
@@ -31,15 +31,12 @@ class EventHandlerProxy(EventHandler):
 
     def add_new_user(
         self,
-        co: str,
-        groups: List[str],
-        user: str,
-        group_attributes: List[str],
         entry: Dict[str, List[bytes]],
+        **kwargs,
     ):
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
-            event_handler.add_new_user(co, groups, user, group_attributes, entry)
+            event_handler.add_new_user(entry, **kwargs)
 
     def add_public_ssh_key(self, co: str, user: str, key: str):
         """Call add_public_ssh_key event for all EventHandlers."""
@@ -61,10 +58,10 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.remove_group(co, group, group_attributes)
 
-    def add_user_to_group(self, co, group, group_attributes, user):
+    def add_user_to_group(self, **kwargs):
         """Call add_user_to_group event for all EventHandlers."""
         for event_handler in self.event_handlers:
-            event_handler.add_user_to_group(co, group, group_attributes, user)
+            event_handler.add_user_to_group(**kwargs)
 
     def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
         """Call start_grace_period_for_user event for all EventHandlers."""

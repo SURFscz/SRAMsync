@@ -3,8 +3,8 @@ Concreet implementation of the State abstract base class. It implements
 the State class based on a JSON file.
 """
 
-from datetime import datetime
 import json
+from datetime import datetime
 from typing import Any, List, Optional
 
 from jsonschema import validate
@@ -147,6 +147,9 @@ class JsonFile(State):
 
     def get_added_groups(self) -> list:
         return list(self._new_state["groups"].keys())
+
+    def get_org_of_known_group(self, group) -> str:
+        return self._last_known_state["groups"][group]["sram"]["org"]
 
     def get_co_of_known_group(self, group) -> str:
         return self._last_known_state["groups"][group]["sram"]["CO"]

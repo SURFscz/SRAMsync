@@ -1,8 +1,9 @@
 """Write a simple log message for each received event."""
 
-from typing import Dict, List, Union
+from typing import Dict
 
 import click
+from click_logging.core import sys
 
 from SRAMsync.common import get_attribute_from_entry
 from SRAMsync.event_handler import EventHandler
@@ -34,16 +35,23 @@ class DummyEventHandler(EventHandler):
         logger.info(click.style(f"  start_of_co_processing({co})", fg="yellow", bold=True))
 
     def add_new_user(
-        self, co: str, group: Union[str, List[str]], user: str, group_attributes: List[str], entry: dict
+        self,
+        entry: dict,
+        **kwargs,
     ):
         """Log the add_new_user event."""
+        org = kwargs["org"]
+        co = kwargs["co"]
+        groups = kwargs["groups"]
+        user = kwargs["user"]
         givenname = get_attribute_from_entry(entry, "givenName")
         sn = get_attribute_from_entry(entry, "sn")
         mail = get_attribute_from_entry(entry, "mail")
         logger.info(
-            "  add_new_user(%s, %s, %s, %s, %s, %s",
+            "  add_new_user(%s/%s, %s, %s, %s, %s, %s",
+            click.style(org, fg="red"),
             click.style(co, fg="yellow"),
-            click.style(group, fg="green"),
+            click.style(groups, fg="green"),
             givenname,
             sn,
             click.style(user, fg="cyan"),
@@ -66,12 +74,12 @@ class DummyEventHandler(EventHandler):
         """Log the delete_public_ssh_key event."""
         logger.info("    delete_public_ssh_key(%s, %s, %s)", co, user, key)
 
-    def add_new_groups(self, co, group, group_attributes):
+    def add_new_groups(self, co, groups, group_attributes):
         """Log the add_new_group event."""
         logger.info(
             "  add_new_group(%s, %s, %s)",
             click.style(co, fg="yellow"),
-            click.style(group, fg="cyan"),
+            click.style(groups, fg="cyan"),
             group_attributes,
         )
 
@@ -84,15 +92,26 @@ class DummyEventHandler(EventHandler):
             group_attributes,
         )
 
-    def add_user_to_group(self, co, group, group_attributes: list, user):
+    def add_user_to_group(self, **kwargs):
         """Log the add_user_to_group event."""
-        logger.info(
-            "  add_user_to_group(%s, %s, %s, %s)",
-            click.style(co, fg="yellow"),
-            click.style(group, fg="green"),
-            group_attributes,
-            click.style(user, fg="cyan"),
-        )
+        try:
+            org = kwargs["org"]
+            co = kwargs["co"]
+            groups = kwargs["groups"]
+            group_attributes = kwargs["group_attributes"]
+            user = kwargs["user"]
+
+            logger.info(
+                "  add_user_to_group(%s/%s, %s, %s, %s)",
+                click.style(org, fg="red"),
+                click.style(co, fg="yellow"),
+                click.style(groups, fg="green"),
+                group_attributes,
+                click.style(user, fg="cyan"),
+            )
+        except KeyError as e:
+            logger.error("Missing argument for DummyEventHandler:add_user_to_group %s", e)
+            sys.exit(1)
 
     def start_grace_period_for_user(self, co, group: str, group_attributes: list, user: str, duration: str):
         """Log the start_grace_period_for_user event."""

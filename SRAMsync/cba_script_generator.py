@@ -6,11 +6,13 @@ doing so, the functionallity of CuaScriptGenerator can be resused here.
 
 from typing import Dict, List
 
+from click_logging.core import sys
 from jsonschema import Draft202012Validator, ValidationError, validate
 
 from SRAMsync.common import render_templated_string
 from SRAMsync.cua_script_generator import CuaScriptGenerator
-from SRAMsync.state import State
+from SRAMsync.json_file import JsonFile
+from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError
 
 
@@ -34,7 +36,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
         "required": ["cba_add_cmd", "cba_del_cmd", "cba_machine", "cba_budget_account", "cua_config"],
     }
 
-    def __init__(self, service: str, cfg: dict, state: State, path: List[str], args) -> None:
+    def __init__(self, service: str, cfg: dict, state: JsonFile, path: List[str], args) -> None:
         try:
             validate(
                 schema=CbaScriptGenerator._schema,
@@ -62,16 +64,21 @@ class CbaScriptGenerator(CuaScriptGenerator):
 
     def add_new_user(
         self,
-        co: str,
-        groups: List[str],
-        user: str,
-        group_attributes: List[str],
         entry: Dict[str, List[bytes]],
+        **kwargs,
     ) -> None:
         """add_new_user event."""
-        super().add_new_user(co, groups, user, group_attributes, entry)
-        self._print("# Adding user CBA account.")
-        self._insert_cba_command(self.cfg["cba_add_cmd"], co, user)
+        super().add_new_user(entry, **kwargs)
+
+        try:
+            co = kwargs["co"]
+            user = kwargs["user"]
+
+            self._print("# Adding user CBA account.")
+            self._insert_cba_command(self.cfg["cba_add_cmd"], co, user)
+        except KeyError as e:
+            logger.error("Missing argument: %s", e)
+            sys.exit(1)
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
         """remove_user_from_group event."""

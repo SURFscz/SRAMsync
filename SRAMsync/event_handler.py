@@ -4,7 +4,7 @@ what needs to be done when the sync-with-sram main loop emits events.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List
 
 from SRAMsync.state import State
 
@@ -17,7 +17,7 @@ class EventHandler(ABC):
         pass
 
     @abstractmethod
-    def get_supported_arguments(self):
+    def get_supported_arguments(self) -> Dict[str, Any]:
         """Get the argument the evenethandler supports."""
 
     @abstractmethod
@@ -31,11 +31,8 @@ class EventHandler(ABC):
     @abstractmethod
     def add_new_user(
         self,
-        co: str,
-        groups: List[str],
-        user: str,
-        group_attributes: List[str],
         entry: Dict[str, List[bytes]],
+        **kwargs,
     ):
         """add_new_user event."""
 
@@ -56,7 +53,7 @@ class EventHandler(ABC):
         """remove_group event."""
 
     @abstractmethod
-    def add_user_to_group(self, co, group, group_attributes, user):
+    def add_user_to_group(self, **kwargs):
         """add_user_to_group event."""
 
     @abstractmethod
