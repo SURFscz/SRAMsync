@@ -5,7 +5,7 @@ of the SRAMsync process.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, List
+from typing import Any, Dict, List, Union
 
 
 class NoGracePeriodForGroupError(Exception):
@@ -32,14 +32,6 @@ class State(ABC):
     def __init__(self, cfg: dict):
         """init"""
         self.cfg = cfg
-
-    def get_config(self) -> dict:
-        """Get the config for the State class."""
-        return self.cfg
-
-    def get_state_name(self) -> str:
-        """Get the name from the config for this State."""
-        return self.cfg["name"]
 
     @abstractmethod
     def __getitem__(self, key: str) -> Any:
