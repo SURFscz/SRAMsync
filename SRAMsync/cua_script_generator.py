@@ -189,7 +189,7 @@ class CuaScriptGenerator(EventHandler):
             org = kwargs["org"]
             user = kwargs["user"]
         except KeyError as e:
-            logger.error("Missing argument: %s", e)
+            logger.error("Missing(cua_script_generator) argument: %s", e)
             sys.exit(1)
 
         givenname = get_attribute_from_entry(entry, "givenName")
@@ -314,7 +314,7 @@ class CuaScriptGenerator(EventHandler):
             group_attributes = kwargs["group_attributes"]
             user = kwargs["user"]
         except KeyError as e:
-            logger.error("Missing argument: %s", e)
+            logger.error("Missing(cua_script_generator) argument: %s", e)
             sys.exit(1)
 
         self._print(f"# Add {user} to group(s) {groups}")

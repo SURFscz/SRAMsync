@@ -384,7 +384,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                             co=co,
                             groups=login_dest_group_names,
                             group_attributes=group_attributes,
-                            user=user,
+                            user=dest_user_name,
                         )
                         new_users.append(dest_user_name)
 
