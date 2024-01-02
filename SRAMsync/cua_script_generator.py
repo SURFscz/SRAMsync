@@ -186,6 +186,7 @@ class CuaScriptGenerator(EventHandler):
             co = kwargs["co"]
             groups = kwargs["groups"]
             group_attributes = kwargs["group_attributes"]
+            org = kwargs["org"]
             user = kwargs["user"]
         except KeyError as e:
             logger.error("Missing argument: %s", e)
@@ -206,6 +207,7 @@ class CuaScriptGenerator(EventHandler):
         command_args[user]["sgroups"] = group
         command_args[user]["sram_co"] = co
         command_args[user]["sram_id"] = uniqueid
+        command_args[user]["sram_org"] = org
 
         command_json = json.dumps(command_args)
 
