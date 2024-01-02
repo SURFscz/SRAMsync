@@ -77,7 +77,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
             self._print("# Adding user CBA account.")
             self._insert_cba_command(self.cfg["cba_add_cmd"], co, user)
         except KeyError as e:
-            logger.error("Missing argument: %s", e)
+            logger.error("Missing(cba_script_generator) argument: %s", e)
             sys.exit(1)
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list, user: str):

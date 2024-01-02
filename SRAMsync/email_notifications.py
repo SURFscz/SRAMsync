@@ -377,10 +377,10 @@ class EmailNotifications(EventHandler):
         """Add add-new-user event message to the message queue."""
         try:
             co = kwargs["co"]
-            group = kwargs["group"]
+            groups = kwargs["groups"]
             user = kwargs["user"]
         except KeyError as e:
-            logger.error("Missing argument: %s", e)
+            logger.error("Missing(email_notification) argument: %s", e)
             sys.exit(1)
 
         givenname = get_attribute_from_entry(entry, "givenName")
@@ -388,7 +388,7 @@ class EmailNotifications(EventHandler):
         mail = get_attribute_from_entry(entry, "mail")
 
         self.add_event_message(
-            co, "add-new-user", group=group, givenname=givenname, sn=sn, user=user, mail=mail
+            co, "add-new-user", groups=groups, givenname=givenname, sn=sn, user=user, mail=mail
         )
 
     def add_public_ssh_key(self, co: str, user: str, key: str) -> None:
@@ -415,7 +415,7 @@ class EmailNotifications(EventHandler):
             group_attributes = kwargs["group_attributes"]
             user = kwargs["user"]
         except KeyError as e:
-            logger.error("Missing argument: %s", e)
+            logger.error("Missing(email_notification) argument: %s", e)
             sys.exit(1)
 
         """Add add-user-to-group event message to the message queue."""
