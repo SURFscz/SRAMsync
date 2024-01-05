@@ -210,7 +210,7 @@ class CuaScriptGenerator(EventHandler):
         command_args[user]["email"] = mail
         command_args[user]["sgroups"] = group
         command_args[user]["sram_co"] = co
-        command_args[user]["sram_co_uid"] = self.org_co_uuids[f'{org}-{co}']
+        command_args[user]["sram_co_uuid"] = self.org_co_uuids[f"{org}-{co}"]
         command_args[user]["sram_id"] = uniqueid
         command_args[user]["sram_org"] = org
 
