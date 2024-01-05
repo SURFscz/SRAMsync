@@ -59,6 +59,7 @@ class CuaScriptGenerator(EventHandler):
 
             self.run = False
             self._cba_co_budget_mapping_filename = ""
+            self.org_co_uuids = dict()
 
             self.cfg = cfg["event_handler_config"]
             self.state = state
@@ -142,6 +143,9 @@ class CuaScriptGenerator(EventHandler):
     def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
         """Process the CO attributes."""
         co_uuid = attributes["uniqueIdentifier"][0].decode("utf-8")  # type: ignore
+        key = f"{org}-{co}"
+        if not key in self.org_co_uuids:
+            self.org_co_uuids[key] = co_uuid
 
         try:
             with open(self._cba_co_budget_mapping_filename, "r") as fd:
@@ -206,6 +210,7 @@ class CuaScriptGenerator(EventHandler):
         command_args[user]["email"] = mail
         command_args[user]["sgroups"] = group
         command_args[user]["sram_co"] = co
+        command_args[user]["sram_co_uid"] = self.org_co_uuids[f'{org}-{co}']
         command_args[user]["sram_id"] = uniqueid
         command_args[user]["sram_org"] = org
 
