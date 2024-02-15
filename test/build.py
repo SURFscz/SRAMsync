@@ -91,7 +91,7 @@ def get_ldif_part(key, attributes, alt_key=None):
     else:
         k = key
 
-    return key, attributes[k].encode()
+    return key, [attributes[k].encode()]
 
 
 def get_people_ldif(person, attributes):
