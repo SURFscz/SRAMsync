@@ -58,7 +58,6 @@ class CuaScriptGenerator(EventHandler):
             )
 
             self.run = False
-            self._cba_co_budget_mapping_filename = ""
             self.org_co_uuids = dict()
 
             self.cfg = cfg["event_handler_config"]
@@ -127,48 +126,12 @@ class CuaScriptGenerator(EventHandler):
         """
         options = {
             "run": {"action": lambda: setattr(self, "run", True), "type": "bool"},
-            "cba-co-budget-mapping-filename": {
-                "action": self.handle_cba_co_budget_mapping_filename,
-                "type": "path",
-                "deprecated": "cba-co-budget-mapping-filename is depricated in v4.3.0 and will be removed in v4.4.0",
-            },
         }
 
         return options
 
-    def handle_cba_co_budget_mapping_filename(self, value) -> None:
-        """Assign a value to self._cba_co_budget_mapping_filename"""
-        self._cba_co_budget_mapping_filename = value
-
     def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
         """Process the CO attributes."""
-        co_uuid = attributes["uniqueIdentifier"][0].decode("utf-8")  # type: ignore
-        key = f"{org}-{co}"
-        if not key in self.org_co_uuids:
-            self.org_co_uuids[key] = co_uuid
-
-        try:
-            with open(self._cba_co_budget_mapping_filename, "r") as fd:
-                mappings = json.load(fd)
-
-            mapping_updated = False
-            new_mappings = {}
-            for uuid, dict_values in mappings.items():
-                if uuid != co_uuid and mappings[uuid]["org"] == org and mappings[uuid]["co"] == co:
-                    new_mappings[co_uuid] = dict_values
-                    mapping_updated = True
-                else:
-                    new_mappings[uuid] = dict_values
-
-            if mapping_updated:
-                with open(self._cba_co_budget_mapping_filename, "w") as fd:
-                    json.dump(new_mappings, fd)
-        except FileNotFoundError:
-            logger.warn(
-                "CuaScriptGenerator: CBA CO budget mapping per file has been requested, however file '%s' does not exists.",
-                self._cba_co_budget_mapping_filename,
-            )
-
         return super().process_co_attributes(attributes, org, co)
 
     def start_of_co_processing(self, co: str) -> None:
