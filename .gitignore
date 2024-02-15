@@ -6,3 +6,9 @@ test/status/
 pylintrc
 pyproject.toml
 pyrightconfig.json
+Session.vim
+test/behave/shirecloud.json
+test/behave/update-cua-for-shirecloud.sh
+.coverage
+.flake8
+uml/eventhandler.png
