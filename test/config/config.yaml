@@ -1,6 +1,6 @@
 service: shirecloud
 secrets:
-  file: test/passwd.json
+  file: test/behave/passwd.json
 sram:
   uri: ldap://localhost:3389
   basedn: dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl
@@ -15,7 +15,19 @@ sync:
       destination: "{service}_login"
   event_handler:
     - name: DummyEventHandler
+    - name: CbaScriptGenerator
+      config:
+        cba_add_cmd: sara_adduser
+        cba_del_cmd: sara_adduser -d
+        cba_machine: master
+        cba_budget_account: xxx-x
+        cua_config:
+          filename: test/behave/update-cua-for-{service}.sh
+          add_cmd: sara_adduser
+          check_cmd: sara_modify_users --schedule --no-usermail --check
+          modify_cmd: sara_modify_users --schedule --no-usermail
+          sshkey_cmd: sara_modify_users --schedule --no-usermail --ssh-public-key
 status:
   name: JsonFile
   config:
-    status_filename: "test/status/{service}.json"
+    status_filename: "test/behave/{service}.json"
