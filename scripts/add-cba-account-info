@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+############################
+#
+# A very basic script to create and update a JSON file for keeping track which
+# SRAM CO UUIDs are linked to which CBA budget account. When adding a new
+# record, the SRAM CO UUID is unkown. Only a CO admin is able to retrieve that
+# kind of information. Hence a new and SRAM unrelated UUID is generated as the
+# UUID serve as keys. A 'note' field is also inserted to make clear that the
+# UUID has no relation with SRAM.
+#
+# The generated UUID will be replace at a later stage, so that the CO by means
+# of the UUID is bound to the CBA budget account name. This binding happens
+# during the synchronisation between SRAM and the CUA (SRAMsync). At this point
+# the correct CO UUID is known and together with an organisation short name and
+# CO short name the linking can be done. The note message will disappear from
+# the record, indicating that the linking has hgappend.SSRAMsync/
+#
+# This script is a temporarily workaround, until CBA, CUA and SRAM are able to
+# cooperate in a better manner than currently is happening.
+#
+############################
+
+UUID=$(uuidgen | tr '[:upper:]' '[:lower:'])
+NOTE_TEXT="Initial setup. The UUID $UUID key serves as a placeholder until the CO can be linked to the correct SRAM UUID."
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	-n | --cba_budget_name)
+		CBA_BUDGET_NAME="$2"
+		shift
+		shift
+		;;
+	-o | --org)
+		ORG="$2"
+		shift
+		shift
+		;;
+	-c | --co)
+		CO="$2"
+		shift
+		shift
+		;;
+	-*)
+		echo "Found unknown option: $1"
+		shift
+		error=1
+		;;
+	*)
+		if [[ $# -gt 1 ]]; then
+			error=1
+			break
+		fi
+		MAPPINGS_FILENAME="$1"
+		shift
+		;;
+	esac
+done
+
+if [[ $# -gt 1 ]]; then
+	echo "Too many arguments found. Usage: $0 --org <organisation name> --co <co name> <mappings filename>"
+	error=1
+fi
+
+if [[ -z "${CBA_BUDGET_NAME+x}" ]]; then
+	echo "CBA budget account name is missing. Please provide one by using: --cba_budget_name <CBA budget account name>"
+	error=1
+fi
+
+if [[ -z "${ORG+x}" ]]; then
+	echo "CO name is missing. Please provide one by using: --org <org name>"
+	error=1
+fi
+
+if [[ -z "${CO+x}" ]]; then
+	echo "CO name is missing. Please provide one by using: --co <co name>"
+	error=1
+fi
+
+# See if the file does not exist. In case there is no input file, the jq
+# command, where a new element is added to the existing file, will fail. To
+# prevent this error, A new file is created in stead that will serve as the
+# start.
+if [[ ! -f "$MAPPINGS_FILENAME" ]] && [[ "$error" -eq 0 ]]; then
+	cat <<EOF
+{
+  "${UUID}": {
+    "Note": "$NOTE_TEXT",
+    "cba_budget_name": "$CBA_BUDGET_NAME",
+    "org": "$ORG",
+    "co": "$CO"
+  }
+}
+EOF
+	exit 0
+fi
+
+# Make sure we're mot adding an already existing entry.
+present=$(jq --arg org "$ORG" --arg co "$CO" 'any(.[]; select( .org == $org and .co == $co ))' "$MAPPINGS_FILENAME")
+if [[ "${present}" != "false" ]]; then
+	echo "Cannot add record for organisation '${ORG}' and CO $()'${CO}', as it already exists." >&2
+	error=1
+fi
+
+if [[ $error -gt 0 ]]; then
+	exit "$error"
+fi
+
+# Let's add a new entry.
+jq --arg cba_budget_name "$CBA_BUDGET_NAME" --arg uuid "$UUID" --arg org "$ORG" --arg co "$CO" '.+ { $uuid: { "note": "'"${NOTE_TEXT}"'", "cba_budget_name": $cba_budget_name, "org": $org, "co": $co}}' "$MAPPINGS_FILENAME"
