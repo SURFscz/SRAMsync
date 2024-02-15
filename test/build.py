@@ -2,13 +2,11 @@
 """build an SRAM  LDAP"""
 
 
-import sys
 import json
 import random
 import string
+import sys
 import uuid
-
-import ldap
 
 from SRAMsync.sync_with_sram import init_ldap
 
@@ -167,6 +165,7 @@ def add_ordered_services(connection, data):
                 ("o", [f"{org}.{co}".encode()]),
                 (get_ldif_part("displayName", co_data)),
                 (get_ldif_part("description", co_data)),
+                (get_ldif_part("uniqueIdentifier", co_data)),
             ]
             connection.add_s(dn_co, ldif)
 
@@ -181,6 +180,7 @@ def add_ordered_services(connection, data):
                     ("objectClass", [b"extensibleObject", b"groupOfMembers"]),
                     ("cn", [group.encode()]),
                     (get_ldif_part("displayName", group_data)),
+                    (get_ldif_part("uniqueIdentifier", group_data)),
                 ]
 
                 members = []
@@ -195,6 +195,7 @@ def add_ordered_services(connection, data):
                 ("objectClass", [b"extensibleObject", b"groupOfMembers"]),
                 ("cn", [b"@all"]),
                 ("displayName", [b"All group"]),
+                (get_ldif_part("uniqueIdentifier", org_data)),
             ]
 
             members = []
