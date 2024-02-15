@@ -55,7 +55,7 @@ def remove_frodo_from_shirecloud_login(context):
 
 @given("Grace period for frodo has not ended")
 def removing_frodo_before_the_grace_period_has_ened(context):
-    with open("test/status/shirecloud.json") as fd:
+    with open("test/behave/shirecloud.json") as fd:
         status = json.load(fd)
 
     context.status_file = status
@@ -82,7 +82,7 @@ def removing_frodo_before_the_grace_period_has_ened(context):
 
 @then("the status file is unchanged")
 def removing_frodo_before_the_grace_period_has_ened(context):
-    with open("test/status/shirecloud.json") as fd:
+    with open("test/behave/shirecloud.json") as fd:
         status = json.load(fd)
 
     assert DeepDiff(context.status_file, status, ignore_order=True) == {}
