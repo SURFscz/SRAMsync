@@ -246,6 +246,9 @@ def main():
 
     complete_data(data)
 
+    with open("test/data.json", "w") as fd:
+        json.dump(data, fd)
+
     ldap_conn = init_ldap(data["ldap"], {}, "ddd")
 
     flat(ldap_conn, data)
