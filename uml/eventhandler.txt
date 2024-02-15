@@ -1,0 +1,10 @@
+@startuml
+
+SRAMsync --> EventHandlerProxy: add person
+EventHandlerProxy --> EventHandler_A: add person
+EventHandler_A --> EventHandlerProxy:
+EventHandlerProxy --> EventHandler_B: add person
+EventHandler_B --> EventHandlerProxy:
+EventHandlerProxy --> SRAMsync
+
+@enduml
