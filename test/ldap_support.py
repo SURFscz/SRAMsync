@@ -1,13 +1,10 @@
 """ldap helper functions"""
+
 import copy
 import json
-import random
 
 import ldap
 from ldap import modlist
-
-import SRAMsync.config
-from SRAMsync.sync_with_sram import init_ldap
 
 BASEDN = "dc=mt-doom,dc=services,dc=sram,dc=surf,dc=nl"
 
@@ -44,7 +41,6 @@ def add_user_flat(ldap_conn, org, co, group, uid):
     dn_uid = f"uid={uid},ou=People,dc=flat,{BASEDN}"
     ldap_conn.add_s(dn_uid, ldif)
 
-    # dn = f"cn={org}.{co}.{group},ou=Groups,dc=flat,{BASEDN}"
     dn = f"cn={org}.{co}.{group},ou=Groups,dc=flat,{BASEDN}"
     ldap_conn.modify_s(dn, [(ldap.MOD_ADD, "member", [dn_uid.encode()])])
 
@@ -96,6 +92,7 @@ def get_uid_ldif(uid):
         (user["cn"]),
         (user["sn"]),
         (user["displayName"]),
+        (user["eduPersonUniqueId"]),
         (user["eduPersonScopedAffiliation"]),
         (user["givenName"]),
         (user["mail"]),
