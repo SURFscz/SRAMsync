@@ -57,10 +57,10 @@ class CbaScriptGenerator(CuaScriptGenerator):
         except ValidationError as e:
             raise ConfigValidationError(e, path) from e
 
-    def _insert_cba_command(self, cmd: str, co: str, user: str) -> None:
+    def _insert_cba_command(self, cmd: str, co: str, user: str, co_uuid: str=None) -> None:
         """Insert the cba command with arguments into the generated bash script."""
-        account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
-        self._print(f"{cmd} --facility {self.cfg['cba_machine']} " f"--account {account} --user {user}\n")
+        #account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
+        self._print(f"{cmd} {self.cfg['cba_machine']} {user} {co_uuid}\n")
 
     def get_supported_arguments(self) -> Dict[str, Any]:
         """
@@ -136,9 +136,10 @@ class CbaScriptGenerator(CuaScriptGenerator):
         try:
             co = kwargs["co"]
             user = kwargs["user"]
+            co_uuid = self.org_co_uuids[f"{kwargs['org']}-{kwargs['co']}"]
 
             self._print("# Adding user CBA account.")
-            self._insert_cba_command(self.cfg["cba_add_cmd"], co, user)
+            self._insert_cba_command(self.cfg["cba_add_cmd"], co, user, co_uuid)
         except KeyError as e:
             logger.error("Missing(cba_script_generator) argument: %s", e)
             sys.exit(1)
