@@ -57,9 +57,9 @@ class CbaScriptGenerator(CuaScriptGenerator):
         except ValidationError as e:
             raise ConfigValidationError(e, path) from e
 
-    def _insert_cba_command(self, cmd: str, co: str, user: str, co_uuid: str=None) -> None:
+    def _insert_cba_command(self, cmd: str, co: str, user: str, co_uuid: str = None) -> None:
         """Insert the cba command with arguments into the generated bash script."""
-        #account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
+        # account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
         self._print(f"{cmd} {self.cfg['cba_machine']} {user} {co_uuid}\n")
 
     def get_supported_arguments(self) -> Dict[str, Any]:
