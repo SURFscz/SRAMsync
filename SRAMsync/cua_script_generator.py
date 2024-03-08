@@ -203,7 +203,7 @@ class CuaScriptGenerator(EventHandler):
         deleting a user's public SSH key. Call the auxiliary event class.
         """
         self._print(f"### Remove SSH Public key: {key}")
-        self._print(f'{self.sshkey_cmd} --remove "{key}" {user}\n')
+        self._print(f'{self.sshkey_cmd} "{key}" --remove {user}\n')
 
     def add_new_groups(self, co: str, groups: List[str], group_attributes: list) -> None:
         """
