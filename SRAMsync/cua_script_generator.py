@@ -132,7 +132,7 @@ class CuaScriptGenerator(EventHandler):
 
     def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
         """Process the CO attributes."""
-        return super().process_co_attributes(attributes, org, co)
+        super().process_co_attributes(attributes, org, co)
 
     def start_of_co_processing(self, co: str) -> None:
         """
@@ -173,9 +173,11 @@ class CuaScriptGenerator(EventHandler):
         command_args[user]["email"] = mail
         command_args[user]["sgroups"] = group
         command_args[user]["sram_co"] = co
-        command_args[user]["sram_co_uuid"] = self.org_co_uuids[f"{org}-{co}"]
         command_args[user]["sram_id"] = uniqueid
         command_args[user]["sram_org"] = org
+
+        if self.org_co_uuids:
+            command_args[user]["sram_co_uuid"] = self.org_co_uuids[f"{org}-{co}"]
 
         command_json = json.dumps(command_args)
 
@@ -228,7 +230,10 @@ class CuaScriptGenerator(EventHandler):
         elif "project_group" in group_attributes:
             self._add_new_project_groups(groups)
         else:
-            logger.error("Could not determine group type (system_group or project_group) for %s.", groups)
+            logger.error(
+                "Could not determine group type (system_group or project_group) for %s.",
+                groups,
+            )
 
     @staticmethod
     def _add_new_system_groups(groups: List[str]) -> None:
@@ -241,7 +246,9 @@ class CuaScriptGenerator(EventHandler):
         group_names = ", ".join(groups)
         plural = "s" if len(groups) > 1 else ""
         logger.debug(
-            "Ignoring adding system group%s %s. It should be done by the CUA team.", plural, group_names
+            "Ignoring adding system group%s %s. It should be done by the CUA team.",
+            plural,
+            group_names,
         )
 
     def _add_new_project_groups(self, groups: List[str]) -> None:
@@ -408,5 +415,9 @@ class CuaScriptGenerator(EventHandler):
                     "Something went wrong during the execution of the generated script. "
                     "The following error was reported:"
                 )
-                logger.error("Command '%s' returned non-zero exit status %d.", e.cmd[0], e.returncode)
+                logger.error(
+                    "Command '%s' returned non-zero exit status %d.",
+                    e.cmd[0],
+                    e.returncode,
+                )
             logger.info("Finished script execution")

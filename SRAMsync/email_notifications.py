@@ -3,6 +3,7 @@ Send e-mails for each emited event from the sync-with-sram main loop. For which
 events to send email is configurable and also some basic formatting can be
 applied.
 """
+
 import smtplib
 import ssl
 import sys
@@ -361,7 +362,7 @@ class EmailNotifications(EventHandler):
         return final_message
 
     def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
-        return super().process_co_attributes(attributes, org, co)
+        super().process_co_attributes(attributes, org, co)
 
     def add_event_message(self, co: str, event: str, important: bool = True, **args) -> None:
         """Add an event message and apply formatting to it."""
