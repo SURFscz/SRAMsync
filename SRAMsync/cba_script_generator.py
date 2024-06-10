@@ -6,7 +6,7 @@ doing so, the functionallity of CuaScriptGenerator can be resused here.
 
 import json
 import sys
-from typing import Any, Dict, List
+from typing import Any
 
 import click
 from jsonschema import Draft202012Validator, ValidationError, validate
@@ -62,7 +62,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
         # account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
         self._print(f"{cmd} {self.cfg['cba_machine']} {user} {co_uuid}\n")
 
-    def get_supported_arguments(self) -> Dict[str, Any]:
+    def get_supported_arguments(self) -> dict[str, Any]:
         """
         Process the arguments that are passed on the command line for plugins.
         Note that not all supplied arguments are necessary supplied for a specific
@@ -127,7 +127,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
 
     def add_new_user(
         self,
-        entry: Dict[str, List[bytes]],
+        entry: dict[str, list[bytes]],
         **kwargs: str,
     ) -> None:
         """add_new_user event."""
