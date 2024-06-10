@@ -1,4 +1,4 @@
-from typing import TypedDict, Union
+from typing import NewType, TypedDict, Union
 
 
 class EventHandler(TypedDict):
@@ -59,3 +59,6 @@ class StateGroup(TypedDict):
 class StateFile(TypedDict):
     users: dict[str, StateUser]
     groups: dict[str, StateGroup]
+
+
+DNs = NewType(name="DNs", tp=list[tuple[str, dict[str, list[bytes]]]])

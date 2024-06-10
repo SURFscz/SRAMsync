@@ -5,6 +5,7 @@ Calling one of the events loops over all known instances and calls the
 same function of each instance.
 """
 
+from datetime import timedelta
 from typing import Any
 
 from SRAMsync.event_handler import EventHandler
@@ -32,7 +33,7 @@ class EventHandlerProxy(EventHandler):
     def add_new_user(
         self,
         entry: dict[str, list[bytes]],
-        **kwargs: str,
+        **kwargs: Any,
     ):
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
@@ -58,12 +59,14 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.remove_group(co, group, group_attributes)
 
-    def add_user_to_group(self, **kwargs):
+    def add_user_to_group(self, **kwargs: Any):
         """Call add_user_to_group event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.add_user_to_group(**kwargs)
 
-    def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
+    def start_grace_period_for_user(
+        self, co: str, group: str, group_attributes: list[str], user: str, duration: timedelta
+    ):
         """Call start_grace_period_for_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.start_grace_period_for_user(co, group, group_attributes, user, duration)

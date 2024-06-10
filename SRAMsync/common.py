@@ -2,7 +2,7 @@
 
 import importlib
 import re
-from typing import Any, List
+from typing import Any
 
 
 class TemplateError(Exception):
@@ -32,7 +32,7 @@ def render_templated_string(template_string: str, **kwargs: str) -> str:
         raise TemplateError("Unknow keyword {} in template: {}".format(e, template_string))
 
 
-def render_templated_string_list(template_strings: List[str], **kwargs: dict[str, str]) -> List[str]:
+def render_templated_string_list(template_strings: list[str], **kwargs: str) -> list[str]:
     """
     Render a string based on a set of keywords. **kw contains defined keywords
     than can be expanded.

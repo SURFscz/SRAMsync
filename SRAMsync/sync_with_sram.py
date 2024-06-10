@@ -37,7 +37,7 @@ from SRAMsync.common import (
 from SRAMsync.config import Config, ConfigurationError
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
-from SRAMsync.typing import StateFile
+from SRAMsync.typing import DNs, StateFile
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
@@ -53,7 +53,7 @@ click_logging_options = {
 class ConfigValidationError(jsonschema.exceptions.ValidationError):
     """Exception in case the supplied configuration file contains errors"""
 
-    def __init__(self, exception: jsonschema.exceptions.ValidationError, path: str):
+    def __init__(self, exception: jsonschema.exceptions.ValidationError, path: list[str]):
         super().__init__(str(exception))
         self.my_path = path
         self.exception = exception
@@ -264,7 +264,7 @@ def get_login_groups_and_users(cfg: Config, service: str, co: str) -> dict[str, 
     return login_groups_and_users
 
 
-def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict[str, str]) -> None:
+def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict[str, list[bytes]]) -> None:
     """
     Determine if a public SSH had been added or deleted and generate the
     appropriate event if necessary.
@@ -337,20 +337,22 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     after a successful run of the resulting script.
     """
 
+    dn = ""
     ldap_conn = cfg.get_ldap_connector()
     login_groups = get_login_groups_and_users(cfg, fq_co, co)
-    new_users = []
+    new_users: list[str] = []
 
     try:
         for login_group, login_users in login_groups.items():
             for user in login_users:
                 dn = f"uid={user},ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
-                dns = ldap_conn.search_s(
+                dns: DNs = ldap_conn.search_s(  # type: ignore
                     dn,
                     ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
                     "(objectClass=person)",
                 )
-                entry = dns[0][1]  # type: ignore
+
+                entry: dict[str, list[bytes]] = dns[0][1]  # type: ignore
                 if is_user_eligible(cfg, entry, user):
                     login_dest_group_names = render_templated_string_list(
                         cfg["sync"]["groups"][login_group]["destination"],
@@ -359,7 +361,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         co=co,
                         sram_group=login_group,
                     )
-                    uid = get_attribute_from_entry(entry, "uid")
+                    uid: str = get_attribute_from_entry(entry, attribute="uid")  # type: ignore
 
                     dest_user_name = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
 
@@ -384,7 +386,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         event_handler = cfg.event_handler_proxy
 
                         event_handler.add_new_user(
-                            entry,
+                            entry,  # type: ignore
                             org=org,
                             co=co,
                             groups=login_dest_group_names,
@@ -393,13 +395,13 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         )
                         new_users.append(dest_user_name)
 
-                    handle_public_ssh_keys(cfg, co, dest_user_name, entry)
+                    handle_public_ssh_keys(cfg, co, dest_user_name, entry)  # type: ignore
     except ldap.NO_SUCH_OBJECT as e:  # type: ignore
         logger.error(
             "Could not find user '%s'. Only This basedn '%s' exists. Trying to match: %s",
             user,  # type: ignore
-            e.args[0]["matched"],
-            dn,  # type: ignore
+            e.args[0]["matched"],  # type: ignore
+            dn,
         )
 
 
@@ -445,7 +447,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
         try:
             basedn = cfg.get_sram_basedn()
-            dns = ldap_conn.search_s(
+            dns: DNs = ldap_conn.search_s(  # type: ignore
                 f"cn={sram_group},ou=Groups,o={fq_co},dc=ordered,{basedn}",
                 ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
                 "(objectClass=groupOfMembers)",
@@ -464,7 +466,9 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             # Find members
             for _, entry in dns:  # type: ignore
                 # Add members
-                members = [member.decode("UTF-8") for member in entry["member"]] if "member" in entry else []
+                members: list[str] = (
+                    [member.decode("UTF-8") for member in entry["member"]] if "member" in entry else []  # type: ignore
+                )
                 for member in members:
                     m_uid = dn_to_rdns(member)["uid"][0]
                     user = render_user_name(cfg, org=org, co=co, group=sram_group, uid=m_uid)
@@ -509,14 +513,14 @@ def add_missing_entries_to_ldap(cfg: Config) -> None:
     event_handler = cfg.event_handler_proxy
     ldap_conn = cfg.get_ldap_connector()
     basedn = cfg.get_sram_basedn()
-    dns = ldap_conn.search_s(
+    dns: DNs = ldap_conn.search_s(  # type: ignore
         f"dc=ordered,{basedn}",
         ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
         "(&(o=*)(ObjectClass=organization))",
     )
 
     for _, entry in dns:  # type: ignore
-        fq_co = get_attribute_from_entry(entry, "o")
+        fq_co = get_attribute_from_entry(entry, "o")  # type: ignore
         org, co = fq_co.split(".")
         event_handler.start_of_co_processing(co)
         logger.debug("Processing CO: %s", co)
@@ -540,23 +544,26 @@ def remove_graced_users(cfg: Config) -> None:
             # org = cfg.state.get_org_of_known_group(group)
             co = cfg.state.get_co_of_known_group(group)
 
-            for user, grace_until_str in group_values["graced_users"].items():
-                grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
+            for user, grace_until_str in group_values["graced_users"].items():  # type: ignore
+                grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")  # type: ignore
                 now = datetime.now(timezone.utc)
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
                     # so automatically disregards this information automatically and
                     # it is the intended behaviour
-                    logger.info("Grace time ended for user %s in %s", user, group)
+                    logger.info("Grace time ended for user %s in %s", user, group)  # type: ignore
                     event_handler.remove_graced_user_from_group(
-                        co=co, group=group, group_attributes=group_attributes, user=user
+                        co=co,
+                        group=group,
+                        group_attributes=group_attributes,
+                        user=user,  # type: ignore
                     )
                 else:
-                    cfg.state.set_graced_period_for_user(group, user, grace_until)
+                    cfg.state.set_graced_period_for_user(group, user, grace_until)  # type: ignore
 
                     remaining_time = grace_until - now
-                    logger.info("%s from %s has %s left of its grace time.", user, group, remaining_time)
+                    logger.info("%s from %s has %s left of its grace time.", user, group, remaining_time)  # type: ignore
 
 
 def remove_deleted_users_from_groups(cfg: Config) -> None:
@@ -591,7 +598,7 @@ def remove_deleted_users_from_group(cfg: Config, co: str, group: str, users: lis
             cfg.state.set_graced_period_for_user(group, user, grace_until)
 
         except NoGracePeriodForGroupError:
-            event_handler.remove_user_from_group(co, group, group_attributes, user)
+            event_handler.remove_user_from_group(co, group, group_attributes, user)  # type: ignore
 
 
 def remove_deleted_groups(cfg: Config) -> None:

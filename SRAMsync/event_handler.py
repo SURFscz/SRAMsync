@@ -14,7 +14,7 @@ class EventHandler(ABC):
     """Abstract implementation of the EventHandler class."""
 
     @abstractmethod
-    def __init__(self, service: str, cfg: EventHandlerConfig, state: State, cfg_path: str):
+    def __init__(self, service: str, cfg: EventHandlerConfig, state: State, cfg_path: list[str]):
         pass
 
     @abstractmethod
@@ -33,7 +33,7 @@ class EventHandler(ABC):
     def add_new_user(
         self,
         entry: dict[str, list[bytes]],
-        **kwargs: str,
+        **kwargs: Any,
     ):
         """add_new_user event."""
 

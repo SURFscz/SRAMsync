@@ -46,10 +46,9 @@ class CuaScriptGenerator(EventHandler):
         "required": ["filename", "add_cmd", "modify_cmd", "check_cmd", "sshkey_cmd"],
     }
 
-    cua_group_types = {"system_group", "project_group"}
+    cua_group_types: set[str] = {"system_group", "project_group"}
 
-    def __init__(self, service: str, cfg: EventHandlerConfig, state: JsonFile, cfg_path: str):
-        __import__("pdb").set_trace()
+    def __init__(self, service: str, cfg: EventHandlerConfig, state: JsonFile, cfg_path: list[str]):
         super().__init__(service, cfg, state, cfg_path)
 
         try:
@@ -189,7 +188,6 @@ class CuaScriptGenerator(EventHandler):
             f"  {{\n" f"    echo '{command_json}' | {self.add_cmd} --file=- --format=json\n" f"  }}\n"
         )
 
-        __import__("pdb").set_trace()
         self._handle_extra_groups(groups, user, group_attributes)
 
     def add_public_ssh_key(self, co: str, user: str, key: str) -> None:
