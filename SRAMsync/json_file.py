@@ -5,12 +5,13 @@ the State class based on a JSON file.
 
 import json
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Optional, Union, cast
 
 from jsonschema import validate
 
 from SRAMsync.common import render_templated_string
 from SRAMsync.state import State, UnkownGroup
+from SRAMsync.typing import StateGroup, StateUser, StatusFilenames, StateFile
 
 
 class JsonFile(State):
@@ -30,7 +31,7 @@ class JsonFile(State):
         "additionalProperties": False,
     }
 
-    def __init__(self, cfg: dict, **kwargs: str):
+    def __init__(self, cfg: StatusFilenames, **kwargs: dict[str, str]):
         super().__init__(cfg)
 
         validate(schema=self._schema, instance=cfg)
@@ -44,14 +45,15 @@ class JsonFile(State):
 
         try:
             with open(self.status_filename, encoding="utf8") as fd:
-                self._last_known_state = json.load(fd)
+                self._last_known_state: StateFile = json.load(fd)
         except FileNotFoundError:
-            self._last_known_state = {"users": {}, "groups": {}}
+            self._last_known_state = cast(StateFile, {"users": {}, "groups": {}})
 
         self.cfg = cfg
-        self._new_state = {"users": {}, "groups": {}}
+        self._new_state: StateFile = {"users": {}, "groups": {}}
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: str) -> Union[dict[str, StateUser], dict[str, StateGroup]]:
+        __import__("pdb").set_trace()
         return self._last_known_state[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
@@ -84,13 +86,13 @@ class JsonFile(State):
         except FileNotFoundError:
             pass
 
-    def get_last_known_state(self) -> dict:
+    def get_last_known_state(self) -> StateFile:
         return self._last_known_state
 
     def is_known_user(self, user: str) -> bool:
         return user in self._last_known_state["users"]
 
-    def is_known_group(self, groups: List[str]) -> bool:
+    def is_known_group(self, groups: list[str]) -> bool:
         known = True
 
         for group in groups:
@@ -98,7 +100,7 @@ class JsonFile(State):
 
         return known
 
-    def is_user_member_of_group(self, dest_group_names: List[str], user: str) -> bool:
+    def is_user_member_of_group(self, dest_group_names: list[str], user: str) -> bool:
         try:
             for dest_group_name in dest_group_names:
                 if dest_group_name not in self._last_known_state["groups"]:
@@ -107,7 +109,7 @@ class JsonFile(State):
                 if user not in self._last_known_state["groups"][dest_group_name]["members"]:
                     return False
         except KeyError as e:
-            raise UnkownGroup(dest_group_name) from e  # pyright: ignore [reportUnboundVariable]
+            raise UnkownGroup(dest_group_name) from e  # type: ignore [reportUnboundVariable]
 
         return True
 
@@ -115,10 +117,10 @@ class JsonFile(State):
         return group in self._new_state["groups"]
 
     def add_user(self, user: str, co: str) -> None:
-        self._new_state["users"][user] = {"CO": co}
+        self._new_state["users"][user] = cast(StateUser, {"CO": co})
 
     def add_groups(
-        self, dest_group_names: List[str], co: str, sram_group: str, group_attributes: list
+        self, dest_group_names: list[str], co: str, sram_group: str, group_attributes: list[str]
     ) -> None:
         for dest_group_name in dest_group_names:
             if dest_group_name not in self._new_state["groups"]:
@@ -131,7 +133,7 @@ class JsonFile(State):
                     },
                 }
 
-    def add_group_member(self, dest_group_names: List[str], user: str) -> None:
+    def add_group_member(self, dest_group_names: list[str], user: str) -> None:
         for dest_group_name in dest_group_names:
             if (
                 dest_group_name in self._new_state["groups"]
@@ -139,34 +141,34 @@ class JsonFile(State):
             ):
                 self._new_state["groups"][dest_group_name]["members"].append(user)
 
-    def get_all_known_users_from_group(self, group) -> List[str]:
+    def get_all_known_users_from_group(self, group: str) -> list[str]:
         return self._last_known_state["groups"][group]["members"]
 
-    def get_added_group(self, group: str) -> dict:
+    def get_added_group(self, group: str) -> StateGroup:
         return self._new_state["groups"][group]
 
-    def get_added_groups(self) -> list:
+    def get_added_groups(self) -> list[str]:
         return list(self._new_state["groups"].keys())
 
-    def get_org_of_known_group(self, group) -> str:
+    def get_org_of_known_group(self, group: str) -> str:
         return self._last_known_state["groups"][group]["sram"]["org"]
 
-    def get_co_of_known_group(self, group) -> str:
+    def get_co_of_known_group(self, group: str) -> str:
         return self._last_known_state["groups"][group]["sram"]["CO"]
 
-    def get_known_group(self, group: str) -> dict:
+    def get_known_group(self, group: str) -> StateGroup:
         return self._last_known_state["groups"][group]
 
-    def get_known_groups(self) -> list:
+    def get_known_groups(self) -> list[str]:
         return list(self._last_known_state["groups"].keys())
 
-    def get_known_group_attributes(self, group: str) -> list:
+    def get_known_group_attributes(self, group: str) -> list[str]:
         return self._last_known_state["groups"][group]["attributes"]
 
-    def get_known_groups_and_attributes(self) -> dict:
+    def get_known_groups_and_attributes(self) -> dict[str, StateGroup]:
         return self._last_known_state["groups"]
 
-    def get_removed_users(self, group: str) -> list:
+    def get_removed_users(self, group: str) -> list[str]:
         if group not in self._new_state["groups"]:
             return self._last_known_state["groups"][group]["members"]
 
@@ -177,13 +179,13 @@ class JsonFile(State):
         ]
         return removed_users
 
-    def get_known_user_public_ssh_keys(self, user: str) -> set:
+    def get_known_user_public_ssh_keys(self, user: str) -> set[str]:
         try:
             return set(self._last_known_state["users"][user]["sshPublicKey"])
         except KeyError:
             return set()
 
-    def set_user_public_ssh_keys(self, user: str, ssh_public_keys: set) -> None:
+    def set_user_public_ssh_keys(self, user: str, ssh_public_keys: set[str]) -> None:
         if ssh_public_keys:
             try:
                 self._new_state["users"][user]["sshPublicKey"] = list(ssh_public_keys)

@@ -5,17 +5,17 @@ doing so, the functionallity of CuaScriptGenerator can be resused here.
 """
 
 import json
+import sys
 from typing import Any, Dict, List
 
 import click
-from click_logging.core import sys
 from jsonschema import Draft202012Validator, ValidationError, validate
 
-from SRAMsync.common import render_templated_string
 from SRAMsync.cua_script_generator import CuaScriptGenerator
 from SRAMsync.json_file import JsonFile
 from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError
+from SRAMsync.typing import EventHandlerConfig
 
 
 class CbaScriptGenerator(CuaScriptGenerator):
@@ -38,14 +38,14 @@ class CbaScriptGenerator(CuaScriptGenerator):
         "required": ["cba_add_cmd", "cba_del_cmd", "cba_machine", "cba_budget_account", "cua_config"],
     }
 
-    def __init__(self, service: str, cfg: dict, state: JsonFile, path: List[str]) -> None:
+    def __init__(self, service: str, cfg: dict[str, Any], state: JsonFile, path: str) -> None:
         try:
             validate(
                 schema=CbaScriptGenerator._schema,
                 instance=cfg["event_handler_config"],
                 format_checker=Draft202012Validator.FORMAT_CHECKER,
             )
-            cua_config = {
+            cua_config: EventHandlerConfig = {
                 "event_handler_config": cfg["event_handler_config"]["cua_config"],
                 "secrets": cfg["secrets"],
             }
@@ -83,11 +83,11 @@ class CbaScriptGenerator(CuaScriptGenerator):
 
         return options
 
-    def handle_cba_co_budget_mapping_filename(self, value) -> None:
+    def handle_cba_co_budget_mapping_filename(self, value: Any) -> None:
         """Assign a value to self._cba_co_budget_mapping_filename"""
         self._cba_co_budget_mapping_filename = value
 
-    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+    def process_co_attributes(self, attributes: dict[str, str], org: str, co: str) -> None:
         """Process the CO attributes."""
         super().process_co_attributes(attributes, org, co)
 
@@ -128,7 +128,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
     def add_new_user(
         self,
         entry: Dict[str, List[bytes]],
-        **kwargs,
+        **kwargs: str,
     ) -> None:
         """add_new_user event."""
         super().add_new_user(entry, **kwargs)
@@ -144,12 +144,14 @@ class CbaScriptGenerator(CuaScriptGenerator):
             logger.error("Missing(cba_script_generator) argument: %s", e)
             sys.exit(1)
 
-    def remove_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
+    def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str):
         """remove_user_from_group event."""
         super().remove_user_from_group(co, group, group_attributes, user)
         self._insert_cba_command(self.cfg["cba_del_cmd"], co, user)
 
-    def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
+    def remove_graced_user_from_group(
+        self, co: str, group: str, group_attributes: list[str], user: str
+    ) -> None:
         """remove_graced_user_from_group event."""
         super().remove_graced_user_from_group(co, group, group_attributes, user)
         self._insert_cba_command(self.cfg["cba_del_cmd"], co, user)

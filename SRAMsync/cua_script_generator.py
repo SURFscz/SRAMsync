@@ -13,9 +13,9 @@ import re
 import stat
 import subprocess
 from datetime import datetime
-from typing import Any, Dict, List
+import sys
+from typing import Any, cast
 
-from click_logging.core import sys
 from jsonschema import Draft202012Validator, ValidationError, validate
 
 from SRAMsync.common import get_attribute_from_entry, render_templated_string
@@ -23,6 +23,7 @@ from SRAMsync.event_handler import EventHandler
 from SRAMsync.json_file import JsonFile
 from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError
+from SRAMsync.typing import EventHandlerConfig
 
 
 class CuaScriptGenerator(EventHandler):
@@ -47,7 +48,8 @@ class CuaScriptGenerator(EventHandler):
 
     cua_group_types = {"system_group", "project_group"}
 
-    def __init__(self, service: str, cfg: Dict, state: JsonFile, cfg_path: List[str]):
+    def __init__(self, service: str, cfg: EventHandlerConfig, state: JsonFile, cfg_path: str):
+        __import__("pdb").set_trace()
         super().__init__(service, cfg, state, cfg_path)
 
         try:
@@ -58,7 +60,7 @@ class CuaScriptGenerator(EventHandler):
             )
 
             self.run = False
-            self.org_co_uuids = dict()
+            self.org_co_uuids = cast(dict[str, str], {})
 
             self.cfg = cfg["event_handler_config"]
             self.state = state
@@ -116,7 +118,7 @@ class CuaScriptGenerator(EventHandler):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
-    def get_supported_arguments(self) -> Dict[str, Any]:
+    def get_supported_arguments(self) -> dict[str, dict[str, Any]]:
         """
         Process the arguments that are passed on the command line for plugins.
         Note that not all supplied arguments are necessary supplied for a specific
@@ -130,7 +132,7 @@ class CuaScriptGenerator(EventHandler):
 
         return options
 
-    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+    def process_co_attributes(self, attributes: dict[str, str], org: str, co: str) -> None:
         """Process the CO attributes."""
         super().process_co_attributes(attributes, org, co)
 
@@ -142,7 +144,7 @@ class CuaScriptGenerator(EventHandler):
 
         self._print(f"\n# service: {self.service_name}/{co}")
 
-    def add_new_user(self, entry: Dict[str, List[bytes]], **kwargs) -> None:
+    def add_new_user(self, entry: dict[str, list[bytes]], **kwargs: Any) -> None:
         """
         Write the appropriate sara_usertools commands to the bash script for
         adding new users. Call the auxiliary event class.
@@ -165,7 +167,7 @@ class CuaScriptGenerator(EventHandler):
         uniqueid = get_attribute_from_entry(entry, "eduPersonUniqueId")
         group = ",".join(groups)
 
-        command_args = dict()
+        command_args: dict[str, dict[str, str]] = dict()
         command_args[user] = dict()
         command_args[user]["template"] = "sram"
         command_args[user]["firstname"] = givenname
@@ -187,6 +189,7 @@ class CuaScriptGenerator(EventHandler):
             f"  {{\n" f"    echo '{command_json}' | {self.add_cmd} --file=- --format=json\n" f"  }}\n"
         )
 
+        __import__("pdb").set_trace()
         self._handle_extra_groups(groups, user, group_attributes)
 
     def add_public_ssh_key(self, co: str, user: str, key: str) -> None:
@@ -205,7 +208,7 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"### Remove SSH Public key: {key}")
         self._print(f'{self.sshkey_cmd} "{key}" --remove {user}\n')
 
-    def add_new_groups(self, co: str, groups: List[str], group_attributes: list) -> None:
+    def add_new_groups(self, co: str, groups: list[str], group_attributes: list[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new group. This is either a CUA system, project or an
@@ -236,7 +239,7 @@ class CuaScriptGenerator(EventHandler):
             )
 
     @staticmethod
-    def _add_new_system_groups(groups: List[str]) -> None:
+    def _add_new_system_groups(groups: list[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA system group. However, the current version of the
@@ -251,13 +254,13 @@ class CuaScriptGenerator(EventHandler):
             group_names,
         )
 
-    def _add_new_project_groups(self, groups: List[str]) -> None:
+    def _add_new_project_groups(self, groups: list[str]) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a new CUA project group.
         """
         for group in groups:
-            command_args = dict()
+            command_args: dict[str, dict[str, str]] = dict()
             command_args[group] = dict()
             command_args[group]["template"] = "sram_group"
             command_args[group]["firstname"] = "sram_group"
@@ -270,7 +273,7 @@ class CuaScriptGenerator(EventHandler):
                 f"  {{\n    echo '{command_args_json}' | {self.add_cmd} --format=json --file=-\n  }}\n"
             )
 
-    def remove_group(self, co: str, group: str, group_attributes: list):
+    def remove_group(self, co: str, group: str, group_attributes: list[str]):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a new CUA project group. Call the auxiliary event class.
@@ -278,7 +281,7 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"# Removing group(s) {group}")
         self._print(f"{self.add_cmd} --remove-group {group}")
 
-    def add_user_to_group(self, **kwargs) -> None:
+    def add_user_to_group(self, **kwargs: Any) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         adding a user to a group. Call the auxiliary event class.
@@ -295,14 +298,16 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"# Add {user} to group(s) {groups}")
         self._update_user_in_groups(groups, group_attributes, user, add=True)
 
-    def start_grace_period_for_user(self, co, group, group_attributes, user, duration):
+    def start_grace_period_for_user(
+        self, co: str, group: str, group_attributes: list[str], user: str, duration: str
+    ):
         """
         The grace period for user user has started. However, for the CUA this
         has no implications. Until the grace period has ended, nothing will change
         for the CUA.
         """
 
-    def remove_user_from_group(self, co: str, group: str, group_attributes: list, user: str) -> None:
+    def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a group. Call the auxiliary event class.
@@ -310,7 +315,7 @@ class CuaScriptGenerator(EventHandler):
         self._print(f"# Remove {user} from group {group}")
         self._update_user_in_groups([group], group_attributes, user, add=False)
 
-    def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list, user: str):
+    def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str):
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a graced group. Call the auxiliary event class.
@@ -319,7 +324,7 @@ class CuaScriptGenerator(EventHandler):
         self.remove_user_from_group(co, group, group_attributes, user)
 
     def _update_user_in_groups(
-        self, groups: List[str], group_attributes: List[str], user: str, add: bool
+        self, groups: list[str], group_attributes: list[str], user: str, add: bool
     ) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
@@ -359,7 +364,7 @@ class CuaScriptGenerator(EventHandler):
             )
             raise ValueError(error)
 
-    def _handle_extra_groups(self, groups: List[str], user: str, group_attributes: List[str]) -> None:
+    def _handle_extra_groups(self, groups: list[str], user: str, group_attributes: list[str]) -> None:
         """
         Handle possible extra_groups attributes.
         """

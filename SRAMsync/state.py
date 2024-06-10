@@ -5,7 +5,9 @@ of the SRAMsync process.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, List
+from typing import Any
+
+from SRAMsync.typing import StateFile, StateGroup, StatusFilenames
 
 
 class NoGracePeriodForGroupError(Exception):
@@ -18,7 +20,7 @@ class NoGracePeriodForGroupError(Exception):
 class UnkownGroup(Exception):
     """Exception in case an unknown group is acccessed."""
 
-    def __init__(self, unknown_group):
+    def __init__(self, unknown_group: str):
         super().__init__()
         self._unknown_group = unknown_group
 
@@ -29,7 +31,7 @@ class State(ABC):
     process. Either state can be querried for known or unknown things.
     """
 
-    def __init__(self, cfg: dict):
+    def __init__(self, cfg: StatusFilenames):
         """init"""
         self.cfg = cfg
 
@@ -46,7 +48,7 @@ class State(ABC):
         """Dump the current state."""
 
     @abstractmethod
-    def get_last_known_state(self) -> dict:
+    def get_last_known_state(self) -> StateFile:
         """Return the last known state."""
 
     @abstractmethod
@@ -54,11 +56,11 @@ class State(ABC):
         """Check if the user is known from the last state."""
 
     @abstractmethod
-    def is_known_group(self, groups: List[str]) -> bool:
+    def is_known_group(self, groups: list[str]) -> bool:
         """Check if the group is known from the last state."""
 
     @abstractmethod
-    def is_user_member_of_group(self, dest_group_names: List[str], user: str) -> bool:
+    def is_user_member_of_group(self, dest_group_names: list[str], user: str) -> bool:
         """Check is the user is member of the destination group."""
 
     @abstractmethod
@@ -71,60 +73,60 @@ class State(ABC):
 
     @abstractmethod
     def add_groups(
-        self, dest_group_names: List[str], co: str, sram_group: str, group_attributes: list
+        self, dest_group_names: list[str], co: str, sram_group: str, group_attributes: list[str]
     ) -> None:
         """Add a new group."""
 
     @abstractmethod
-    def add_group_member(self, dest_group_names: List[str], user: str) -> None:
+    def add_group_member(self, dest_group_names: list[str], user: str) -> None:
         """Add member to a group."""
 
     @abstractmethod
-    def get_all_known_users_from_group(self, group) -> List[str]:
+    def get_all_known_users_from_group(self, group: str) -> list[str]:
         """Get all users from the known group."""
 
     @abstractmethod
-    def get_added_group(self, group: str) -> dict:
+    def get_added_group(self, group: str) -> StateGroup:
         """Get added group."""
 
     @abstractmethod
-    def get_added_groups(self) -> list:
+    def get_added_groups(self) -> list[str]:
         """Get added groups."""
 
     @abstractmethod
-    def get_org_of_known_group(self, group) -> str:
+    def get_org_of_known_group(self, group: str) -> str:
         """Get the CO name of the known group."""
 
     @abstractmethod
-    def get_co_of_known_group(self, group) -> str:
+    def get_co_of_known_group(self, group: str) -> str:
         """Get the CO name of the known group."""
 
     @abstractmethod
-    def get_known_group(self, group: str) -> dict:
+    def get_known_group(self, group: str) -> StateGroup:
         """Get known group."""
 
     @abstractmethod
-    def get_known_groups(self) -> list:
+    def get_known_groups(self) -> list[str]:
         """Get known groups."""
 
     @abstractmethod
-    def get_known_group_attributes(self, group: str) -> list:
+    def get_known_group_attributes(self, group: str) -> list[str]:
         """Get attributes for known group."""
 
     @abstractmethod
-    def get_known_groups_and_attributes(self) -> dict:
+    def get_known_groups_and_attributes(self) -> dict[str, StateGroup]:
         """Get all known groups and their attributes."""
 
     @abstractmethod
-    def get_removed_users(self, group: str) -> list:
+    def get_removed_users(self, group: str) -> list[str]:
         """Get the users that have been removed since the last synchronisation for the group."""
 
     @abstractmethod
-    def get_known_user_public_ssh_keys(self, user: str) -> set:
+    def get_known_user_public_ssh_keys(self, user: str) -> set[str]:
         """Get the set of known public ssh keys for the user."""
 
     @abstractmethod
-    def set_user_public_ssh_keys(self, user: str, ssh_public_keys: set) -> None:
+    def set_user_public_ssh_keys(self, user: str, ssh_public_keys: set[str]) -> None:
         """Set the public ssh keys for the user."""
 
     @abstractmethod

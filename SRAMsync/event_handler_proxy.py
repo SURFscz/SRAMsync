@@ -5,7 +5,7 @@ Calling one of the events loops over all known instances and calls the
 same function of each instance.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from SRAMsync.event_handler import EventHandler
 
@@ -13,26 +13,26 @@ from SRAMsync.event_handler import EventHandler
 class EventHandlerProxy(EventHandler):
     """Proxy class to iterate over EventHandlers."""
 
-    def __init__(self, event_handlers):
+    def __init__(self, event_handlers: dict[str, EventHandler]):
         self.event_handlers = event_handlers
 
-    def get_supported_arguments(self) -> Dict[str, Any]:
+    def get_supported_arguments(self) -> dict[str, Any]:
         return super().get_supported_arguments()
 
-    def start_of_co_processing(self, co):
+    def start_of_co_processing(self, co: str):
         """Call start_of_co_processing event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
-    def process_co_attributes(self, attributes: Dict[str, str], org: str, co: str) -> None:
+    def process_co_attributes(self, attributes: dict[str, str], org: str, co: str) -> None:
         """Call process_co_attributes event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.process_co_attributes(attributes, org, co)
 
     def add_new_user(
         self,
-        entry: Dict[str, List[bytes]],
-        **kwargs,
+        entry: dict[str, list[bytes]],
+        **kwargs: str,
     ):
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
@@ -48,12 +48,12 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.delete_public_ssh_key(co, user, key)
 
-    def add_new_groups(self, co: str, groups: List[str], group_attributes: List[str]):
+    def add_new_groups(self, co: str, groups: list[str], group_attributes: list[str]):
         """Call add_new_group event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.add_new_groups(co, groups, group_attributes)
 
-    def remove_group(self, co: str, group: str, group_attributes: List[str]):
+    def remove_group(self, co: str, group: str, group_attributes: list[str]):
         """Call remove_group event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.remove_group(co, group, group_attributes)

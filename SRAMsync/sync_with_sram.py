@@ -19,14 +19,14 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List
+from typing import cast
 
 import click
 import click_logging
 import jsonschema.exceptions
 import ldap
 from ldap import ldapobject
-from ldap.dn import str2dn
+from ldap.dn import str2dn  # type: ignore
 
 from SRAMsync.common import (
     TemplateError,
@@ -37,6 +37,7 @@ from SRAMsync.common import (
 from SRAMsync.config import Config, ConfigurationError
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
+from SRAMsync.typing import StateFile
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings = dict(help_option_names=["-h", "--help"])
@@ -52,16 +53,17 @@ click_logging_options = {
 class ConfigValidationError(jsonschema.exceptions.ValidationError):
     """Exception in case the supplied configuration file contains errors"""
 
-    def __init__(self, exception, path):
-        super().__init__(exception, path)
-        self.path = path
+    def __init__(self, exception: jsonschema.exceptions.ValidationError, path: str):
+        super().__init__(str(exception))
+        self.my_path = path
         self.exception = exception
 
 
 class MissingUidInRenameUser(Exception):
     """Exception in case the {uid} tag is missing from rename_user."""
 
-    def __init__(self, msg):
+    def __init__(self, msg: str):
+        """Init."""
         super().__init__(msg)
         self.msg = msg
 
@@ -73,26 +75,27 @@ class MultipleLoginGroups(Exception):
 class PasswordNotFound(Exception):
     """Exception is case no password has been found."""
 
-    def __init__(self, msg):
+    def __init__(self, msg: str):
+        """Init."""
         super().__init__(msg)
         self.msg = msg
 
 
-def dn_to_rdns(dn: str) -> dict:
+def dn_to_rdns(dn: str) -> dict[str, list[str]]:
     """
     Convert the given dn string representation info into a dictionary, where
     each key value pair is an rdn.
     """
 
     rdns = {}
-    rdn_components = str2dn(dn)
+    rdn_components = cast(list[tuple[str, str, int]], str2dn(dn))
     for rdn in rdn_components:
         attribute, value, _ = rdn[0]
-        rdns.setdefault(attribute, []).append(value)
-    return rdns
+        rdns.setdefault(attribute, []).append(value)  # type: ignore
+    return cast(dict[str, list[str]], rdns)
 
 
-def get_ldap_passwd(config: dict, secrets: dict, service: str) -> str:
+def get_ldap_passwd(config: dict[str, str], secrets: dict[str, dict[str, str]], service: str) -> str:
     """
     Get the SRAM LDAP password.
 
@@ -122,26 +125,28 @@ def get_ldap_passwd(config: dict, secrets: dict, service: str) -> str:
     raise PasswordNotFound("SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD.")
 
 
-def init_ldap(config: dict, secrets: dict, service: str) -> ldapobject.LDAPObject:
+def init_ldap(
+    config: dict[str, str], secrets: dict[str, dict[str, str]], service: str
+) -> ldapobject.LDAPObject:
     """
     Initialization and binding an LDAP connection.
     """
     logger.debug("LDAP: connecting to: %s", config["uri"])
-    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)  # type: ignore pylint: disable=E1101
-    ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore pylint: disable=E1101
-    ldap_conn = ldap.initialize(config["uri"])
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)  # type: ignore
+    ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore
+    ldap_conn = cast(ldapobject.LDAPObject, ldap.initialize(config["uri"]))  # type: ignore
     passwd = get_ldap_passwd(config, secrets, service)
-    ldap_conn.simple_bind_s(config["binddn"], passwd)
+    ldap_conn.simple_bind_s(config["binddn"], passwd)  # type: ignore
     logger.debug("LDAP: connected")
 
     return ldap_conn
 
 
-def get_previous_status(cfg: Config) -> dict:
+def get_previous_status(cfg: Config) -> StateFile:
     """
     Get the saved status from disk if it exits. Return an empty status otherwise.
     """
-    status = {"users": {}, "groups": {}}
+    status: StateFile = {"users": {}, "groups": {}}
 
     if "provisional_status_filename" in cfg and os.path.isfile(cfg["provisional_status_filename"]):
         logger.warning("Found unexpected provisional status file: %s", cfg["provisional_status_filename"])
@@ -223,7 +228,7 @@ def render_user_name(cfg: Config, org: str, co: str, group: str, uid: str) -> st
     return user_name
 
 
-def get_login_groups_and_users(cfg: Config, service: str, co: str) -> Dict[str, List[str]]:
+def get_login_groups_and_users(cfg: Config, service: str, co: str) -> dict[str, list[str]]:
     """
     Check if there is at least one and not more than one group that controls
     which users are allowed to login. If there are none, it's okay to use all
@@ -259,7 +264,7 @@ def get_login_groups_and_users(cfg: Config, service: str, co: str) -> Dict[str, 
     return login_groups_and_users
 
 
-def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict) -> None:
+def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict[str, str]) -> None:
     """
     Determine if a public SSH had been added or deleted and generate the
     appropriate event if necessary.
@@ -296,18 +301,18 @@ def process_co_attributes(cfg: Config, fq_co: str, org: str, co: str) -> None:
 
     dn = f"o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
 
-    dns = ldap_conn.search_s(
+    dns = ldap_conn.search_s(  # type: ignore
         dn,
-        ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
+        ldap.SCOPE_BASE,  # type: ignore
         f"(o={fq_co})",
     )
 
     if dns:
-        number_of_matching_dns = len(dns)
+        number_of_matching_dns = len(dns)  # type: ignore
         if number_of_matching_dns != 1:
             raise ValueError("Expected one element for %s, found %s", dn, number_of_matching_dns)
         try:
-            attributes = dns[0][1]
+            attributes = cast(dict[str, str], dns[0][1])
             event_handler = cfg.event_handler_proxy
             event_handler.process_co_attributes(attributes, org, co)
         except KeyError:
@@ -566,7 +571,7 @@ def remove_deleted_users_from_groups(cfg: Config) -> None:
         remove_deleted_users_from_group(cfg, co, group, removed_users)
 
 
-def remove_deleted_users_from_group(cfg: Config, co: str, group: str, users: List[str]) -> None:
+def remove_deleted_users_from_group(cfg: Config, co: str, group: str, users: list[str]) -> None:
     """Remove the given users from the group."""
 
     event_handler = cfg.event_handler_proxy
@@ -643,7 +648,7 @@ def keep_new_status(cfg: Config, new_status: dict) -> None:
     logger.info("new status file has been written to: %s", filename)
 
 
-def get_configuration_paths(path: str) -> List[str]:
+def get_configuration_paths(path: str) -> list[str]:
     """
     Return an array containing paths to configurations in case the provided
     path was a directory, or a single path if the path was a file.
@@ -688,7 +693,7 @@ def show_configuration_error(
 @click.version_option()
 @click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
-def cli(configuration, debug, verbose, eventhandler_args):
+def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[str]):
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
 
@@ -735,7 +740,7 @@ def cli(configuration, debug, verbose, eventhandler_args):
         for configuration_path in configuration_paths:
             logger.info("Handling configuration: %s", configuration_path)
 
-            new_eventhandler_args = {}
+            new_eventhandler_args: dict[str, str] = {}
             for arg in eventhandler_args:
                 if "=" in arg:
                     key, value = arg.split("=", 1)
@@ -771,16 +776,16 @@ def cli(configuration, debug, verbose, eventhandler_args):
         show_configuration_error(configuration_path, e)
     except jsonschema.exceptions.ValidationError as e:
         show_configuration_error(configuration_path, e)
-    except ldap.NO_SUCH_OBJECT as e:  # type: ignore pylint: disable=E1101
-        if "desc" in e.args[0]:
-            logger.error("%s for basedn '%s'", e.args[0]["desc"], e.args[0]["matched"])
-    except ldap.INVALID_CREDENTIALS:  # type: ignore pylint: disable=E1101
+    except ldap.NO_SUCH_OBJECT as e:  # type: ignore
+        if "desc" in e.args[0]:  # type: ignore
+            logger.error("%s for basedn '%s'", e.args[0]["desc"], e.args[0]["matched"])  # type: ignore
+    except ldap.INVALID_CREDENTIALS:  # type: ignore
         logger.error(
             "Invalid credentials. Please check your configuration file or set SRAM_LDAP_PASSWD correctly."
         )
-    except ldap.SERVER_DOWN as e:  # type: ignore pylint: disable=E1101
-        if "desc" in e.args[0]:
-            logger.error(e.args[0]["desc"])
+    except ldap.SERVER_DOWN as e:  # type: ignore
+        if "desc" in e.args[0]:  # type: ignore
+            logger.error(e.args[0]["desc"])  # type: ignore
     except ModuleNotFoundError as e:
         logger.error("%s. Please check your config file.", e)
     except MultipleLoginGroups:

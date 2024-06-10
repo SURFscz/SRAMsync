@@ -1,19 +1,21 @@
 """Write a simple log message for each received event."""
 
+import sys
 from typing import Dict
 
 import click
-from click_logging.core import sys
 
 from SRAMsync.common import get_attribute_from_entry
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.sramlogger import logger
+from SRAMsync.state import State
+from SRAMsync.typing import EventHandlerConfig
 
 
 class DummyEventHandler(EventHandler):
     """Write a simple log message for each received event."""
 
-    def __init__(self, service, cfg, state, cfg_path):
+    def __init__(self, service: str, cfg: EventHandlerConfig, state: State, cfg_path: list[str]):
         super().__init__(service, cfg, state, cfg_path)
         logger.debug(
             click.style("service: ", fg="magenta") + click.style(service, fg=(255, 255, 255), bold=True)
@@ -30,14 +32,14 @@ class DummyEventHandler(EventHandler):
                 + click.style(attribute_value, fg="red", bold=True)
             )
 
-    def start_of_co_processing(self, co):
+    def start_of_co_processing(self, co: str):
         """Log the start_of_co_processing event."""
         logger.info(click.style(f"  start_of_co_processing({co})", fg="yellow", bold=True))
 
     def add_new_user(
         self,
-        entry: dict,
-        **kwargs,
+        entry: dict[str, list[bytes]],
+        **kwargs: str,
     ):
         """Log the add_new_user event."""
         org = kwargs["org"]
@@ -61,7 +63,7 @@ class DummyEventHandler(EventHandler):
     def get_supported_arguments(self):
         return {}
 
-    def add_public_ssh_key(self, co, user, key):
+    def add_public_ssh_key(self, co: str, user: str, key: str):
         """Log the add_public_ssh_key event."""
         logger.info(
             "    add_public_ssh_key(%s, %s, %s)",
@@ -70,11 +72,11 @@ class DummyEventHandler(EventHandler):
             click.style(key, fg="white", dim=True),
         )
 
-    def delete_public_ssh_key(self, co, user, key):
+    def delete_public_ssh_key(self, co: str, user: str, key: str):
         """Log the delete_public_ssh_key event."""
         logger.info("    delete_public_ssh_key(%s, %s, %s)", co, user, key)
 
-    def add_new_groups(self, co, groups, group_attributes):
+    def add_new_groups(self, co: str, groups: list[str], group_attributes: list[str]):
         """Log the add_new_group event."""
         logger.info(
             "  add_new_group(%s, %s, %s)",
@@ -83,7 +85,7 @@ class DummyEventHandler(EventHandler):
             group_attributes,
         )
 
-    def remove_group(self, co, group, group_attributes):
+    def remove_group(self, co: str, group: str, group_attributes: list[str]):
         """Log the remove_group event."""
         logger.info(
             "  remove_group(%s, %s, %s)",
@@ -92,7 +94,7 @@ class DummyEventHandler(EventHandler):
             group_attributes,
         )
 
-    def add_user_to_group(self, **kwargs):
+    def add_user_to_group(self, **kwargs: str):
         """Log the add_user_to_group event."""
         try:
             org = kwargs["org"]
@@ -113,7 +115,9 @@ class DummyEventHandler(EventHandler):
             logger.error("Missing argument for DummyEventHandler:add_user_to_group %s", e)
             sys.exit(1)
 
-    def start_grace_period_for_user(self, co, group: str, group_attributes: list, user: str, duration: str):
+    def start_grace_period_for_user(
+        self, co: str, group: str, group_attributes: list[str], user: str, duration: str
+    ):
         """Log the start_grace_period_for_user event."""
         logger.info(
             "  start_grace_period_for_user(%s, %s, %s, %s %s)",
@@ -124,7 +128,7 @@ class DummyEventHandler(EventHandler):
             duration,
         )
 
-    def remove_user_from_group(self, co, group, group_attributes: list, user):
+    def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str):
         """Log the remove_user_from_group event."""
         logger.info(
             "  remove_user_from_group(%s, %s, %s, %s)",
@@ -134,7 +138,7 @@ class DummyEventHandler(EventHandler):
             click.style(user, fg="cyan"),
         )
 
-    def remove_graced_user_from_group(self, co, group, group_attributes, user):
+    def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str):
         """Log the remove_graced_user_from_group event."""
         logger.info(
             "  remove_graced_user_from_group(%s, %s, %s, %s)",

@@ -1,12 +1,12 @@
 """
-  Configuration definition and validating. The config class defines
-  the main configuration. EventHandler classes may extent the
-  configuration.
+Configuration definition and validating. The config class defines
+the main configuration. EventHandler classes may extent the
+configuration.
 """
 
 import re
 from datetime import timedelta
-from typing import Any, Dict, List
+from typing import Any, Union, cast
 
 import ldap
 import yaml
@@ -18,17 +18,20 @@ from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, State
+from SRAMsync.typing import StatusConfig, EventHandlerConfig, ConfigGroup
+
+import SRAMsync.typing
 
 
 class ConfigurationError(Exception):
     """Exception class representing configuration errors."""
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
 
 
-def get_status_object(cfg: dict, **kwargs: str) -> State:
+def get_status_object(cfg: StatusConfig, **kwargs: str) -> State:
     """Return the configured status object."""
     state_class = deduct_event_handler_class(cfg["name"])
     state_object = state_class(cfg["config"], **kwargs)
@@ -168,29 +171,32 @@ class Config:
         "additionalProperties": False,
     }
 
-    def __init__(self, config_file: str, args: Dict[str, str] = {}) -> None:
+    def __init__(self, config_file: str, args: Union[dict[str, str], None] = None) -> None:
+        if args is None:
+            args = {}
+
         with open(config_file, encoding="utf8") as fd:
-            config = yaml.safe_load(fd)
+            config = cast(SRAMsync.typing.Config, yaml.safe_load(fd))
 
         validate(schema=self._schema, instance=config, format_checker=Draft202012Validator.FORMAT_CHECKER)
 
         if "@all" not in config["sync"]["groups"]:
-            config["sync"]["groups"]["@all"] = {"attributes": [], "destination": []}
+            config["sync"]["groups"]["@all"] = cast(ConfigGroup, {"attributes": [], "destination": []})  # type: ignore[reportArgumentType]
 
         self.config = config
 
-        self.secrets = {}
+        self.secrets: dict[str, dict[str, str]] = {}
         if "secrets" in config:
             with open(config["secrets"]["file"], encoding="utf8") as fd:
                 self.secrets = yaml.safe_load(fd)
 
-        self.state = get_status_object(config["status"], service=config["service"])
+        self.state = get_status_object(config["status"], service=config["service"])  # type: ignore[reportArgumentType]
 
         event_handlers = self.get_event_handlers(self.state, args)
         self.event_handler_proxy = EventHandlerProxy(event_handlers)
 
     def __getitem__(self, item: str) -> Any:
-        return self.config[item]
+        return cast(Any, self.config[item])
 
     def __contains__(self, item: str) -> bool:
         return item in self.config
@@ -209,7 +215,7 @@ class Config:
         self._group_destintion_to_list()
         self._normalize_grace_periods()
 
-    def get_event_handlers(self, state: State, args: Dict[str, str]) -> List[EventHandler]:
+    def get_event_handlers(self, state: State, args: dict[str, str]) -> list[EventHandler]:
         """
         Dynamically load the configured class from the configuration. If the class
         expects a configuration extract that from the configuration and pass it
@@ -217,38 +223,38 @@ class Config:
         provisional_status_filename in the class configuration.
         """
 
-        event_handler_section = self.config["sync"]["event_handler"]
+        event_handlers = self.config["sync"]["event_handler"]
 
         event_handler_instances = []
-        for event in event_handler_section:
-            event_handler_class = deduct_event_handler_class(event["name"])
+        for event_handler in event_handlers:
+            event_handler_class = cast(EventHandler, deduct_event_handler_class(event_handler["name"]))
 
-            event_handler_cfg = {}
-            if "config" in event:
-                event_handler_cfg["event_handler_config"] = event["config"]
+            event_handler_cfg = cast(EventHandlerConfig, {})
+            if "config" in event_handler:
+                event_handler_cfg["event_handler_config"] = event_handler["config"]
 
             if hasattr(self, "secrets"):
                 event_handler_cfg["secrets"] = self.secrets
 
-            event_handler_instance = event_handler_class(
+            event_handler_instance = event_handler_class(  # type: ignore
                 self.config["service"], event_handler_cfg, state, ["sync", "event_handler", "config"]
             )
-            supported_arguments = event_handler_instance.get_supported_arguments()
-            argss = [k for k in supported_arguments if k in args]
-            for arg in argss:
+            supported_arguments = event_handler_instance.get_supported_arguments()  # type: ignore
+            new_args: list[dict[str, Any]] = [k for k in supported_arguments if k in args]  # type: ignore
+            for arg in new_args:
                 if "deprecated" in supported_arguments[arg]:
-                    logger.warning("%s: %s", event["name"], supported_arguments[arg]["deprecated"])
+                    logger.warning("%s: %s", event_handler["name"], supported_arguments[arg]["deprecated"])  # type: ignore
 
-                action = supported_arguments[arg]["action"]
-                action_argument = args[arg]
+                action = supported_arguments[arg]["action"]  # type: ignore
+                action_argument = args[arg]  # type: ignore
                 if action_argument:
                     action(action_argument)
                 else:
                     action()
 
-            event_handler_instances.append(event_handler_instance)
+            event_handler_instances.append(event_handler_instance)  # type: ignore
 
-        return event_handler_instances
+        return event_handler_instances  # type: ignore
 
     def get_sram_basedn(self) -> str:
         """Get the base DN"""
@@ -386,7 +392,7 @@ class Config:
 
             validate(schema=self._schema, instance=self.config)
 
-    def _retieve_fully_qualified_cos(self) -> List[str]:
+    def _retieve_fully_qualified_cos(self) -> list[str]:
         """Retrieve all organization.co that are known to the services."""
         basedn = self.get_sram_basedn()
 

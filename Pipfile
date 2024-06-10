@@ -9,8 +9,8 @@ python-ldap = ">=3.4"
 jsonschema = "*"
 pyyaml = "*"
 click-logging = "*"
-sramsync = {editable = true, path = "."}
 pyright = "*"
+sramsync = {file = ".", editable = true}
 
 [dev-packages]
 black = "*"
