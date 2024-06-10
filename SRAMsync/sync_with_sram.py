@@ -636,25 +636,6 @@ def remove_superfluous_entries_from_ldap(cfg: Config) -> None:
     remove_deleted_users_from_groups(cfg)
 
 
-def keep_new_status(cfg: Config, new_status: dict) -> None:
-    """
-    Write the new status to the defined status_filename or
-    provisional_status_filename depending on the configuration.
-    """
-
-    if "provisional_status_filename" in cfg:
-        filename = cfg["provisional_status_filename"]
-    else:
-        filename = cfg["status_filename"]
-
-    filename = render_templated_string(filename, service=cfg["service"])
-
-    with open(filename, "w", encoding="utf8") as status_file:
-        json.dump(new_status, status_file, indent=2)
-
-    logger.info("new status file has been written to: %s", filename)
-
-
 def get_configuration_paths(path: str) -> list[str]:
     """
     Return an array containing paths to configurations in case the provided
