@@ -312,7 +312,7 @@ class Config:
         groups: dict[str, dict[str, ConfigGroup]] = self.config["sync"]["groups"]
 
         for group, values in groups.items():
-            for i, attribute in enumerate(values["attributes"]):
+            for idx, attribute in enumerate(values["attributes"]):
                 if attribute == "grace_period":
                     raise ValueError("grace_period attribute found without a value. Check configuration.")
 
@@ -320,7 +320,7 @@ class Config:
                     _, raw_period = attribute.split(sep="=")
                     grace_period: int = to_seconds(raw_period)
 
-                    groups[group]["attributes"][i] = f"grace_period={grace_period}"
+                    groups[group]["attributes"][idx] = f"grace_period={grace_period}"  # type: ignore[reportGeneralTypeIssues]
                 elif attribute.startswith("grace_period="):
                     raise ValueError("grace_period has wrong value.")
 
