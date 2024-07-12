@@ -31,30 +31,29 @@ class JsonFile(State):
         "additionalProperties": False,
     }
 
-    def __init__(self, cfg: StatusFilenames, **kwargs: dict[str, str]):
+    def __init__(self, cfg: StatusFilenames, **kwargs: str) -> None:
         super().__init__(cfg)
 
         validate(schema=self._schema, instance=cfg)
 
         if "provisional_status_filename" in cfg:
             self.provisional_status_filename = render_templated_string(
-                cfg["provisional_status_filename"], **kwargs
+                template_string=cfg["provisional_status_filename"], **kwargs
             )
 
-        self.status_filename = render_templated_string(cfg["status_filename"], **kwargs)
+        self.status_filename = render_templated_string(template_string=cfg["status_filename"], **kwargs)
 
         try:
-            with open(self.status_filename, encoding="utf8") as fd:
-                self._last_known_state: StateFile = json.load(fd)
+            with open(file=self.status_filename, encoding="utf8") as fd:
+                self._last_known_state: StateFile = json.load(fp=fd)
         except FileNotFoundError:
             self._last_known_state = cast(StateFile, {"users": {}, "groups": {}})
 
         self.cfg = cfg
         self._new_state: StateFile = {"users": {}, "groups": {}}
 
-    def __getitem__(self, key: str) -> Union[dict[str, StateUser], dict[str, StateGroup]]:
-        __import__("pdb").set_trace()
-        return self._last_known_state[key]
+    def __getitem__(self, key: str) -> Union[StateGroup, StateUser]:
+        return self._last_known_state[key]  # pyright: ignore[reportUnknownVariableType]
 
     def __setitem__(self, key: str, value: Any) -> None:
         print(key, value)
@@ -76,12 +75,12 @@ class JsonFile(State):
     def dump_state(self) -> None:
         try:
             if "provisional_status_filename" in self.cfg:
-                status_filename = self.provisional_status_filename
+                status_filename: str = self.provisional_status_filename
             else:
                 status_filename = self.status_filename
 
-            with open(status_filename, "w", encoding="utf8") as fd:
-                json.dump(self._new_state, fd, indent=2, sort_keys=True)
+            with open(file=status_filename, mode="w", encoding="utf8") as fd:
+                json.dump(obj=self._new_state, fp=fd, indent=2, sort_keys=True)
                 fd.write("\n")
         except FileNotFoundError:
             pass
@@ -124,7 +123,7 @@ class JsonFile(State):
     ) -> None:
         for dest_group_name in dest_group_names:
             if dest_group_name not in self._new_state["groups"]:
-                self._new_state["groups"][dest_group_name] = {
+                self._new_state["groups"][dest_group_name] = {  # pyright: ignore[reportArgumentType]
                     "members": [],
                     "attributes": group_attributes,
                     "sram": {
@@ -151,7 +150,7 @@ class JsonFile(State):
         return list(self._new_state["groups"].keys())
 
     def get_org_of_known_group(self, group: str) -> str:
-        return self._last_known_state["groups"][group]["sram"]["org"]
+        return self._last_known_state["groups"][group]["sram"]["org"]  # pyright: ignore[reportUnknownVariableType]
 
     def get_co_of_known_group(self, group: str) -> str:
         return self._last_known_state["groups"][group]["sram"]["CO"]
@@ -172,7 +171,7 @@ class JsonFile(State):
         if group not in self._new_state["groups"]:
             return self._last_known_state["groups"][group]["members"]
 
-        removed_users = [
+        removed_users: list[str] = [
             user
             for user in self._last_known_state["groups"][group]["members"]
             if user not in self._new_state["groups"][group]["members"]

@@ -19,8 +19,9 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import cast
+from typing import Literal, Union, cast
 
+from pathlib import Path
 import click
 import click_logging
 import jsonschema.exceptions
@@ -35,15 +36,16 @@ from SRAMsync.common import (
     render_templated_string_list,
 )
 from SRAMsync.config import Config, ConfigurationError
+from SRAMsync.event_handler_proxy import EventHandlerProxy
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
 from SRAMsync.typing import DNs, StateFile
 
 #  By default click does not offer the short '-h' option.
-click_ctx_settings = dict(help_option_names=["-h", "--help"])
+click_ctx_settings: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])
 
 #  Adjust some of the defaults of click_logging.
-click_logging_options = {
+click_logging_options: dict[str, str] = {
     "default": "WARNING",
     "metavar": "level",
     "help": "level should be one of: CRITICAL, ERROR, WARNING, INFO or DEBUG.",
@@ -53,8 +55,8 @@ click_logging_options = {
 class ConfigValidationError(jsonschema.exceptions.ValidationError):
     """Exception in case the supplied configuration file contains errors"""
 
-    def __init__(self, exception: jsonschema.exceptions.ValidationError, path: list[str]):
-        super().__init__(str(exception))
+    def __init__(self, exception: jsonschema.exceptions.ValidationError, path: Path) -> None:
+        super().__init__(message=str(exception))
         self.my_path = path
         self.exception = exception
 
@@ -62,7 +64,7 @@ class ConfigValidationError(jsonschema.exceptions.ValidationError):
 class MissingUidInRenameUser(Exception):
     """Exception in case the {uid} tag is missing from rename_user."""
 
-    def __init__(self, msg: str):
+    def __init__(self, msg: str) -> None:
         """Init."""
         super().__init__(msg)
         self.msg = msg
@@ -75,7 +77,7 @@ class MultipleLoginGroups(Exception):
 class PasswordNotFound(Exception):
     """Exception is case no password has been found."""
 
-    def __init__(self, msg: str):
+    def __init__(self, msg: str) -> None:
         """Init."""
         super().__init__(msg)
         self.msg = msg
@@ -134,9 +136,9 @@ def init_ldap(
     logger.debug("LDAP: connecting to: %s", config["uri"])
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, 0)  # type: ignore
     ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)  # type: ignore
-    ldap_conn = cast(ldapobject.LDAPObject, ldap.initialize(config["uri"]))  # type: ignore
-    passwd = get_ldap_passwd(config, secrets, service)
-    ldap_conn.simple_bind_s(config["binddn"], passwd)  # type: ignore
+    ldap_conn: ldapobject.LDAPObject = cast(ldapobject.LDAPObject, ldap.initialize(config["uri"]))  # type: ignore
+    passwd: str = get_ldap_passwd(config, secrets, service)
+    ldap_conn.simple_bind_s(who=config["binddn"], cred=passwd)  # type: ignore
     logger.debug("LDAP: connected")
 
     return ldap_conn
@@ -153,17 +155,17 @@ def get_previous_status(cfg: Config) -> StateFile:
         logger.warning("Possible reason is that the generated script has not been run yet.")
         logger.warning("It is okay to continue this sync and generate a new up-to-date script.")
 
-    filename = render_templated_string(cfg["status_filename"], service=cfg["service"])
+    filename: str = render_templated_string(template_string=cfg["status_filename"], service=cfg["service"])
     try:
-        with open(filename, encoding="utf8") as json_file:
-            status = json.load(json_file)
+        with open(file=filename, encoding="utf8") as json_file:
+            status = json.load(fp=json_file)
     except FileNotFoundError:
         pass
 
     return status
 
 
-def is_user_eligible(cfg: Config, entry: dict, user: str) -> bool:
+def is_user_eligible(cfg: Config, entry: dict[str, list[bytes]], user: str) -> bool:
     """
     Check if the user (uid) is eligible for using the service. There are two
     ways to determine this. i) if the users is found to be part of the
@@ -175,22 +177,22 @@ def is_user_eligible(cfg: Config, entry: dict, user: str) -> bool:
       - voPersonStatus defined and set to 'active'
     """
 
-    uid = get_attribute_from_entry(entry, "uid")
+    uid: str = get_attribute_from_entry(entry=entry, attribute="uid")
 
     if "aup_enforcement" in cfg["sync"]["users"] and cfg["sync"]["users"]["aup_enforcement"]:
-        a = [k for k in entry.keys() if "voPersonPolicyAgreement" in k]
+        a: list[str] = [k for k in entry.keys() if "voPersonPolicyAgreement" in k]
         if not a:
             logger.warning("Igoring %s. AUP attribute (voPersonPolicyAgreement) is missing.", uid)
             return False
 
-        timestamps = [k.split(";")[1].split("-")[1] for k in a]
+        timestamps: list[str] = [k.split(";")[1].split("-")[1] for k in a]
         timestamps.sort(reverse=True)
 
         for timestamp in timestamps:
             logger.debug("User %s accepted policies on: %s", user, datetime.fromtimestamp(int(timestamp)))
 
     if "voPersonStatus" in entry:
-        vo_person_status = get_attribute_from_entry(entry, "voPersonStatus")
+        vo_person_status: str = get_attribute_from_entry(entry, "voPersonStatus")
         if vo_person_status != "active":
             return False
 
@@ -235,9 +237,9 @@ def get_login_groups_and_users(cfg: Config, service: str, co: str) -> dict[str, 
     known users from the reserved '@all` group.
     """
 
-    ldap_conn = cfg.get_ldap_connector()
+    ldap_conn: ldapobject.LDAPObject = cfg.get_ldap_connector()
 
-    login_groups_and_users = {}
+    login_groups_and_users: dict[str, list[str]] = {}
     if "groups" in cfg["sync"]:
         login_groups_and_users = {
             group: [] for group, v in cfg["sync"]["groups"].items() if "login_users" in v["attributes"]
@@ -248,15 +250,15 @@ def get_login_groups_and_users(cfg: Config, service: str, co: str) -> dict[str, 
 
     for group in login_groups_and_users:
         try:
-            dns = ldap_conn.search_s(
-                f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
-                ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
-                f"(cn={group})",
+            dns: DNs = ldap_conn.search_s(  # type: ignore
+                base=f"ou=Groups,o={service},dc=ordered,{cfg.get_sram_basedn()}",
+                scope=ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
+                filterstr=f"(cn={group})",
             )
             for _, entry in dns:  # type: ignore
                 if "member" in entry:
-                    for member in entry["member"]:
-                        uid = dn_to_rdns(member)["uid"][0]
+                    for member in entry["member"]:  # type: ignore
+                        uid: str = dn_to_rdns(dn=member)["uid"][0]  # type: ignore
                         login_groups_and_users[group].append(uid)
         except ldap.NO_SUCH_OBJECT:  # type: ignore pylint: disable=E1101
             logger.warning("login group '{group}' has been defined but could not be found for CO '%s'.", co)
@@ -271,18 +273,18 @@ def handle_public_ssh_keys(cfg: Config, co: str, user: str, entry: dict[str, lis
     """
 
     if "sshPublicKey" in entry:
-        raw_ssh_public_keys = entry["sshPublicKey"]
-        current_ssh_public_keys = set([raw_ssh_public_keys[0].decode("UTF-8").rstrip()])
+        raw_ssh_public_keys: list[bytes] = entry["sshPublicKey"]
+        current_ssh_public_keys: set[str] = set([raw_ssh_public_keys[0].decode(encoding="UTF-8").rstrip()])
         for key in raw_ssh_public_keys[1:]:
-            current_ssh_public_keys = current_ssh_public_keys | {key.decode("UTF-8").rstrip()}
+            current_ssh_public_keys = current_ssh_public_keys | {key.decode(encoding="UTF-8").rstrip()}
 
-        known_ssh_public_keys = cfg.state.get_known_user_public_ssh_keys(user)
-        cfg.state.set_user_public_ssh_keys(user, current_ssh_public_keys)
+        known_ssh_public_keys: set[str] = cfg.state.get_known_user_public_ssh_keys(user)
+        cfg.state.set_user_public_ssh_keys(user, ssh_public_keys=current_ssh_public_keys)
 
-        new_ssh_public_keys = current_ssh_public_keys - known_ssh_public_keys
-        dropped_ssh_public_leys = known_ssh_public_keys - current_ssh_public_keys
+        new_ssh_public_keys: set[str] = current_ssh_public_keys - known_ssh_public_keys
+        dropped_ssh_public_leys: set[str] = known_ssh_public_keys - current_ssh_public_keys
 
-        event_handler = cfg.event_handler_proxy
+        event_handler: EventHandlerProxy = cfg.event_handler_proxy
         for key in new_ssh_public_keys:
             logger.debug("    Adding public SSH key: %s…", key[:50])
             event_handler.add_public_ssh_key(co, user, key)
@@ -297,23 +299,23 @@ def process_co_attributes(cfg: Config, fq_co: str, org: str, co: str) -> None:
     Each CO had a number of attributes. Let the event handler deal with
     them.
     """
-    ldap_conn = cfg.get_ldap_connector()
+    ldap_conn: ldapobject.LDAPObject = cfg.get_ldap_connector()
 
-    dn = f"o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
+    dn: str = f"o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
 
-    dns = ldap_conn.search_s(  # type: ignore
-        dn,
-        ldap.SCOPE_BASE,  # type: ignore
-        f"(o={fq_co})",
+    dns: Union[list[str], None] = ldap_conn.search_s(  # type: ignore
+        base=dn,
+        scope=ldap.SCOPE_BASE,  # type: ignore
+        filterstr=f"(o={fq_co})",
     )
 
     if dns:
-        number_of_matching_dns = len(dns)  # type: ignore
+        number_of_matching_dns: int = len(dns)  # type: ignore
         if number_of_matching_dns != 1:
             raise ValueError("Expected one element for %s, found %s", dn, number_of_matching_dns)
         try:
             attributes = cast(dict[str, str], dns[0][1])
-            event_handler = cfg.event_handler_proxy
+            event_handler: EventHandlerProxy = cfg.event_handler_proxy
             event_handler.process_co_attributes(attributes, org, co)
         except KeyError:
             logger.warn("UUID for CO %s of org %s not found.", co, org)
@@ -338,24 +340,24 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     """
 
     dn = ""
-    ldap_conn = cfg.get_ldap_connector()
-    login_groups = get_login_groups_and_users(cfg, fq_co, co)
+    ldap_conn: ldapobject.LDAPObject = cfg.get_ldap_connector()
+    login_groups: dict[str, list[str]] = get_login_groups_and_users(cfg=cfg, service=fq_co, co=co)
     new_users: list[str] = []
 
     try:
         for login_group, login_users in login_groups.items():
             for user in login_users:
-                dn = f"uid={user},ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
+                dn: str = f"uid={user},ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
                 dns: DNs = ldap_conn.search_s(  # type: ignore
-                    dn,
-                    ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
-                    "(objectClass=person)",
+                    base=dn,
+                    scope=ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
+                    filterstr="(objectClass=person)",
                 )
 
                 entry: dict[str, list[bytes]] = dns[0][1]  # type: ignore
-                if is_user_eligible(cfg, entry, user):
-                    login_dest_group_names = render_templated_string_list(
-                        cfg["sync"]["groups"][login_group]["destination"],
+                if is_user_eligible(cfg, entry, user):  # type: ignore
+                    login_dest_group_names: list[str] = render_templated_string_list(
+                        template_strings=cfg["sync"]["groups"][login_group]["destination"],
                         service=cfg["service"],
                         org=org,
                         co=co,
@@ -363,9 +365,9 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                     )
                     uid: str = get_attribute_from_entry(entry, attribute="uid")  # type: ignore
 
-                    dest_user_name = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
+                    dest_user_name: str = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
 
-                    cfg.state.add_user(dest_user_name, co)
+                    cfg.state.add_user(user=dest_user_name, co=co)
 
                     if dest_user_name in new_users:
                         logger.error(
@@ -374,16 +376,16 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         )
                         sys.exit(1)
 
-                    if not cfg.state.is_known_user(dest_user_name):
-                        group_attributes = render_templated_string_list(
-                            cfg["sync"]["groups"][login_group]["attributes"],
+                    if not cfg.state.is_known_user(user=dest_user_name):
+                        group_attributes: list[str] = render_templated_string_list(
+                            template_strings=cfg["sync"]["groups"][login_group]["attributes"],
                             service=cfg["service"],
                             org=org,
                             co=co,
                             sram_group=login_group,
                         )
                         logger.debug("  Found new user: %s", dest_user_name)
-                        event_handler = cfg.event_handler_proxy
+                        event_handler: EventHandlerProxy = cfg.event_handler_proxy
 
                         event_handler.add_new_user(
                             entry,  # type: ignore
@@ -425,8 +427,8 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     if "groups" not in cfg["sync"]:
         return
 
-    event_handler = cfg.event_handler_proxy
-    ldap_conn = cfg.get_ldap_connector()
+    event_handler: EventHandlerProxy = cfg.event_handler_proxy
+    ldap_conn: ldapobject.LDAPObject = cfg.get_ldap_connector()
     service = cfg["service"]
 
     # for sram_group, value in non_login_groups.items():
@@ -438,40 +440,49 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             # by the user, the destination would have been set.
             continue
 
-        group_attributes = render_templated_string_list(
-            value["attributes"], service=service, org=org, co=co, sram_group=sram_group
+        group_attributes: list[str] = render_templated_string_list(
+            template_strings=value["attributes"], service=service, org=org, co=co, sram_group=sram_group
         )
-        dest_group_names = render_templated_string_list(
-            value["destination"], service=service, org=org, co=co, sram_group=sram_group
+        dest_group_names: list[str] = render_templated_string_list(
+            template_strings=value["destination"], service=service, org=org, co=co, sram_group=sram_group
         )
 
         try:
-            basedn = cfg.get_sram_basedn()
+            basedn: str = cfg.get_sram_basedn()
             dns: DNs = ldap_conn.search_s(  # type: ignore
-                f"cn={sram_group},ou=Groups,o={fq_co},dc=ordered,{basedn}",
-                ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
-                "(objectClass=groupOfMembers)",
+                base=f"cn={sram_group},ou=Groups,o={fq_co},dc=ordered,{basedn}",
+                scope=ldap.SCOPE_BASE,  # type: ignore pylint: disable=E1101
+                filterstr="(objectClass=groupOfMembers)",
             )
 
             # Create groups
             if not cfg.state.is_known_group(dest_group_names):
-                group_names = ", ".join(dest_group_names)
-                plural = "s" if len(dest_group_names) > 1 else ""
+                group_names: str = ", ".join(dest_group_names)
+                plural: Literal["s", ""] = "s" if len(dest_group_names) > 1 else ""
                 logger.debug("  Adding group%s: %s", plural, group_names)
 
-                event_handler.add_new_groups(co, dest_group_names, group_attributes)
+                event_handler.add_new_groups(
+                    co=co, groups=dest_group_names, group_attributes=group_attributes
+                )
 
-            cfg.state.add_groups(dest_group_names, co, sram_group, group_attributes)
+            cfg.state.add_groups(
+                dest_group_names=dest_group_names,
+                co=co,
+                sram_group=sram_group,
+                group_attributes=group_attributes,
+            )
 
             # Find members
             for _, entry in dns:  # type: ignore
                 # Add members
                 members: list[str] = (
-                    [member.decode("UTF-8") for member in entry["member"]] if "member" in entry else []  # type: ignore
+                    [member.decode(encoding="UTF-8") for member in entry["member"]]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                    if "member" in entry
+                    else []  # type: ignore
                 )
                 for member in members:
-                    m_uid = dn_to_rdns(member)["uid"][0]
-                    user = render_user_name(cfg, org=org, co=co, group=sram_group, uid=m_uid)
+                    m_uid: str = dn_to_rdns(member)["uid"][0]
+                    user: str = render_user_name(cfg, org=org, co=co, group=sram_group, uid=m_uid)
                     try:
                         if "login_users" not in group_attributes and not cfg.state.is_user_member_of_group(
                             dest_group_names, user
@@ -510,18 +521,18 @@ def add_missing_entries_to_ldap(cfg: Config) -> None:
     new_status, while status is the previous known status of the destination
     LDAP."""
 
-    event_handler = cfg.event_handler_proxy
-    ldap_conn = cfg.get_ldap_connector()
-    basedn = cfg.get_sram_basedn()
+    event_handler: EventHandlerProxy = cfg.event_handler_proxy
+    ldap_conn: ldapobject.LDAPObject = cfg.get_ldap_connector()
+    basedn: str = cfg.get_sram_basedn()
     dns: DNs = ldap_conn.search_s(  # type: ignore
-        f"dc=ordered,{basedn}",
-        ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
-        "(&(o=*)(ObjectClass=organization))",
+        base=f"dc=ordered,{basedn}",
+        scope=ldap.SCOPE_ONELEVEL,  # type: ignore pylint: disable=E1101
+        filterstr="(&(o=*)(ObjectClass=organization))",
     )
 
     for _, entry in dns:  # type: ignore
-        fq_co = get_attribute_from_entry(entry, "o")  # type: ignore
-        org, co = fq_co.split(".")
+        fq_co: str = get_attribute_from_entry(entry=entry, attribute="o")  # type: ignore
+        org, co = fq_co.split(sep=".")
         event_handler.start_of_co_processing(co)
         logger.debug("Processing CO: %s", co)
 
@@ -533,7 +544,7 @@ def add_missing_entries_to_ldap(cfg: Config) -> None:
 def remove_graced_users(cfg: Config) -> None:
     """Remove users that have passed the grace period."""
 
-    event_handler = cfg.event_handler_proxy
+    event_handler: EventHandlerProxy = cfg.event_handler_proxy
 
     for group, group_values in cfg.state.get_known_groups_and_attributes().items():
         if "graced_users" in group_values:
@@ -542,11 +553,11 @@ def remove_graced_users(cfg: Config) -> None:
             sram_group = group_values["sram"]["sram-group"]
             group_attributes = cfg["sync"]["groups"][sram_group]["attributes"]
             # org = cfg.state.get_org_of_known_group(group)
-            co = cfg.state.get_co_of_known_group(group)
+            co: str = cfg.state.get_co_of_known_group(group)
 
             for user, grace_until_str in group_values["graced_users"].items():  # type: ignore
-                grace_until = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")  # type: ignore
-                now = datetime.now(timezone.utc)
+                grace_until: datetime = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")  # type: ignore
+                now: datetime = datetime.now(timezone.utc)
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
@@ -562,7 +573,7 @@ def remove_graced_users(cfg: Config) -> None:
                 else:
                     cfg.state.set_graced_period_for_user(group, user, grace_until)  # type: ignore
 
-                    remaining_time = grace_until - now
+                    remaining_time: timedelta = grace_until - now
                     logger.info("%s from %s has %s left of its grace time.", user, group, remaining_time)  # type: ignore
 
 
@@ -572,33 +583,37 @@ def remove_deleted_users_from_groups(cfg: Config) -> None:
     """
 
     for group in cfg.state.get_known_groups():
-        co = cfg.state.get_co_of_known_group(group)
-        removed_users = cfg.state.get_removed_users(group)
+        co: str = cfg.state.get_co_of_known_group(group)
+        removed_users: list[str] = cfg.state.get_removed_users(group)
 
-        remove_deleted_users_from_group(cfg, co, group, removed_users)
+        remove_deleted_users_from_group(cfg=cfg, co=co, group=group, users=removed_users)
 
 
 def remove_deleted_users_from_group(cfg: Config, co: str, group: str, users: list[str]) -> None:
     """Remove the given users from the group."""
 
-    event_handler = cfg.event_handler_proxy
+    event_handler: EventHandlerProxy = cfg.event_handler_proxy
 
     for user in users:
-        group_attributes = cfg.state.get_known_group_attributes(group)
+        group_attributes: list[str] = cfg.state.get_known_group_attributes(group)
         try:
-            seconds = cfg.get_grace_period(group)
-            grace_until = datetime.now(timezone.utc) + timedelta(seconds=float(seconds))
-            remaining_time = grace_until - datetime.now(timezone.utc)
+            seconds: int = cfg.get_grace_period(group)
+            grace_until: datetime = datetime.now(tz=timezone.utc) + timedelta(seconds=float(seconds))
+            remaining_time: timedelta = grace_until - datetime.now(timezone.utc)
             logger.info(
                 "User '%s' has been removed but not deleted due to grace time. Remaining time: %s",
                 user,
                 remaining_time,
             )
-            event_handler.start_grace_period_for_user(co, group, group_attributes, user, remaining_time)
-            cfg.state.set_graced_period_for_user(group, user, grace_until)
+            event_handler.start_grace_period_for_user(
+                co=co, group=group, group_attributes=group_attributes, user=user, duration=remaining_time
+            )
+            cfg.state.set_graced_period_for_user(group=group, user=user, grace_period=grace_until)
 
         except NoGracePeriodForGroupError:
-            event_handler.remove_user_from_group(co, group, group_attributes, user)  # type: ignore
+            event_handler.remove_user_from_group(
+                co=co, group=group, group_attributes=group_attributes, user=user
+            )  # type: ignore
 
 
 def remove_deleted_groups(cfg: Config) -> None:
@@ -608,21 +623,23 @@ def remove_deleted_groups(cfg: Config) -> None:
     first from the group.
     """
 
-    event_handler = cfg.event_handler_proxy
+    event_handler: EventHandlerProxy = cfg.event_handler_proxy
 
-    known_groups = cfg.state.get_known_groups()
-    added_groups = cfg.state.get_added_groups()
-    removed_groups = [group for group in known_groups if group not in added_groups]
+    known_groups: list[str] = cfg.state.get_known_groups()
+    added_groups: list[str] = cfg.state.get_added_groups()
+    removed_groups: list[str] = [group for group in known_groups if group not in added_groups]
 
     for group in removed_groups:
-        co = cfg.state.get_co_of_known_group(group)
+        co: str = cfg.state.get_co_of_known_group(group)
 
-        users = cfg.state.get_all_known_users_from_group(group)
+        users: list[str] = cfg.state.get_all_known_users_from_group(group)
         remove_deleted_users_from_group(cfg, co, group, users)
         cfg.state.invalidate_all_group_members(group)
 
         logger.debug("Removing group: '%s'", group)
-        event_handler.remove_group(co, group, cfg.state.get_known_group_attributes(group))
+        event_handler.remove_group(
+            co=co, group=group, group_attributes=cfg.state.get_known_group_attributes(group)
+        )
 
 
 def remove_superfluous_entries_from_ldap(cfg: Config) -> None:
@@ -642,8 +659,8 @@ def get_configuration_paths(path: str) -> list[str]:
     path was a directory, or a single path if the path was a file.
     """
 
-    if os.path.isdir(path):
-        paths = os.listdir(path)
+    if os.path.isdir(s=path):
+        paths: list[str] = os.listdir(path)
         paths = sorted([os.path.join(path, x) for x in paths if x.endswith(("yaml", "yml"))])
     else:
         paths = [path]
@@ -660,7 +677,7 @@ def show_configuration_error(
     indent = 0
     for path_element in exception.path:
         logger.error("%s%s:", " " * indent, path_element)
-        indent = indent + 2
+        indent: int = indent + 2
     logger.error("%s%s", " " * indent, exception.message)
 
 
@@ -679,7 +696,7 @@ def show_configuration_error(
     help="Set log level to INFO or DEBUG, depending depending on the count",
 )
 @click.version_option()
-@click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)
+@click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)  # type: ignore
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
 def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[str]):
     """
@@ -711,19 +728,19 @@ def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[
     configuration_path = ""
 
     if debug:
-        logging.getLogger("SRAMsync").setLevel(logging.DEBUG)
+        logging.getLogger(name="SRAMsync").setLevel(level=logging.DEBUG)
 
     if verbose > 0:
         if verbose > 2:
-            logger.warning("verbose option supports two levels only. Additional levels are ignored.")
+            logger.warning(msg="verbose option supports two levels only. Additional levels are ignored.")
             verbose = 2
-        verbose_logging = ["INFO", "DEBUG"]
-        logging.getLogger("SRAMsync").setLevel(verbose_logging[verbose - 1])
+        verbose_logging: list[str] = ["INFO", "DEBUG"]
+        logging.getLogger(name="SRAMsync").setLevel(level=verbose_logging[verbose - 1])
 
     try:
-        logger.info("Started syncing with SRAM")
+        logger.info(msg="Started syncing with SRAM")
 
-        configuration_paths = get_configuration_paths(configuration)
+        configuration_paths: list[str] = get_configuration_paths(path=configuration)
 
         for configuration_path in configuration_paths:
             logger.info("Handling configuration: %s", configuration_path)
@@ -731,15 +748,17 @@ def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[
             new_eventhandler_args: dict[str, str] = {}
             for arg in eventhandler_args:
                 if "=" in arg:
-                    key, value = arg.split("=", 1)
+                    key, value = arg.split(sep="=", maxsplit=1)
                     new_eventhandler_args[key] = value
                 else:
                     new_eventhandler_args[arg] = ""
 
-            cfg = Config(configuration_path, new_eventhandler_args)
+            cfg: Config = Config(config_file=configuration_path, args=new_eventhandler_args)
 
-            ldap_conn = init_ldap(cfg["sram"], cfg.secrets, cfg["service"])
-            cfg.set_set_ldap_connector(ldap_conn)
+            ldap_conn: ldapobject.LDAPObject = init_ldap(
+                config=cfg["sram"], secrets=cfg.secrets, service=cfg["service"]
+            )
+            cfg.set_set_ldap_connector(ldap_connector=ldap_conn)
             cfg.last_minute_config_updates()
 
             add_missing_entries_to_ldap(cfg)
@@ -749,7 +768,7 @@ def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[
 
             cfg.state.dump_state()
 
-        logger.info("Finished syncing with SRAM")
+        logger.info(msg="Finished syncing with SRAM")
         clean_exit = True
     except (
         IOError,
@@ -759,25 +778,25 @@ def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[
         MissingUidInRenameUser,
         TemplateError,
     ) as e:
-        logger.error(e)
+        logger.error(msg=e)
     except ConfigValidationError as e:
-        show_configuration_error(configuration_path, e)
+        show_configuration_error(configuration_path, exception=e)
     except jsonschema.exceptions.ValidationError as e:
-        show_configuration_error(configuration_path, e)
+        show_configuration_error(configuration_path, exception=e)
     except ldap.NO_SUCH_OBJECT as e:  # type: ignore
         if "desc" in e.args[0]:  # type: ignore
             logger.error("%s for basedn '%s'", e.args[0]["desc"], e.args[0]["matched"])  # type: ignore
     except ldap.INVALID_CREDENTIALS:  # type: ignore
         logger.error(
-            "Invalid credentials. Please check your configuration file or set SRAM_LDAP_PASSWD correctly."
+            msg="Invalid credentials. Please check your configuration file or set SRAM_LDAP_PASSWD correctly."
         )
     except ldap.SERVER_DOWN as e:  # type: ignore
         if "desc" in e.args[0]:  # type: ignore
-            logger.error(e.args[0]["desc"])  # type: ignore
+            logger.error(msg=e.args[0]["desc"])  # type: ignore
     except ModuleNotFoundError as e:
         logger.error("%s. Please check your config file.", e)
     except MultipleLoginGroups:
-        logger.error("Multiple login groups have been defined in the config file. Only one is allowed.")
+        logger.error(msg="Multiple login groups have been defined in the config file. Only one is allowed.")
 
     if not clean_exit:
         sys.exit(1)

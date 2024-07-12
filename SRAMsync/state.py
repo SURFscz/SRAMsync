@@ -20,7 +20,7 @@ class NoGracePeriodForGroupError(Exception):
 class UnkownGroup(Exception):
     """Exception in case an unknown group is acccessed."""
 
-    def __init__(self, unknown_group: str):
+    def __init__(self, unknown_group: str) -> None:
         super().__init__()
         self._unknown_group = unknown_group
 
@@ -31,7 +31,7 @@ class State(ABC):
     process. Either state can be querried for known or unknown things.
     """
 
-    def __init__(self, cfg: StatusFilenames):
+    def __init__(self, cfg: StatusFilenames) -> None:
         """init"""
         self.cfg = cfg
 

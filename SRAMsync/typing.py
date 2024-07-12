@@ -2,13 +2,13 @@ from typing import NewType, TypedDict, Union
 
 
 class EventHandler(TypedDict):
-    config: dict[str, str]
     name: str
+    config: dict[str, str]
 
 
 class ConfigGroup(TypedDict):
     attributes: list[str]
-    destination: str
+    destination: list[str]
 
 
 class EventHandlerConfig(TypedDict):
@@ -38,22 +38,26 @@ class Config(TypedDict):
     sram: dict[str, str]
     sync: Sync
     status: StatusConfig
+    attributes: list[str]
+    destination: list[str]
 
 
 class SRAM(TypedDict):
     CO: str
     sram_group: str
+    org: str
 
 
 class StateUser(TypedDict):
     CO: str
-    sshPublicKey: set[str]
+    sshPublicKey: list[str]
 
 
 class StateGroup(TypedDict):
     attributes: list[str]
     members: list[str]
     sram: SRAM
+    graced_users: dict[str, str]
 
 
 class StateFile(TypedDict):

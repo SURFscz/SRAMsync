@@ -1,8 +1,10 @@
+from typing import Any
+from SRAMsync.typing import StateFile
 from state import State
 
 
 class CuaState(State):
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialze access to the CUA
         """
@@ -17,16 +19,16 @@ class CuaState(State):
     def dump_state(self) -> None:
         """Dump the current state."""
 
-    def get_last_known_state(self) -> dict:
+    def get_last_known_state(self, groups: list[str]) -> StateFile:
         """Return the last known state."""
 
     def is_known_user(self, user: str) -> bool:
         """Check if the user is known from the last state."""
 
-    def is_known_group(self, groups: List[str]) -> bool:
+    def is_known_group(self, groups: list[str]) -> bool:
         """Check if the group is known from the last state."""
 
-    def is_user_member_of_group(self, dest_group_names: List[str], user: str) -> bool:
+    def is_user_member_of_group(self, dest_group_names: list[str], user: str) -> bool:
         """Check is the user is member of the destination group."""
 
     def is_found_group(self, group: str) -> bool:
@@ -36,14 +38,14 @@ class CuaState(State):
         """Add user."""
 
     def add_groups(
-        self, dest_group_names: List[str], co: str, sram_group: str, group_attributes: list
+        self, dest_group_names: list[str], co: str, sram_group: str, group_attributes: list
     ) -> None:
         """Add a new group."""
 
-    def add_group_member(self, dest_group_names: List[str], user: str) -> None:
+    def add_group_member(self, dest_group_names: list[str], user: str) -> None:
         """Add member to a group."""
 
-    def get_all_known_users_from_group(self, group) -> List[str]:
+    def get_all_known_users_from_group(self, group: str) -> list[str]:
         """Get all users from the known group."""
 
     def get_added_group(self, group: str) -> dict:
@@ -82,5 +84,5 @@ class CuaState(State):
     def set_graced_period_for_user(self, group: str, user: str, grace_period: datetime) -> None:
         """Set the grace period for the user in group group."""
 
-    def invalidate_all_group_members(self, group: str):
+    def invalidate_all_group_members(self, group: str) -> None:
         """If necessay, invalidate all group members."""
