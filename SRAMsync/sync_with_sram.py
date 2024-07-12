@@ -642,6 +642,16 @@ def remove_deleted_groups(cfg: Config) -> None:
         )
 
 
+def remove_deleted_sram_users(cfg: Config) -> None:
+    """Remove all users at the destination that are nolonger known to SRAM."""
+    event_handler: EventHandlerProxy = cfg.event_handler_proxy
+
+    removed_users: set[str] = cfg.state.get_removed_users_f()
+
+    for user in removed_users:
+        event_handler.remove_user(user, cfg.state)
+
+
 def remove_superfluous_entries_from_ldap(cfg: Config) -> None:
     """
     Remove entries in the destination LDAP based on the difference between
@@ -651,6 +661,7 @@ def remove_superfluous_entries_from_ldap(cfg: Config) -> None:
     remove_deleted_groups(cfg)
     remove_graced_users(cfg)
     remove_deleted_users_from_groups(cfg)
+    remove_deleted_sram_users(cfg)
 
 
 def get_configuration_paths(path: str) -> list[str]:

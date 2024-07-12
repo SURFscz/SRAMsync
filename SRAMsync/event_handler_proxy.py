@@ -84,6 +84,11 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.remove_graced_user_from_group(co, group, group_attributes, user)
 
+    def remove_user(self, user: str, state: State) -> None:
+        """Call remove_user for all EventHandlers."""
+        for event_handler in self.event_handlers:
+            event_handler.remove_user(user=user, state=state)
+
     def finalize(self):
         """Call finalize event for all EventHandlers."""
         for event_handler in self.event_handlers:

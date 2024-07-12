@@ -122,6 +122,10 @@ class State(ABC):
         """Get the users that have been removed since the last synchronisation for the group."""
 
     @abstractmethod
+    def get_removed_users_f(self) -> set[str]:
+        """Get the users that have been removed from the CO level since the last synchronisation."""
+
+    @abstractmethod
     def get_known_user_public_ssh_keys(self, user: str) -> set[str]:
         """Get the set of known public ssh keys for the user."""
 

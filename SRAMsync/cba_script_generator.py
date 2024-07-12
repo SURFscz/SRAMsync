@@ -148,7 +148,6 @@ class CbaScriptGenerator(CuaScriptGenerator):
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str) -> None:
         """remove_user_from_group event."""
-        __import__("pdb").set_trace()
         super().remove_user_from_group(co, group, group_attributes, user)
         self._insert_cba_command(cmd=self.cfg["cba_del_cmd"], co=co, user=user)
 
@@ -158,3 +157,11 @@ class CbaScriptGenerator(CuaScriptGenerator):
         """remove_graced_user_from_group event."""
         super().remove_graced_user_from_group(co, group, group_attributes, user)
         self._insert_cba_command(cmd=self.cfg["cba_del_cmd"], co=co, user=user)
+
+    def remove_user(self, user: str, state: State) -> None:
+        co: str = state["users"][user]["CO"]
+
+        logger.debug(f"CbaScriptGenerator: removing user: {user} for CO: {co}")
+
+        self._print(string=f"{self.cfg['cba_budget_account']} {user} {co}")
+        super().remove_user(user, state)

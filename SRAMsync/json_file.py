@@ -178,6 +178,12 @@ class JsonFile(State):
         ]
         return removed_users
 
+    def get_removed_users_f(self) -> set[str]:
+        users_in_sram: list[str] = [user for user in self._new_state["users"]]
+        last_known_users: list[str] = [user for user in self._last_known_state["users"]]
+
+        return set(last_known_users) - set(users_in_sram)
+
     def get_known_user_public_ssh_keys(self, user: str) -> set[str]:
         try:
             return set(self._last_known_state["users"][user]["sshPublicKey"])

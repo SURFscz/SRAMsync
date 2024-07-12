@@ -148,6 +148,9 @@ class DummyEventHandler(EventHandler):
             click.style(user, fg="cyan"),
         )
 
+    def remove_user(self, user: str, state: State) -> None:
+        logger.info("  remove_user(%s", click.style(text=user, fg="yellow"))
+
     def finalize(self):
         """Log the finalize event."""
         logger.info(click.style("finalize()", fg="white", bold=True))

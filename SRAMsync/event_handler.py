@@ -76,7 +76,9 @@ class EventHandler(ABC):
         """remove_graced_user_from_group event."""
 
     @abstractmethod
-    def finalize(self):
+    def remove_user(self, user: str, state: State) -> None:
+        """Remove user."""
+
     @abstractmethod
     def finalize(self) -> None:
         """finalize event."""
