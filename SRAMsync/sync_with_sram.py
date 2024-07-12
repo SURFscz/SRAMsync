@@ -456,7 +456,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             )
 
             # Create groups
-            if not cfg.state.is_known_group(dest_group_names):
+            if not cfg.state.is_known_group(groups=dest_group_names):
                 group_names: str = ", ".join(dest_group_names)
                 plural: Literal["s", ""] = "s" if len(dest_group_names) > 1 else ""
                 logger.debug("  Adding group%s: %s", plural, group_names)
@@ -481,7 +481,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                     else []  # type: ignore
                 )
                 for member in members:
-                    m_uid: str = dn_to_rdns(member)["uid"][0]
+                    m_uid: str = dn_to_rdns(dn=member)["uid"][0]
                     user: str = render_user_name(cfg, org=org, co=co, group=sram_group, uid=m_uid)
                     try:
                         if "login_users" not in group_attributes and not cfg.state.is_user_member_of_group(

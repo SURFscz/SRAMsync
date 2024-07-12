@@ -220,7 +220,7 @@ class CuaScriptGenerator(EventHandler):
                 item.strip()
                 for attribute in group_attributes
                 if re_extra_groups_attribute.match(attribute)
-                for item in attribute.split("=")[1].split(",")
+                for item in attribute.split(sep="=")[1].split(sep=",")
             ]
 
             groups = list(set(groups) - set(extra_groups))
