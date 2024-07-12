@@ -100,15 +100,18 @@ class JsonFile(State):
         return known
 
     def is_user_member_of_group(self, dest_group_names: list[str], user: str) -> bool:
-        try:
-            for dest_group_name in dest_group_names:
+        if not dest_group_names:
+            return False
+
+        for dest_group_name in dest_group_names:
+            try:
                 if dest_group_name not in self._last_known_state["groups"]:
                     return False
 
                 if user not in self._last_known_state["groups"][dest_group_name]["members"]:
                     return False
-        except KeyError as e:
-            raise UnkownGroup(dest_group_name) from e  # type: ignore [reportUnboundVariable]
+            except KeyError as e:
+                raise UnkownGroup(unknown_group=dest_group_name) from e
 
         return True
 
