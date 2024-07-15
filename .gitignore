@@ -3,9 +3,7 @@ configs/
 __pycache__/
 SRAMsync.egg-info/
 test/status/
-pylintrc
 pyproject.toml
-pyrightconfig.json
 Session.vim
 test/behave/shirecloud.json
 test/behave/update-cua-for-shirecloud.sh
