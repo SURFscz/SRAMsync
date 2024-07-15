@@ -42,10 +42,7 @@ class Config(TypedDict):
     destination: list[str]
 
 
-class SRAM(TypedDict):
-    CO: str
-    sram_group: str
-    org: str
+SRAM = TypedDict("SRAM", {"CO": str, "sram-group": str, "org": str})
 
 
 class StateUser(TypedDict):

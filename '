@@ -62,7 +62,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
     def _insert_cba_command(self, cmd: str, co: str, user: str, co_uuid: str = "") -> None:
         """Insert the cba command with arguments into the generated bash script."""
         # account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
-        self._print(string=f"{cmd} {self.cfg['cba_machine']} {user} {co_uuid}\n")
+        self._print(f"{cmd} {self.cfg['cba_machine']} {user} {co_uuid}\n")
 
     def get_supported_arguments(self) -> dict[str, Any]:
         """
@@ -72,9 +72,8 @@ class CbaScriptGenerator(CuaScriptGenerator):
         can encounter an argument that is not for this module and thus must be ignored.
         An unknown argument does not mean that it is an error.
         """
-        options: dict[str, dict[str, Union[Union[Callable[[str], None], Callable[[], None]], str]]] = (
-            super().get_supported_arguments()
-        )
+        # options: dict[str, dict[str, Union[Callable[[], None], str]]] = super().get_supported_arguments()
+        options: dict[str, dict[str, Callable[[str], None]]] = super().get_supported_arguments()
 
         options.update(
             {
@@ -92,12 +91,12 @@ class CbaScriptGenerator(CuaScriptGenerator):
         """Assign a value to self._cba_co_budget_mapping_filename"""
         self._cba_co_budget_mapping_filename = value
 
-    def process_co_attributes(self, attributes: dict[str, list[bytes]], org: str, co: str) -> None:
+    def process_co_attributes(self, attributes: dict[str, str], org: str, co: str) -> None:
         """Process the CO attributes."""
         super().process_co_attributes(attributes, org, co)
 
-        co_uuid: str = attributes["uniqueIdentifier"][0].decode("utf-8")  # type: ignore
-        key: str = f"{org}-{co}"
+        co_uuid = attributes["uniqueIdentifier"][0].decode("utf-8")  # type: ignore
+        key = f"{org}-{co}"
         if key not in self.org_co_uuids:
             self.org_co_uuids[key] = co_uuid
 

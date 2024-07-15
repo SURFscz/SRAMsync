@@ -5,7 +5,7 @@ of the SRAMsync process.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from SRAMsync.typing import StateFile, StateGroup, StatusFilenames
 
@@ -36,7 +36,7 @@ class State(ABC):
         self.cfg = cfg
 
     @abstractmethod
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: Literal["users", "groups"]) -> Any:
         """Return item."""
 
     @abstractmethod
@@ -138,5 +138,5 @@ class State(ABC):
         """Set the grace period for the user in group group."""
 
     @abstractmethod
-    def invalidate_all_group_members(self, group: str):
+    def invalidate_all_group_members(self, group: str) -> None:
         """If necessay, invalidate all group members."""

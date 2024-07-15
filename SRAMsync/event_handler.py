@@ -24,7 +24,7 @@ class EventHandler(ABC):
         """Get the argument the evenethandler supports."""
 
     @abstractmethod
-    def process_co_attributes(self, attributes: dict[str, str], org: str, co: str) -> None:
+    def process_co_attributes(self, attributes: dict[str, list[bytes]], org: str, co: str) -> None:
         """Provide the UUID for the current org and co."""
 
     @abstractmethod

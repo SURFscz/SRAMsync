@@ -116,7 +116,9 @@ class CuaScriptGenerator(EventHandler):
         """Helper function for printing strings to a file."""
         print(string, file=self.script_file_descriptor)
 
-    def get_supported_arguments(self) -> dict[str, dict[str, Union[Callable[[], None], str]]]:
+    def get_supported_arguments(
+        self,
+    ) -> dict[str, dict[str, Union[Union[Callable[[str], None], Callable[[], None]], str]]]:
         """
         Process the arguments that are passed on the command line for plugins.
         Note that not all supplied arguments are necessary supplied for a specific
@@ -124,13 +126,13 @@ class CuaScriptGenerator(EventHandler):
         can encounter an argument that is not for this module and thus must be ignored.
         An unknown argument does not mean that it is an error.
         """
-        options: dict[str, dict[str, Union[Callable[[], None], str]]] = {
+        options: dict[str, dict[str, Union[Union[Callable[[str], None], Callable[[], None]], str]]] = {
             "run": {"action": lambda: setattr(self, "run", True), "type": "bool"},
         }
 
         return options
 
-    def process_co_attributes(self, attributes: dict[str, str], org: str, co: str) -> None:
+    def process_co_attributes(self, attributes: dict[str, list[bytes]], org: str, co: str) -> None:
         """Process the CO attributes."""
         super().process_co_attributes(attributes, org, co)
 
@@ -314,7 +316,9 @@ class CuaScriptGenerator(EventHandler):
         self._print(string=f"# Remove {user} from group {group}")
         self._update_user_in_groups([group], group_attributes, user, add=False)
 
-    def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str):
+    def remove_graced_user_from_group(
+        self, co: str, group: str, group_attributes: list[str], user: str
+    ) -> None:
         """
         Write the appropriate sara_usertools command to the bash script for
         removing a user from a graced group. Call the auxiliary event class.
@@ -357,7 +361,7 @@ class CuaScriptGenerator(EventHandler):
             )
             raise ValueError(error)
         else:
-            error: str = (
+            error = (
                 f'\'{", ".join(self.cua_group_types)}\' are mutually exclusive in the attributes '
                 f"of group: {groups}."
             )
@@ -369,8 +373,8 @@ class CuaScriptGenerator(EventHandler):
         """
         extra_groups: list[str] = [k.strip() for k in group_attributes if self.extra_groups_re.match(k)]
         if len(extra_groups) > 0:
-            extra_groups: list[str] = [k.split("=")[1].split(",") for k in extra_groups][0]
-            extra_groups: list[str] = [k.strip() for k in extra_groups]
+            extra_groups = [k.split(sep="=")[1].split(sep=",") for k in extra_groups][0]
+            extra_groups = [k.strip() for k in extra_groups]
 
             for extra_group in extra_groups:
                 self._print(string=f"{self.modify_cmd} --group {extra_group} {user}")
@@ -411,7 +415,9 @@ class CuaScriptGenerator(EventHandler):
             logger.info("Executing generated script")
             self.script_file_descriptor.flush()
             try:
-                result = subprocess.run([self.script_name], check=True, capture_output=True, shell=True)
+                result: subprocess.CompletedProcess[bytes] = subprocess.run(
+                    [self.script_name], check=True, capture_output=True, shell=True
+                )
                 logger.debug("script retuned: %d", result.returncode)
                 logger.debug("script output: %s", result.stdout)
             except subprocess.TimeoutExpired:

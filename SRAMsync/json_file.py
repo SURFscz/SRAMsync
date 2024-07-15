@@ -5,7 +5,7 @@ the State class based on a JSON file.
 
 import json
 from datetime import datetime
-from typing import Any, Optional, Union, cast
+from typing import Any, Literal, Optional, Union, cast
 
 from jsonschema import validate
 
@@ -52,8 +52,10 @@ class JsonFile(State):
         self.cfg = cfg
         self._new_state: StateFile = {"users": {}, "groups": {}}
 
-    def __getitem__(self, key: str) -> Union[StateGroup, StateUser]:
-        return self._last_known_state[key]  # pyright: ignore[reportUnknownVariableType]
+    def __getitem__(
+        self, key: Literal["users", "groups"]
+    ) -> Union[dict[str, StateGroup], dict[str, StateUser]]:
+        return self._last_known_state[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
         print(key, value)
@@ -126,13 +128,11 @@ class JsonFile(State):
     ) -> None:
         for dest_group_name in dest_group_names:
             if dest_group_name not in self._new_state["groups"]:
-                self._new_state["groups"][dest_group_name] = {  # pyright: ignore[reportArgumentType]
+                self._new_state["groups"][dest_group_name] = {
                     "members": [],
                     "attributes": group_attributes,
-                    "sram": {
-                        "CO": co,
-                        "sram-group": sram_group,
-                    },
+                    "sram": {"CO": co, "sram-group": sram_group, "org": ""},
+                    "graced_users": {},
                 }
 
     def add_group_member(self, dest_group_names: list[str], user: str) -> None:
@@ -153,7 +153,7 @@ class JsonFile(State):
         return list(self._new_state["groups"].keys())
 
     def get_org_of_known_group(self, group: str) -> str:
-        return self._last_known_state["groups"][group]["sram"]["org"]  # pyright: ignore[reportUnknownVariableType]
+        return self._last_known_state["groups"][group]["sram"]["org"]
 
     def get_co_of_known_group(self, group: str) -> str:
         return self._last_known_state["groups"][group]["sram"]["CO"]

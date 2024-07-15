@@ -89,12 +89,12 @@ def dn_to_rdns(dn: str) -> dict[str, list[str]]:
     each key value pair is an rdn.
     """
 
-    rdns = {}
-    rdn_components = cast(list[tuple[str, str, int]], str2dn(dn))
+    rdns: dict[str, list[str]] = {}
+    rdn_components: list[tuple[str, str, int]] = cast(list[tuple[str, str, int]], str2dn(dn))
     for rdn in rdn_components:
         attribute, value, _ = rdn[0]
-        rdns.setdefault(attribute, []).append(value)  # type: ignore
-    return cast(dict[str, list[str]], rdns)
+        rdns.setdefault(attribute, []).append(value)
+    return rdns
 
 
 def get_ldap_passwd(config: dict[str, str], secrets: dict[str, dict[str, str]], service: str) -> str:
@@ -158,7 +158,7 @@ def get_previous_status(cfg: Config) -> StateFile:
     filename: str = render_templated_string(template_string=cfg["status_filename"], service=cfg["service"])
     try:
         with open(file=filename, encoding="utf8") as json_file:
-            status = json.load(fp=json_file)
+            status = cast(StateFile, json.load(fp=json_file))
     except FileNotFoundError:
         pass
 
@@ -185,14 +185,14 @@ def is_user_eligible(cfg: Config, entry: dict[str, list[bytes]], user: str) -> b
             logger.warning("Igoring %s. AUP attribute (voPersonPolicyAgreement) is missing.", uid)
             return False
 
-        timestamps: list[str] = [k.split(";")[1].split("-")[1] for k in a]
+        timestamps: list[str] = [k.split(sep=";")[1].split(sep="-")[1] for k in a]
         timestamps.sort(reverse=True)
 
         for timestamp in timestamps:
             logger.debug("User %s accepted policies on: %s", user, datetime.fromtimestamp(int(timestamp)))
 
     if "voPersonStatus" in entry:
-        vo_person_status: str = get_attribute_from_entry(entry, "voPersonStatus")
+        vo_person_status: str = get_attribute_from_entry(entry, attribute="voPersonStatus")
         if vo_person_status != "active":
             return False
 
@@ -225,7 +225,9 @@ def render_user_name(cfg: Config, org: str, co: str, group: str, uid: str) -> st
     if "{uid}" not in template:
         raise MissingUidInRenameUser("'{uid}' is missing from the 'rename_user' template.")
 
-    user_name = render_templated_string(template, service=service, org=org, co=co, uid=uid)
+    user_name: str = render_templated_string(
+        template_string=template, service=service, org=org, co=co, uid=uid
+    )
 
     return user_name
 
@@ -314,7 +316,7 @@ def process_co_attributes(cfg: Config, fq_co: str, org: str, co: str) -> None:
         if number_of_matching_dns != 1:
             raise ValueError("Expected one element for %s, found %s", dn, number_of_matching_dns)
         try:
-            attributes = cast(dict[str, str], dns[0][1])
+            attributes: dict[str, list[bytes]] = cast(dict[str, list[bytes]], dns[0][1])
             event_handler: EventHandlerProxy = cfg.event_handler_proxy
             event_handler.process_co_attributes(attributes, org, co)
         except KeyError:
@@ -344,9 +346,9 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
     login_groups: dict[str, list[str]] = get_login_groups_and_users(cfg=cfg, service=fq_co, co=co)
     new_users: list[str] = []
 
-    try:
-        for login_group, login_users in login_groups.items():
-            for user in login_users:
+    for login_group, login_users in login_groups.items():
+        for user in login_users:
+            try:
                 dn: str = f"uid={user},ou=People,o={fq_co},dc=ordered,{cfg.get_sram_basedn()}"
                 dns: DNs = ldap_conn.search_s(  # type: ignore
                     base=dn,
@@ -397,14 +399,14 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         )
                         new_users.append(dest_user_name)
 
-                    handle_public_ssh_keys(cfg, co, dest_user_name, entry)  # type: ignore
-    except ldap.NO_SUCH_OBJECT as e:  # type: ignore
-        logger.error(
-            "Could not find user '%s'. Only This basedn '%s' exists. Trying to match: %s",
-            user,  # type: ignore
-            e.args[0]["matched"],  # type: ignore
-            dn,
-        )
+                    handle_public_ssh_keys(cfg=cfg, co=co, user=dest_user_name, entry=entry)  # type: ignore
+            except ldap.NO_SUCH_OBJECT as e:  # type: ignore
+                logger.error(
+                    "Could not find user '%s'. Only This basedn '%s' exists. Trying to match: %s",
+                    user,
+                    e.args[0]["matched"],  # type: ignore
+                    dn,
+                )
 
 
 def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
@@ -550,31 +552,31 @@ def remove_graced_users(cfg: Config) -> None:
         if "graced_users" in group_values:
             logger.debug("Checking graced users for group: %s", group)
 
-            sram_group = group_values["sram"]["sram-group"]
+            sram_group: str = group_values["sram"]["sram-group"]
             group_attributes = cfg["sync"]["groups"][sram_group]["attributes"]
             # org = cfg.state.get_org_of_known_group(group)
             co: str = cfg.state.get_co_of_known_group(group)
 
             for user, grace_until_str in group_values["graced_users"].items():  # type: ignore
                 grace_until: datetime = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")  # type: ignore
-                now: datetime = datetime.now(timezone.utc)
+                now: datetime = datetime.now(tz=timezone.utc)
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be
                     # copied over to new_status if it needs to be preserved. Not doing
                     # so automatically disregards this information automatically and
                     # it is the intended behaviour
-                    logger.info("Grace time ended for user %s in %s", user, group)  # type: ignore
+                    logger.info("Grace time ended for user %s in %s", user, group)
                     event_handler.remove_graced_user_from_group(
                         co=co,
                         group=group,
                         group_attributes=group_attributes,
-                        user=user,  # type: ignore
+                        user=user,
                     )
                 else:
-                    cfg.state.set_graced_period_for_user(group, user, grace_until)  # type: ignore
+                    cfg.state.set_graced_period_for_user(group=group, user=user, grace_period=grace_until)
 
                     remaining_time: timedelta = grace_until - now
-                    logger.info("%s from %s has %s left of its grace time.", user, group, remaining_time)  # type: ignore
+                    logger.info("%s from %s has %s left of its grace time.", user, group, remaining_time)
 
 
 def remove_deleted_users_from_groups(cfg: Config) -> None:
@@ -613,7 +615,7 @@ def remove_deleted_users_from_group(cfg: Config, co: str, group: str, users: lis
         except NoGracePeriodForGroupError:
             event_handler.remove_user_from_group(
                 co=co, group=group, group_attributes=group_attributes, user=user
-            )  # type: ignore
+            )
 
 
 def remove_deleted_groups(cfg: Config) -> None:
@@ -649,7 +651,7 @@ def remove_deleted_sram_users(cfg: Config) -> None:
     removed_users: set[str] = cfg.state.get_removed_users_f()
 
     for user in removed_users:
-        event_handler.remove_user(user, cfg.state)
+        event_handler.remove_user(user, state=cfg.state)
 
 
 def remove_superfluous_entries_from_ldap(cfg: Config) -> None:
@@ -709,7 +711,7 @@ def show_configuration_error(
 @click.version_option()
 @click_logging.simple_verbosity_option(logger, "--log-level", "-l", **click_logging_options)  # type: ignore
 @click.argument("configuration", type=click.Path(exists=True, dir_okay=True))
-def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[str]):
+def cli(configuration: str, debug: bool, verbose: int, eventhandler_args: tuple[str]) -> None:
     """
     Synchronisation between the SRAM LDAP and the destination LDAP
 

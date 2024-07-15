@@ -21,12 +21,12 @@ class EventHandlerProxy(EventHandler):
     def get_supported_arguments(self) -> dict[str, Any]:
         return super().get_supported_arguments()
 
-    def start_of_co_processing(self, co: str):
+    def start_of_co_processing(self, co: str) -> None:
         """Call start_of_co_processing event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.start_of_co_processing(co)
 
-    def process_co_attributes(self, attributes: dict[str, str], org: str, co: str) -> None:
+    def process_co_attributes(self, attributes: dict[str, list[bytes]], org: str, co: str) -> None:
         """Call process_co_attributes event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.process_co_attributes(attributes, org, co)
@@ -35,7 +35,7 @@ class EventHandlerProxy(EventHandler):
         self,
         entry: dict[str, list[bytes]],
         **kwargs: Any,
-    ):
+    ) -> None:
         """Call add_new_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.add_new_user(entry, **kwargs)
@@ -67,7 +67,7 @@ class EventHandlerProxy(EventHandler):
 
     def start_grace_period_for_user(
         self, co: str, group: str, group_attributes: list[str], user: str, duration: timedelta
-    ):
+    ) -> None:
         """Call start_grace_period_for_user event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.start_grace_period_for_user(co, group, group_attributes, user, duration)
@@ -89,7 +89,7 @@ class EventHandlerProxy(EventHandler):
         for event_handler in self.event_handlers:
             event_handler.remove_user(user=user, state=state)
 
-    def finalize(self):
+    def finalize(self) -> None:
         """Call finalize event for all EventHandlers."""
         for event_handler in self.event_handlers:
             event_handler.finalize()
