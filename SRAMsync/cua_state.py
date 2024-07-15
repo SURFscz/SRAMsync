@@ -1,16 +1,15 @@
-from typing import Any
-from SRAMsync.typing import StateFile
+from datetime import datetime
+from typing import Any, Literal
+from SRAMsync.typing import StateFile, StateGroup, StatusFilenames
 from state import State
 
 
 class CuaState(State):
-    def __init__(self) -> None:
-        """
-        Initialze access to the CUA
-        """
-        pass
+    def __init__(self, cfg: StatusFilenames) -> None:
+        """init"""
+        self.cfg = cfg
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: Literal["users", "groups"]) -> Any:
         """Return item."""
 
     def __setitem__(self, key: str, value: Any) -> None:
@@ -19,7 +18,7 @@ class CuaState(State):
     def dump_state(self) -> None:
         """Dump the current state."""
 
-    def get_last_known_state(self, groups: list[str]) -> StateFile:
+    def get_last_known_state(self) -> StateFile:
         """Return the last known state."""
 
     def is_known_user(self, user: str) -> bool:
@@ -38,7 +37,7 @@ class CuaState(State):
         """Add user."""
 
     def add_groups(
-        self, dest_group_names: list[str], co: str, sram_group: str, group_attributes: list
+        self, dest_group_names: list[str], co: str, sram_group: str, group_attributes: list[str]
     ) -> None:
         """Add a new group."""
 
@@ -48,37 +47,40 @@ class CuaState(State):
     def get_all_known_users_from_group(self, group: str) -> list[str]:
         """Get all users from the known group."""
 
-    def get_added_group(self, group: str) -> dict:
+    def get_added_group(self, group: str) -> StateGroup:
         """Get added group."""
 
-    def get_added_groups(self) -> list:
+    def get_added_groups(self) -> list[str]:
         """Get added groups."""
 
-    def get_org_of_known_group(self, group) -> str:
+    def get_org_of_known_group(self, group: str) -> str:
         """Get the CO name of the known group."""
 
-    def get_co_of_known_group(self, group) -> str:
+    def get_co_of_known_group(self, group: str) -> str:
         """Get the CO name of the known group."""
 
-    def get_known_group(self, group: str) -> dict:
+    def get_known_group(self, group: str) -> StateGroup:
         """Get known group."""
 
-    def get_known_groups(self) -> list:
+    def get_known_groups(self) -> list[str]:
         """Get known groups."""
 
-    def get_known_group_attributes(self, group: str) -> list:
+    def get_known_group_attributes(self, group: str) -> list[str]:
         """Get attributes for known group."""
 
-    def get_known_groups_and_attributes(self) -> dict:
+    def get_known_groups_and_attributes(self) -> dict[str, StateGroup]:
         """Get all known groups and their attributes."""
 
-    def get_removed_users(self, group: str) -> list:
+    def get_removed_users(self, group: str) -> list[str]:
         """Get the users that have been removed since the last synchronisation for the group."""
 
-    def get_known_user_public_ssh_keys(self, user: str) -> set:
+    def get_removed_users_f(self) -> set[str]:
+        """Get the users that have been removed from the CO level since the last synchronisation."""
+
+    def get_known_user_public_ssh_keys(self, user: str) -> set[str]:
         """Get the set of known public ssh keys for the user."""
 
-    def set_user_public_ssh_keys(self, user: str, ssh_public_keys: set) -> None:
+    def set_user_public_ssh_keys(self, user: str, ssh_public_keys: set[str]) -> None:
         """Set the public ssh keys for the user."""
 
     def set_graced_period_for_user(self, group: str, user: str, grace_period: datetime) -> None:
