@@ -9,7 +9,6 @@ python-ldap = ">=3.4"
 jsonschema = "*"
 pyyaml = "*"
 click-logging = "*"
-pyright = "*"
 sramsync = {file = ".", editable = true}
 typing-extensions = "*"
 
