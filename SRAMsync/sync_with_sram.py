@@ -27,7 +27,7 @@ import click_logging
 import jsonschema.exceptions
 import ldap
 from ldap import ldapobject
-from ldap.dn import str2dn  # type: ignore
+from ldap.dn import str2dn  # pyright: ignore[reportUnknownVariableType]
 
 from SRAMsync.common import (
     TemplateError,
@@ -39,7 +39,7 @@ from SRAMsync.config import Config, ConfigurationError
 from SRAMsync.event_handler_proxy import EventHandlerProxy
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
-from SRAMsync.typing import DNs, StateFile
+from SRAMsync.typing import DNs, Secrets, StateFile
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])
@@ -97,7 +97,7 @@ def dn_to_rdns(dn: str) -> dict[str, list[str]]:
     return rdns
 
 
-def get_ldap_passwd(config: dict[str, str], secrets: dict[str, dict[str, str]], service: str) -> str:
+def get_ldap_passwd(config: dict[str, str], secrets: Secrets, service: str) -> str:
     """
     Get the SRAM LDAP password.
 
@@ -127,9 +127,7 @@ def get_ldap_passwd(config: dict[str, str], secrets: dict[str, dict[str, str]], 
     raise PasswordNotFound("SRAM LDAP password not found. Check your configuration or set SRAM_LDAP_PASSWD.")
 
 
-def init_ldap(
-    config: dict[str, str], secrets: dict[str, dict[str, str]], service: str
-) -> ldapobject.LDAPObject:
+def init_ldap(config: dict[str, str], secrets: Secrets, service: str) -> ldapobject.LDAPObject:
     """
     Initialization and binding an LDAP connection.
     """
