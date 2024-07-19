@@ -24,7 +24,7 @@ from SRAMsync.event_handler import EventHandler
 from SRAMsync.json_file import JsonFile
 from SRAMsync.sramlogger import logger
 from SRAMsync.sync_with_sram import ConfigValidationError
-from SRAMsync.typing import EventHandlerConfig
+from SRAMsync.typing import CuaNotificationsConfig, EventHandlerConfig
 
 
 class CuaScriptGenerator(EventHandler):
@@ -62,7 +62,7 @@ class CuaScriptGenerator(EventHandler):
             self.run = False
             self.org_co_uuids = cast(dict[str, str], {})
 
-            self.cfg = cfg["event_handler_config"]
+            self.cfg = cast(CuaNotificationsConfig, cfg["event_handler_config"])
             self.state = state
             self.script_name = render_templated_string(template_string=self.cfg["filename"], service=service)
             self.script_file_descriptor = open(file=self.script_name, mode="w+", encoding="utf8")

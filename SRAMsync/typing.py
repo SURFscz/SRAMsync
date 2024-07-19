@@ -1,9 +1,21 @@
 from typing import NewType, TypedDict, Union
+from typing_extensions import NotRequired
 
 
-class EventHandler(TypedDict):
-    name: str
-    config: dict[str, str]
+class MessageContent(TypedDict):
+    important: bool
+    messages: set[str]
+
+
+COmessage = dict[str, MessageContent]
+Message = dict[str, COmessage]
+
+
+class SMTPconfig(TypedDict):
+    host: str
+    port: int
+    login: NotRequired[str]
+    passwd: NotRequired[str]
 
 
 class ConfigGroup(TypedDict):
@@ -11,9 +23,74 @@ class ConfigGroup(TypedDict):
     destination: list[str]
 
 
+Secrets = TypedDict("Secrets", {"sram-ldap": dict[str, str], "smtp": dict[str, dict[str, str]]})
+
+
+class HeaderLine(TypedDict):
+    header: str
+    line: str
+
+
+EmailHeaders = TypedDict(
+    "EmailHeaders",
+    {
+        "mail-to": str,
+        "mail-from": str,
+        "mail-message": str,
+        "mail-subject": str,
+    },
+)
+report_events = TypedDict(
+    "report_events",
+    {
+        "start-co-processing": HeaderLine,
+        "add-new-user": HeaderLine,
+        "add-group": HeaderLine,
+        "add-user-to-group": HeaderLine,
+        "remove-user-from-group": HeaderLine,
+        "remove-graced-user-from-group": HeaderLine,
+        "finalize": HeaderLine,
+    },
+)
+
+
+class EmailNotificationConfig(EmailHeaders):
+    aggregate_mails: bool
+    collect_events: bool
+    smtp: SMTPconfig
+    report_events: report_events
+
+
+class CuaNotificationsConfig(TypedDict):
+    filename: str
+    add_cmd: str
+    modify_cmd: str
+    check_cmd: str
+    sshkey_cmd: str
+
+
+class CbaNotificationConfig(TypedDict):
+    cua_config: CuaNotificationsConfig
+    cba_budget_account: str
+    cba_machine: str
+    cba_add_cmd: str
+    cba_del_cmd: str
+
+
+class DummyEventHandler(TypedDict):
+    pass
+
+
 class EventHandlerConfig(TypedDict):
-    event_handler_config: dict[str, str]
-    secrets: dict[str, dict[str, str]]
+    event_handler_config: Union[
+        EmailNotificationConfig, CuaNotificationsConfig, CbaNotificationConfig, DummyEventHandler
+    ]
+    secrets: Secrets
+
+
+class EventHandler(TypedDict):
+    name: str
+    config: EventHandlerConfig
 
 
 class Sync(TypedDict):

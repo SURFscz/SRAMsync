@@ -18,7 +18,7 @@ from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, State
-from SRAMsync.typing import StateFile, StatusConfig, EventHandlerConfig, ConfigGroup
+from SRAMsync.typing import Secrets, StateFile, StatusConfig, EventHandlerConfig, ConfigGroup
 
 import SRAMsync.typing
 
@@ -185,7 +185,7 @@ class Config:
 
         self.config = config
 
-        self.secrets: dict[str, dict[str, str]] = {}
+        self.secrets: Secrets = cast(Secrets, {})
         if "secrets" in config:
             with open(file=config["secrets"]["file"], encoding="utf8") as fd:
                 self.secrets = yaml.safe_load(stream=fd)
@@ -231,7 +231,7 @@ class Config:
                 EventHandler, deduct_event_handler_class(event_handler_full_name=event_handler["name"])
             )
 
-            event_handler_cfg = cast(EventHandlerConfig, {})
+            event_handler_cfg: EventHandlerConfig = cast(EventHandlerConfig, {})
             if "config" in event_handler:
                 event_handler_cfg["event_handler_config"] = event_handler["config"]
 

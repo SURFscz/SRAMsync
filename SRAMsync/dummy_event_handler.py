@@ -43,7 +43,7 @@ class DummyEventHandler(EventHandler):
         self,
         entry: dict[str, list[bytes]],
         **kwargs: str,
-    ):
+    ) -> None:
         """Log the add_new_user event."""
         org: str = kwargs["org"]
         co: str = kwargs["co"]
@@ -68,7 +68,7 @@ class DummyEventHandler(EventHandler):
     ) -> dict[str, dict[str, Union[Union[Callable[[str], None], Callable[[], None]], str]]]:
         return {}
 
-    def add_public_ssh_key(self, co: str, user: str, key: str):
+    def add_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """Log the add_public_ssh_key event."""
         logger.info(
             "    add_public_ssh_key(%s, %s, %s)",
@@ -77,11 +77,11 @@ class DummyEventHandler(EventHandler):
             click.style(text=key, fg="white", dim=True),
         )
 
-    def delete_public_ssh_key(self, co: str, user: str, key: str):
+    def delete_public_ssh_key(self, co: str, user: str, key: str) -> None:
         """Log the delete_public_ssh_key event."""
         logger.info("    delete_public_ssh_key(%s, %s, %s)", co, user, key)
 
-    def add_new_groups(self, co: str, groups: list[str], group_attributes: list[str]):
+    def add_new_groups(self, co: str, groups: list[str], group_attributes: list[str]) -> None:
         """Log the add_new_group event."""
         logger.info(
             "  add_new_group(%s, %s, %s)",
@@ -90,7 +90,7 @@ class DummyEventHandler(EventHandler):
             group_attributes,
         )
 
-    def remove_group(self, co: str, group: str, group_attributes: list[str]):
+    def remove_group(self, co: str, group: str, group_attributes: list[str]) -> None:
         """Log the remove_group event."""
         logger.info(
             "  remove_group(%s, %s, %s)",
@@ -99,7 +99,7 @@ class DummyEventHandler(EventHandler):
             group_attributes,
         )
 
-    def add_user_to_group(self, **kwargs: str):
+    def add_user_to_group(self, **kwargs: str) -> None:
         """Log the add_user_to_group event."""
         try:
             org: str = kwargs["org"]
@@ -133,7 +133,7 @@ class DummyEventHandler(EventHandler):
             duration,
         )
 
-    def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str):
+    def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str) -> None:
         """Log the remove_user_from_group event."""
         logger.info(
             "  remove_user_from_group(%s, %s, %s, %s)",
@@ -143,7 +143,9 @@ class DummyEventHandler(EventHandler):
             click.style(text=user, fg="cyan"),
         )
 
-    def remove_graced_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str):
+    def remove_graced_user_from_group(
+        self, co: str, group: str, group_attributes: list[str], user: str
+    ) -> None:
         """Log the remove_graced_user_from_group event."""
         logger.info(
             "  remove_graced_user_from_group(%s, %s, %s, %s)",

@@ -6,7 +6,7 @@ doing so, the functionallity of CuaScriptGenerator can be resused here.
 
 import json
 import sys
-from typing import Any, Callable, Union
+from typing import Any, Callable, Union, cast
 
 import click
 from pathlib import Path
@@ -17,7 +17,7 @@ from SRAMsync.json_file import JsonFile
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import State
 from SRAMsync.sync_with_sram import ConfigValidationError
-from SRAMsync.typing import EventHandlerConfig
+from SRAMsync.typing import CbaNotificationConfig, EventHandlerConfig
 
 
 class CbaScriptGenerator(CuaScriptGenerator):
@@ -40,19 +40,23 @@ class CbaScriptGenerator(CuaScriptGenerator):
         "required": ["cba_add_cmd", "cba_del_cmd", "cba_machine", "cba_budget_account", "cua_config"],
     }
 
-    def __init__(self, service: str, cfg: dict[str, Any], state: JsonFile, path: Path) -> None:
+    def __init__(self, service: str, cfg: EventHandlerConfig, state: JsonFile, path: Path) -> None:
         try:
             validate(
                 schema=CbaScriptGenerator._schema,
                 instance=cfg["event_handler_config"],
                 format_checker=Draft202012Validator.FORMAT_CHECKER,
             )
+
             cua_config: EventHandlerConfig = {
-                "event_handler_config": cfg["event_handler_config"]["cua_config"],
+                "event_handler_config": cast(CbaNotificationConfig, cfg["event_handler_config"])[
+                    "cua_config"
+                ],
                 "secrets": cfg["secrets"],
             }
             super().__init__(service, cfg=cua_config, state=state, cfg_path=path)
-            self.cfg = cfg["event_handler_config"]
+
+            self.cfg = cast(CbaNotificationConfig, cfg["event_handler_config"])
             self._cba_co_budget_mapping_filename = ""
         except ConfigValidationError as e:
             raise e
