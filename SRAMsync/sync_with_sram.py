@@ -39,7 +39,7 @@ from SRAMsync.config import Config, ConfigurationError
 from SRAMsync.event_handler_proxy import EventHandlerProxy
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, UnkownGroup
-from SRAMsync.typing import DNs, Secrets, StateFile
+from SRAMsync.typing import DNs, Entry, Secrets, StateFile
 
 #  By default click does not offer the short '-h' option.
 click_ctx_settings: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])
@@ -354,8 +354,8 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                     filterstr="(objectClass=person)",
                 )
 
-                entry: dict[str, list[bytes]] = dns[0][1]  # type: ignore
-                if is_user_eligible(cfg, entry, user):  # type: ignore
+                entry: Entry = cast(Entry, dns[0][1])
+                if is_user_eligible(cfg, entry, user):
                     login_dest_group_names: list[str] = render_templated_string_list(
                         template_strings=cfg["sync"]["groups"][login_group]["destination"],
                         service=cfg["service"],
@@ -363,7 +363,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         co=co,
                         sram_group=login_group,
                     )
-                    uid: str = get_attribute_from_entry(entry, attribute="uid")  # type: ignore
+                    uid: str = get_attribute_from_entry(entry, attribute="uid")
 
                     dest_user_name: str = render_user_name(cfg, org=org, co=co, group=login_group, uid=uid)
 
@@ -388,7 +388,7 @@ def process_user_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
                         event_handler: EventHandlerProxy = cfg.event_handler_proxy
 
                         event_handler.add_new_user(
-                            entry,  # type: ignore
+                            entry,
                             org=org,
                             co=co,
                             groups=login_dest_group_names,
@@ -555,8 +555,8 @@ def remove_graced_users(cfg: Config) -> None:
             # org = cfg.state.get_org_of_known_group(group)
             co: str = cfg.state.get_co_of_known_group(group)
 
-            for user, grace_until_str in group_values["graced_users"].items():  # type: ignore
-                grace_until: datetime = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")  # type: ignore
+            for user, grace_until_str in group_values["graced_users"].items():
+                grace_until: datetime = datetime.strptime(grace_until_str, "%Y-%m-%d %H:%M:%S%z")
                 now: datetime = datetime.now(tz=timezone.utc)
                 if now > grace_until:
                     # The graced info for users is in status initially and needs to be

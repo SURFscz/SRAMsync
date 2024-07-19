@@ -2,6 +2,9 @@ from typing import NewType, TypedDict, Union
 from typing_extensions import NotRequired
 
 
+Entry = dict[str, list[bytes]]
+
+
 class MessageContent(TypedDict):
     important: bool
     messages: set[str]
@@ -16,11 +19,6 @@ class SMTPconfig(TypedDict):
     port: int
     login: NotRequired[str]
     passwd: NotRequired[str]
-
-
-class ConfigGroup(TypedDict):
-    attributes: list[str]
-    destination: list[str]
 
 
 Secrets = TypedDict("Secrets", {"sram-ldap": dict[str, str], "smtp": dict[str, dict[str, str]]})
@@ -93,9 +91,17 @@ class EventHandler(TypedDict):
     config: EventHandlerConfig
 
 
+class ConfigGroup(TypedDict):
+    attributes: list[str]
+    destination: list[str]
+
+
+Group = dict[str, dict[str, ConfigGroup]]
+
+
 class Sync(TypedDict):
     event_handler: list[EventHandler]
-    groups: dict[str, dict[str, ConfigGroup]]
+    groups: Group
     users: dict[str, Union[bool, str]]
 
 

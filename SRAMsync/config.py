@@ -18,7 +18,7 @@ from SRAMsync.event_handler import EventHandler
 from SRAMsync.event_handler_proxy import EventHandlerProxy
 from SRAMsync.sramlogger import logger
 from SRAMsync.state import NoGracePeriodForGroupError, State
-from SRAMsync.typing import Secrets, StateFile, StatusConfig, EventHandlerConfig, ConfigGroup
+from SRAMsync.typing import Group, Secrets, StateFile, StatusConfig, EventHandlerConfig, ConfigGroup
 
 import SRAMsync.typing
 
@@ -366,8 +366,8 @@ class Config:
 
                 groups.add(group_name)
 
-        new_groups: dict[str, str] = {}
-        all_groups: dict[str, dict[str, str]] = self.config["sync"]["groups"]  # pyright: ignore[]
+        new_groups: Group = {}
+        all_groups: Group = self.config["sync"]["groups"]  # pyright: ignore[]
         for regex, value in regex_groups.items():
             for group in groups:
                 if regex.match(group):
@@ -415,11 +415,9 @@ class Config:
 
     def _group_destintion_to_list(self) -> None:
         """Make the destination a list in case it is defined as a string."""
-        groups: dict[str, dict[str, str]] = self.config["sync"]["groups"]  # pyright: ignore[]
+        groups: Group = self.config["sync"]["groups"]
         dest_as_string: list[str] = [
-            group
-            for group in groups
-            if isinstance(groups[group]["destination"], str)  # pyright: ignore[]
+            group for group in groups if isinstance(groups[group]["destination"], str)
         ]
 
         for group_name in dest_as_string:
