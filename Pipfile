@@ -11,6 +11,7 @@ pyyaml = "*"
 click-logging = "*"
 pyright = "*"
 sramsync = {file = ".", editable = true}
+typing-extensions = "*"
 
 [dev-packages]
 black = "*"
@@ -25,6 +26,7 @@ coverage = "*"
 exceptiongroup = "*"
 behave = "*"
 ipdb = "*"
+aiosmtpd = "*"
 
 [pipenv]
 allow_prereleases = true
