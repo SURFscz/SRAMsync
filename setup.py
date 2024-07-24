@@ -11,7 +11,7 @@ setup(
     author_email="gerben.venekamp@surf.nl",
     description="Reading entries and attributes from SRAM LDAP and process them",
     url="https://github.com/SURFscz/SRAMsync/",
-    install_requires=["Click", "pyldap", "jsonschema", "pyyaml", "click_logging"],
+    install_requires=["Click", "pyldap", "jsonschema", "pyyaml", "click_logging", "typing-extensions"],
     entry_points={"console_scripts": ["sync-with-sram = SRAMsync.sync_with_sram:cli"]},
     python_requires=">=3.9",
     packages=find_packages(),
