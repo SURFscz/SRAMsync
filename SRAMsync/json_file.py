@@ -124,14 +124,14 @@ class JsonFile(State):
         self._new_state["users"][user] = cast(StateUser, {"CO": co})
 
     def add_groups(
-        self, dest_group_names: list[str], co: str, sram_group: str, group_attributes: list[str]
+        self, dest_group_names: list[str], co: str, org: str, sram_group: str, group_attributes: list[str]
     ) -> None:
         for dest_group_name in dest_group_names:
             if dest_group_name not in self._new_state["groups"]:
                 self._new_state["groups"][dest_group_name] = {
                     "members": [],
                     "attributes": group_attributes,
-                    "sram": {"CO": co, "sram-group": sram_group, "org": ""},
+                    "sram": {"CO": co, "sram-group": sram_group, "org": org},
                     "graced_users": {},
                 }
 

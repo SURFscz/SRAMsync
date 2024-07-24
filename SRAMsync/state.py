@@ -73,7 +73,7 @@ class State(ABC):
 
     @abstractmethod
     def add_groups(
-        self, dest_group_names: list[str], co: str, sram_group: str, group_attributes: list[str]
+        self, dest_group_names: list[str], co: str, org: str, sram_group: str, group_attributes: list[str]
     ) -> None:
         """Add a new group."""
 

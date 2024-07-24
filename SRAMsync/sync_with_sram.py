@@ -468,6 +468,7 @@ def process_group_data(cfg: Config, fq_co: str, org: str, co: str) -> None:
             cfg.state.add_groups(
                 dest_group_names=dest_group_names,
                 co=co,
+                org=org,
                 sram_group=sram_group,
                 group_attributes=group_attributes,
             )
