@@ -63,10 +63,10 @@ class CbaScriptGenerator(CuaScriptGenerator):
         except ValidationError as e:
             raise ConfigValidationError(e, path) from e
 
-    def _insert_cba_command(self, cmd: str, co: str, user: str, co_uuid: str = "") -> None:
+    def _insert_cba_command(self, cmd: str, user: str, co_uuid: str = "") -> None:
         """Insert the cba command with arguments into the generated bash script."""
         # account = render_templated_string(self.cfg["cba_budget_account"], co=co, uid=user)
-        self._print(string=f"{cmd} {self.cfg['cba_machine']} {user} {co_uuid}\n")
+        self._print(string=f"{cmd} {user} {co_uuid}\n")
 
     def get_supported_arguments(self) -> dict[str, Any]:
         """
@@ -143,26 +143,29 @@ class CbaScriptGenerator(CuaScriptGenerator):
         super().add_new_user(entry, **kwargs)
 
         try:
-            co: str = kwargs["co"]
             user: str = kwargs["user"]
             co_uuid: str = self.org_co_uuids[f"{kwargs['org']}-{kwargs['co']}"]
 
             self._print(string="# Adding user CBA account.")
-            self._insert_cba_command(self.cfg["cba_add_cmd"], co, user, co_uuid)
+            self._insert_cba_command(self.cfg["cba_add_cmd"], co_uuid=co_uuid, user=user)
         except KeyError as e:
             logger.error("Missing(cba_script_generator) argument: %s", e)
             sys.exit(1)
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str) -> None:
         """remove_user_from_group event."""
-        self._insert_cba_command(cmd=self.cfg["cba_del_cmd"], co=co, user=user)
+        org: str = cast(State, self.state)["groups"][group]["sram"]["org"]
+        co_uuid: str = self.org_co_uuids[f"{org}-{co}"]
+        self._insert_cba_command(cmd=self.cfg["cba_del_cmd"], co_uuid=co_uuid, user=user)
 
     def remove_graced_user_from_group(
         self, co: str, group: str, group_attributes: list[str], user: str
     ) -> None:
         """remove_graced_user_from_group event."""
         super().remove_graced_user_from_group(co, group, group_attributes, user)
-        self._insert_cba_command(cmd=self.cfg["cba_del_cmd"], co=co, user=user)
+        org: str = cast(State, self.state)["groups"][group]["sram"]["org"]
+        co_uuid: str = self.org_co_uuids[f"{org}-{co}"]
+        self._insert_cba_command(cmd=self.cfg["cba_del_cmd"], co_uuid=co_uuid, user=user)
 
     def remove_user(self, user: str, state: State) -> None:
         group: str = ""
