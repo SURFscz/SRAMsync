@@ -154,6 +154,7 @@ class CbaScriptGenerator(CuaScriptGenerator):
 
     def remove_user_from_group(self, co: str, group: str, group_attributes: list[str], user: str) -> None:
         """remove_user_from_group event."""
+        self._print(string=f"# Remove {user} from group {group} --> delete user from CBA account")
         org: str = cast(State, self.state)["groups"][group]["sram"]["org"]
         co_uuid: str = self.org_co_uuids[f"{org}-{co}"]
         self._insert_cba_command(cmd=self.cfg["cba_del_cmd"], co_uuid=co_uuid, user=user)
