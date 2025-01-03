@@ -23,9 +23,9 @@ from SRAMsync.common import get_attribute_from_entry, render_templated_string
 from SRAMsync.event_handler import EventHandler
 from SRAMsync.json_file import JsonFile
 from SRAMsync.sramlogger import logger
+from SRAMsync.state import State
 from SRAMsync.sync_with_sram import ConfigValidationError
 from SRAMsync.typing import CuaNotificationsConfig, EventHandlerConfig
-
 
 class CuaScriptGenerator(EventHandler):
     """
@@ -325,6 +325,13 @@ class CuaScriptGenerator(EventHandler):
         """
         self._print(string=f"# Grace time has ended for user {user} from group {group}")
         self.remove_user_from_group(co, group, group_attributes, user)
+
+    def remove_user(self, user: str, state: State) -> None:
+
+        co: str = state["users"][user]["CO"]
+
+        logger.debug(f"CuaScriptGenerator: removing user: {user} for CO: {co}")
+        super().remove_user(user, state)
 
     def _update_user_in_groups(
         self, groups: list[str], group_attributes: list[str], user: str, add: bool
